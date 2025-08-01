@@ -32,9 +32,9 @@ fun LoginScreen(viewModel: LoginViewModel = viewModel()) {
         Spacer(modifier = Modifier.height(24.dp))
 
         OutlinedTextField(
-            value = viewModel.email,
-            onValueChange = viewModel::onEmailChange,
-            label = { Text("E-Mail") },
+            value = viewModel.username,
+            onValueChange = viewModel::onUsernameChange,
+            label = { Text("Benutzername") },
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -51,10 +51,15 @@ fun LoginScreen(viewModel: LoginViewModel = viewModel()) {
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
-            onClick = { /* Mit Backend verknüpfen */ },
+            onClick = { viewModel.loginUser() },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Einloggen")
         }
+
+        Text(
+            text = viewModel.message,
+            color = MaterialTheme.colorScheme.primary
+        )
     }
 }

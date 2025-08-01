@@ -33,6 +33,16 @@ fun RegisterScreen(viewModel: RegisterViewModel = viewModel()) {
         Spacer(modifier = Modifier.height(24.dp))
 
         OutlinedTextField(
+            value = viewModel.username,
+            onValueChange = viewModel::onUsernameChange,
+            label = { Text("Benutzername") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+
+        OutlinedTextField(
             value = viewModel.email,
             onValueChange = viewModel::onEmailChange,
             label = { Text("E-Mail") },
@@ -52,10 +62,17 @@ fun RegisterScreen(viewModel: RegisterViewModel = viewModel()) {
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
-            onClick = { /* mit Backend verknüpfen */ },
+            onClick = { viewModel.registerUser() },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Registrieren")
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = viewModel.message,
+            color = MaterialTheme.colorScheme.primary
+        )
     }
 }
