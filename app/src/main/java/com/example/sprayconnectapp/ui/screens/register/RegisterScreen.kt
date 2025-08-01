@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -62,6 +63,7 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+            val context = LocalContext.current
 
 
             Box(
@@ -109,7 +111,7 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
                     Spacer(modifier = Modifier.height(32.dp))
 
                     Button(
-                        onClick = { viewModel.registerUser() },
+                        onClick = { viewModel.registerUser(context) },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("Registrieren")

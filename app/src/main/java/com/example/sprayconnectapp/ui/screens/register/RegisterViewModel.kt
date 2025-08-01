@@ -1,5 +1,6 @@
 package com.example.sprayconnectapp.ui.screens.register
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 
@@ -24,6 +25,7 @@ class RegisterViewModel : ViewModel() {
     var message by mutableStateOf("") // Rückmeldung in UI
 
 
+
     fun onEmailChange(new: String) {
         email = new
     }
@@ -36,7 +38,7 @@ class RegisterViewModel : ViewModel() {
         username = new
     }
 
-    fun registerUser() {
+    fun registerUser(context: Context) {
         viewModelScope.launch {
             try {
                 val request = RegisterRequest(
@@ -44,7 +46,7 @@ class RegisterViewModel : ViewModel() {
                     email = email,
                     password = password
                 )
-                val response = RetrofitInstance.api.register(request)
+                val response = RetrofitInstance.getApi(context).register(request)
 
                 if (response.isSuccessful) {
                     message = "Registrierung erfolgreich!"

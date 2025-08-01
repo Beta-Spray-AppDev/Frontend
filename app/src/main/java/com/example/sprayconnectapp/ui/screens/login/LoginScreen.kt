@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -54,6 +55,9 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            val context = LocalContext.current
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -94,7 +98,7 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
                     Spacer(modifier = Modifier.height(32.dp))
 
                     Button(
-                        onClick = { viewModel.loginUser() },
+                        onClick = { viewModel.loginUser(context) },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("Einloggen")
