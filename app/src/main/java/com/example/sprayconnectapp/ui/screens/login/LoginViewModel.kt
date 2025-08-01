@@ -1,5 +1,6 @@
 package com.example.sprayconnectapp.ui.screens.login
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -10,6 +11,10 @@ import androidx.lifecycle.viewModelScope
 import com.example.sprayconnectapp.data.LoginRequest
 import com.example.sprayconnectapp.network.RetrofitInstance
 import kotlinx.coroutines.launch
+
+import com.example.sprayconnectapp.util.getTokenFromPrefs
+import com.example.sprayconnectapp.util.saveTokenToPrefs
+
 
 
 class LoginViewModel : ViewModel() {
@@ -29,7 +34,7 @@ class LoginViewModel : ViewModel() {
     fun onPasswordChange(new: String) {
         password = new
     }
-    fun loginUser() {
+    fun loginUser(context: Context) {
         viewModelScope.launch {
             try {
                 val request = LoginRequest(
@@ -37,11 +42,17 @@ class LoginViewModel : ViewModel() {
                     password = password
                 )
 
-                val response = RetrofitInstance.api.login(request)
+                val response = RetrofitInstance.getApi(context).login(request)
 
                 if (response.isSuccessful) {
-                    val body = response.body()
-                    message = body ?: "Login erfolgreich!"
+                    val token = response.body()
+
+                    if (!token.isNullOrBlank() && token.startsWith("ey")) {
+                        message = "Login erfolgreich"
+                        saveTokenToPrefs(context, token)
+                    } else {
+                        message = "Login fehlgeschlagen: Ungültige Antwort"
+                    }
                 } else {
                     message = "Login fehlgeschlagen: ${response.code()}"
                 }
@@ -51,6 +62,13 @@ class LoginViewModel : ViewModel() {
             }
         }
     }
+
+
+
+
+
+
+
 
 
 
