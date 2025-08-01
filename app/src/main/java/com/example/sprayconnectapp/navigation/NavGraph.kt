@@ -14,8 +14,8 @@ fun NavGraph (navController: NavHostController){
     startDestination = "start"
     ){
         composable("start"){ StartScreen(navController) }
-        composable("login"){ LoginScreen() }
-        composable("register"){ RegisterScreen() }
+        composable("login"){ LoginScreen(navController) }
+        composable("register"){ RegisterScreen(navController) }
     }
 
 }
