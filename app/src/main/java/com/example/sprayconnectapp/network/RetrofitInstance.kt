@@ -50,6 +50,11 @@ object RetrofitInstance {
         return getRetrofit(context).create(AuthApi::class.java)
     }
 
+    fun getGymApi(context: Context): GymApi {
+        return getRetrofit(context).create(GymApi::class.java)
+    }
+
+
 
 
 }
