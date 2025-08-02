@@ -12,7 +12,6 @@ import com.example.sprayconnectapp.data.LoginRequest
 import com.example.sprayconnectapp.network.RetrofitInstance
 import kotlinx.coroutines.launch
 
-import com.example.sprayconnectapp.util.getTokenFromPrefs
 import com.example.sprayconnectapp.util.saveTokenToPrefs
 
 

@@ -18,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -29,6 +30,16 @@ import androidx.navigation.NavController
 
 @Composable
 fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewModel()) {
+    val context = LocalContext.current
+
+
+    if (viewModel.message == "Login erfolgreich") {
+        LaunchedEffect(viewModel.message) {
+            navController.navigate("home") {
+                popUpTo("login") { inclusive = true }
+            }
+        }
+    }
 
     Box(modifier = Modifier
         .fillMaxSize()
@@ -56,7 +67,6 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            val context = LocalContext.current
 
             Box(
                 modifier = Modifier
@@ -108,6 +118,7 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
                         text = viewModel.message,
                         color = MaterialTheme.colorScheme.primary
                     )
+
                 }
             }
         }

@@ -6,6 +6,7 @@ import androidx.navigation.compose.composable
 import com.example.sprayconnectapp.ui.screens.login.LoginScreen
 import com.example.sprayconnectapp.ui.screens.register.RegisterScreen
 import com.example.sprayconnectapp.ui.screens.StartScreen
+import com.example.sprayconnectapp.ui.screens.home.HomeScreen
 
 @Composable
 fun NavGraph (navController: NavHostController){
@@ -16,6 +17,8 @@ fun NavGraph (navController: NavHostController){
         composable("start"){ StartScreen(navController) }
         composable("login"){ LoginScreen(navController) }
         composable("register"){ RegisterScreen(navController) }
+        composable("home") { HomeScreen(navController) }
+
     }
 
 }
