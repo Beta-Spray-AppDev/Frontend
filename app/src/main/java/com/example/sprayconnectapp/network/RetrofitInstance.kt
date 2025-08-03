@@ -29,11 +29,16 @@ object RetrofitInstance {
                 val original = chain.request()
                 val requestBuilder = original.newBuilder()
 
-                // Wenn Token vorhanden: Authorization-Header hinzufügen
-                token?.let {
-                    requestBuilder.addHeader("Authorization", "Bearer $it")
-                }
+                //Token nicht mitschicken bei auth endpoint
+                val isAuthEndpoint = original.url.encodedPath.startsWith("/auth/")
+                if(!isAuthEndpoint){
+                    val token = getTokenFromPrefs(context)
 
+                    // Wenn Token vorhanden: Authorization-Header hinzufügen
+                    token?.let {
+                        requestBuilder.addHeader("Authorization", "Bearer $it")
+                    }
+                }
                 chain.proceed(requestBuilder.build())
             }
             .build()
