@@ -9,5 +9,7 @@ interface GymApi {
 
     @GET("api/gyms")
     suspend fun getAllGyms(): Response<List<Gym>>
+    @GET("ping")
+    suspend fun ping(): Response<Unit>
 
 }
