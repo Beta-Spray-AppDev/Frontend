@@ -68,13 +68,7 @@ fun StartScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            if (!online) {
-                Text(
-                    text = "Du bist offline. Login & Registrierung nicht möglich.",
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
+
 
             if (!online) {
                 Text(
