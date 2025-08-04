@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.sprayconnectapp.data.Gym
+import com.example.sprayconnectapp.data.dto.Gym
 import com.example.sprayconnectapp.network.RetrofitInstance
 import com.example.sprayconnectapp.util.clearTokenFromPrefs
 import kotlinx.coroutines.launch

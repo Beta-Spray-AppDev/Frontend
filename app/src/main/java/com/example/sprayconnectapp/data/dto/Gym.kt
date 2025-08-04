@@ -1,4 +1,4 @@
-package com.example.sprayconnectapp.data
+package com.example.sprayconnectapp.data.dto
 
 import java.util.UUID
 

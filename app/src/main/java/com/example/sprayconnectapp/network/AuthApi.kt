@@ -1,7 +1,7 @@
 package com.example.sprayconnectapp.network
 
-import com.example.sprayconnectapp.data.LoginRequest
-import com.example.sprayconnectapp.data.RegisterRequest
+import com.example.sprayconnectapp.data.dto.LoginRequest
+import com.example.sprayconnectapp.data.dto.RegisterRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST

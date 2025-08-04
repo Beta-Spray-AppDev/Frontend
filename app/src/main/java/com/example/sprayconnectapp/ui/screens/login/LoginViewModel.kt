@@ -8,7 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
-import com.example.sprayconnectapp.data.LoginRequest
+import com.example.sprayconnectapp.data.dto.LoginRequest
 import com.example.sprayconnectapp.network.RetrofitInstance
 import kotlinx.coroutines.launch
 
