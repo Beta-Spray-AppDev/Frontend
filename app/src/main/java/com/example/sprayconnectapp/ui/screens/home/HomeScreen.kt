@@ -25,6 +25,7 @@ fun HomeScreen(navController: NavController) {
     val viewModel: HomeViewModel = viewModel()
 
     LaunchedEffect(Unit) {
+        viewModel.initRepository(context)
         viewModel.loadGyms(context)
         Log.d("HomeViewModel", "Lade Gyms...")
     }
