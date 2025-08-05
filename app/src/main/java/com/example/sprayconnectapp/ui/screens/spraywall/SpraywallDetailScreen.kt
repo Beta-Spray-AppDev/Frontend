@@ -88,13 +88,20 @@ fun SpraywallDetailScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-
                     navController.navigate("addSpraywall/$gymId/$gymName")
-                }
+                },
+                containerColor = Color(0xFF26C6DA), // Türkis
+                contentColor = Color.White,
+                elevation = FloatingActionButtonDefaults.elevation(
+                    defaultElevation = 8.dp,
+                    pressedElevation = 12.dp
+                )
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Neue Spraywall hinzufügen")
             }
         }
+
+
     ) { innerPadding ->
         Column(
             modifier = Modifier

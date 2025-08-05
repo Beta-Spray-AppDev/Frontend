@@ -8,6 +8,7 @@ import com.example.sprayconnectapp.ui.screens.GymDetail.GymDetailScreen
 import com.example.sprayconnectapp.ui.screens.login.LoginScreen
 import com.example.sprayconnectapp.ui.screens.register.RegisterScreen
 import com.example.sprayconnectapp.ui.screens.StartScreen
+import com.example.sprayconnectapp.ui.screens.home.AddGymScreen
 import com.example.sprayconnectapp.ui.screens.home.HomeScreen
 import com.example.sprayconnectapp.ui.screens.spraywall.SpraywallDetailScreen
 
@@ -37,6 +38,10 @@ fun NavGraph (navController: NavHostController){
             val gymName = backStackEntry.arguments?.getString("gymName") ?: ""
             AddSpraywallScreen(navController = navController, gymId = gymId, gymName = gymName)
         }
+        composable("addGym") {
+            AddGymScreen(navController = navController)
+        }
+
 
 
 

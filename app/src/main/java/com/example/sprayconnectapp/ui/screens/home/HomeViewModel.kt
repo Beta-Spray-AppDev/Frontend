@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.sprayconnectapp.data.dto.CreateGymDTO
 import com.example.sprayconnectapp.data.dto.Gym
 import com.example.sprayconnectapp.network.RetrofitInstance
 import com.example.sprayconnectapp.util.clearTokenFromPrefs
@@ -124,6 +125,27 @@ class HomeViewModel : ViewModel() {
             isLoading.value = false
         }
     }
+
+    fun createGym(
+        context: Context,
+        dto: CreateGymDTO,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitInstance.getGymApi(context).createGym(dto)
+                if (response.isSuccessful) {
+                    onSuccess()
+                } else {
+                    onError("Fehler: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                onError("Fehler: ${e.localizedMessage}")
+            }
+        }
+    }
+
 
 
 
