@@ -8,6 +8,7 @@ import com.example.sprayconnectapp.ui.screens.login.LoginScreen
 import com.example.sprayconnectapp.ui.screens.register.RegisterScreen
 import com.example.sprayconnectapp.ui.screens.StartScreen
 import com.example.sprayconnectapp.ui.screens.home.HomeScreen
+import com.example.sprayconnectapp.ui.screens.spraywall.SpraywallDetailScreen
 
 @Composable
 fun NavGraph (navController: NavHostController){
@@ -19,10 +20,19 @@ fun NavGraph (navController: NavHostController){
         composable("login"){ LoginScreen(navController) }
         composable("register"){ RegisterScreen(navController) }
         composable("home") { HomeScreen(navController) }
-        composable("gymDetail/{gymName}") { backStackEntry ->
+        composable("gymDetail/{gymId}/{gymName}") { backStackEntry ->
+            val gymId = backStackEntry.arguments?.getString("gymId") ?: ""
             val gymName = backStackEntry.arguments?.getString("gymName") ?: ""
-            GymDetailScreen(navController, gymName)
+            GymDetailScreen(navController = navController, gymId = gymId, gymName = gymName)
+
         }
+        composable("spraywallDetail/{gymId}/{gymName}") { backStackEntry ->
+            val gymId = backStackEntry.arguments?.getString("gymId") ?: ""
+            val gymName = backStackEntry.arguments?.getString("gymName") ?: ""
+            SpraywallDetailScreen(navController, gymId, gymName)
+        }
+
+
 
     }
 

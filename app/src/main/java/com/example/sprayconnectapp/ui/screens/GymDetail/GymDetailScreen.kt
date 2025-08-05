@@ -12,7 +12,11 @@ import com.example.sprayconnectapp.ui.BackButton
 
 
 @Composable
-fun GymDetailScreen(navController: NavController, gymName: String) {
+fun GymDetailScreen(
+    navController: NavController,
+    gymId: String,
+    gymName: String
+){
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -42,7 +46,7 @@ fun GymDetailScreen(navController: NavController, gymName: String) {
 
         Button(
             onClick = {
-                // TODO: Spraywall-Liste anzeigen
+                navController.navigate("spraywallDetail/$gymId/$gymName")
             },
             modifier = Modifier.fillMaxWidth()
         ) {
