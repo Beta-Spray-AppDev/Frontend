@@ -55,4 +55,25 @@ class SpraywallViewModel : ViewModel() {
             isLoading.value = false
         }
     }
+
+    fun createSpraywall(context: Context, dto: SpraywallDTO, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            isLoading.value = true
+            errorMessage.value = null
+
+            try {
+                val response = RetrofitInstance.getSpraywallApi(context).createSpraywall(dto)
+                if (response.isSuccessful) {
+                    onSuccess()
+                } else {
+                    onError("Fehler: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                onError("Fehler: ${e.localizedMessage}")
+            }
+
+            isLoading.value = false
+        }
+    }
+
 }
