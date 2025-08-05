@@ -59,6 +59,12 @@ object RetrofitInstance {
         return getRetrofit(context).create(GymApi::class.java)
     }
 
+    fun getSpraywallApi(context: Context): SpraywallApi {
+        return getRetrofit(context).create(SpraywallApi::class.java)
+    }
+
+
+
 
 
 

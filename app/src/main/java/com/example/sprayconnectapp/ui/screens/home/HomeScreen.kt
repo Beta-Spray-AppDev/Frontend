@@ -64,7 +64,7 @@ fun HomeScreen(navController: NavController) {
                 items(viewModel.gyms.value) { gym ->
                     Card(
                         onClick = {
-                            navController.navigate("gymDetail/${gym.name}")
+                            navController.navigate("gymDetail/${gym.id}/${gym.name}")
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
