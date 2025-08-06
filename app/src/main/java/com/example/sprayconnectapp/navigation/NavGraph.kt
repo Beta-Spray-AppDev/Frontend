@@ -3,6 +3,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.sprayconnectapp.ui.screens.BoulderList.BoulderListScreen
 import com.example.sprayconnectapp.ui.screens.BoulderView.CreateBoulderScreen
 import com.example.sprayconnectapp.ui.screens.spraywall.AddSpraywallScreen
 import com.example.sprayconnectapp.ui.screens.GymDetail.GymDetailScreen
@@ -43,13 +44,23 @@ fun NavGraph (navController: NavHostController){
             AddGymScreen(navController = navController)
         }
 
-        composable("create_boulder") {
+        composable("create_boulder/{spraywallId}") { backStackEntry ->
+            val spraywallId = backStackEntry.arguments?.getString("spraywallId") ?: ""
             CreateBoulderScreen(
+                spraywallId = spraywallId,
                 onSave = { navController.popBackStack() },
                 onBack = { navController.popBackStack() }
-
             )
         }
+
+        composable("boulders/{spraywallId}/{spraywallName}") { backStackEntry ->
+            val spraywallId = backStackEntry.arguments?.getString("spraywallId") ?: ""
+            val spraywallName = backStackEntry.arguments?.getString("spraywallName") ?: ""
+            BoulderListScreen(navController, spraywallId, spraywallName)
+        }
+
+
+
 
 
 

@@ -127,7 +127,9 @@ fun SpraywallDetailScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         items(spraywalls) { spraywall ->
-                            SpraywallCard(spraywall)
+                            SpraywallCard(spraywall){
+                                navController.navigate("boulders/${spraywall.id}/${spraywall.name}")
+                            }
                         }
                     }
                 }
@@ -137,7 +139,7 @@ fun SpraywallDetailScreen(
 }
 
 @Composable
-fun SpraywallCard(spraywall: SpraywallDTO) {
+fun SpraywallCard(spraywall: SpraywallDTO, onClick: () -> Unit) {
     val cleanUrl = spraywall.photoUrl.trim() //entferne /n am ende der url
 
     Log.d("SpraywallCard", "URL geladen: [$cleanUrl]")
@@ -146,7 +148,8 @@ fun SpraywallCard(spraywall: SpraywallDTO) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(2.dp),
+            .shadow(2.dp)
+            .clickable{onClick()},
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {

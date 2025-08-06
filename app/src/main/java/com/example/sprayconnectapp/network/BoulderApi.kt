@@ -1,12 +1,20 @@
 package com.example.sprayconnectapp.network
 
+import com.example.sprayconnectapp.data.dto.BoulderDTO
 import com.example.sprayconnectapp.data.dto.CreateBoulderRequest
 import retrofit2.http.POST
 import retrofit2.http.Body
 import retrofit2.Response
+import retrofit2.http.GET
+import retrofit2.http.Path
+import java.util.UUID
 
 
 interface BoulderApi {
     @POST("boulders")
     suspend fun createBoulder(@Body request: CreateBoulderRequest): Response<Unit>
+
+    @GET("boulders/spraywall/{spraywallId}")
+    suspend fun getBouldersBySpraywall(@Path("spraywallId") spraywallId: UUID): Response<List<BoulderDTO>>
+
 }

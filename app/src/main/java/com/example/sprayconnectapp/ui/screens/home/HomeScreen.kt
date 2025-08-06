@@ -17,6 +17,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.ui.graphics.Color
+import com.example.sprayconnectapp.util.getTokenFromPrefs
+import com.example.sprayconnectapp.util.getUsernameFromToken
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -25,6 +27,13 @@ fun HomeScreen(navController: NavController) {
 
     val context = LocalContext.current
     val viewModel: HomeViewModel = viewModel()
+
+    val token = getTokenFromPrefs(context)
+    val username = token?.let { getUsernameFromToken(it) }
+
+    Log.d("Auth", "Angemeldet als: $username")
+
+
 
     LaunchedEffect(Unit) {
         viewModel.initRepository(context)
@@ -61,7 +70,7 @@ fun HomeScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(32.dp))
 
             Text(
-                text = "Willkommen bei SprayConnect!",
+                text = "Willkommen ${username}!",
                 style = MaterialTheme.typography.headlineMedium
             )
 

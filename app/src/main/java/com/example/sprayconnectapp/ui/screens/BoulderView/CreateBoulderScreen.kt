@@ -14,8 +14,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PaintingStyle.Companion.Stroke
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -30,6 +34,7 @@ import com.example.sprayconnectapp.data.dto.HoldType
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateBoulderScreen(
+    spraywallId: String,
     viewModel: CreateBoulderViewModel = viewModel(),
     onSave: () -> Unit = {},
     onBack: () -> Unit = {}
@@ -94,9 +99,21 @@ fun CreateBoulderScreen(
                             .offset {
                                 IntOffset(hold.x.toInt(), hold.y.toInt())
                             }
-                            .size(24.dp)
-                            .background(color, CircleShape)
-                            .border(2.dp, color, CircleShape)
+                            .size(28.dp) // äußere Größe
+                            .drawBehind {
+                                // Weißer äußerer Ring
+                                drawCircle(
+                                    color = Color.White,
+                                    style = Stroke(width = 6.dp.toPx())
+                                )
+
+                                // Farbiger innerer Ring
+                                drawCircle(
+                                    color = color,
+                                    style = Stroke(width = 3.dp.toPx())
+                                )
+                            }
+
                     )
                 }
             }
@@ -134,7 +151,7 @@ fun CreateBoulderScreen(
                                 context = context,
                                 name = boulderName,
                                 difficulty = boulderDifficulty,
-                                spraywallId = "bf484068-c885-4737-aed3-bdb49741c645" // später dynamisch machen
+                                spraywallId = spraywallId
                             )
                             showDialog = false
                             onSave()
