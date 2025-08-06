@@ -3,6 +3,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.sprayconnectapp.ui.screens.BoulderView.CreateBoulderScreen
 import com.example.sprayconnectapp.ui.screens.spraywall.AddSpraywallScreen
 import com.example.sprayconnectapp.ui.screens.GymDetail.GymDetailScreen
 import com.example.sprayconnectapp.ui.screens.login.LoginScreen
@@ -40,6 +41,14 @@ fun NavGraph (navController: NavHostController){
         }
         composable("addGym") {
             AddGymScreen(navController = navController)
+        }
+
+        composable("create_boulder") {
+            CreateBoulderScreen(
+                onSave = { navController.popBackStack() },
+                onBack = { navController.popBackStack() }
+
+            )
         }
 
 

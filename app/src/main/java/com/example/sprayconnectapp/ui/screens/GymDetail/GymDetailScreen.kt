@@ -52,5 +52,17 @@ fun GymDetailScreen(
         ) {
             Text("Spraywall auswählen")
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+
+        Button(
+            onClick = {
+                navController.navigate("create_boulder")
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Create Boulder")
+        }
     }
 }
