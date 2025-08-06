@@ -14,9 +14,18 @@ import com.example.sprayconnectapp.util.getTokenFromPrefs
 
 object RetrofitInstance {
 
+    private var retrofit: Retrofit? = null
+
+    fun resetRetrofit() {
+        retrofit = null
+    }
+
 
     // Übergabe des Contexts für Zugriff auf SharedPreferences
     fun getRetrofit(context: Context): Retrofit {
+
+        if (retrofit != null) return retrofit!!
+
         val token = getTokenFromPrefs(context)
 
         val logger = HttpLoggingInterceptor().apply {
@@ -32,10 +41,10 @@ object RetrofitInstance {
                 //Token nicht mitschicken bei auth endpoint
                 val isAuthEndpoint = original.url.encodedPath.startsWith("/auth/")
                 if(!isAuthEndpoint){
-                    val token = getTokenFromPrefs(context)
 
+                    val freshToken = getTokenFromPrefs(context)
                     // Wenn Token vorhanden: Authorization-Header hinzufügen
-                    token?.let {
+                    freshToken?.let {
                         requestBuilder.addHeader("Authorization", "Bearer $it")
                     }
                 }

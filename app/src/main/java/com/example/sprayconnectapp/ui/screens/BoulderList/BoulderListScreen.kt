@@ -54,7 +54,7 @@ fun BoulderListScreen(
                 onClick = {
                     navController.navigate("create_boulder/$spraywallId")
                 },
-                containerColor = Color(0xFF26C6DA), 
+                containerColor = Color(0xFF26C6DA),
                 contentColor = Color.White,
                 elevation = FloatingActionButtonDefaults.elevation(
                     defaultElevation = 8.dp,

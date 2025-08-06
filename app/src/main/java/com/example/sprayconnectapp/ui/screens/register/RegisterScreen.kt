@@ -1,6 +1,7 @@
 package com.example.sprayconnectapp.ui.screens.register
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -111,7 +112,14 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
                     Spacer(modifier = Modifier.height(32.dp))
 
                     Button(
-                        onClick = { viewModel.registerUser(context) },
+                        onClick = {
+                            viewModel.registerUser(context) {
+                                Toast.makeText(context, "Willkommen!", Toast.LENGTH_LONG).show()
+                                navController.navigate("home") {
+                                    popUpTo("register") { inclusive = true }
+                                }
+                            }
+                                  },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("Registrieren")

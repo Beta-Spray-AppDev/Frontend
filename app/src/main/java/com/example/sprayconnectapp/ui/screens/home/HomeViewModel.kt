@@ -151,6 +151,8 @@ class HomeViewModel : ViewModel() {
 
     fun logout(context: Context) {
         clearTokenFromPrefs(context)
+        RetrofitInstance.resetRetrofit()
+
     }
 
 }

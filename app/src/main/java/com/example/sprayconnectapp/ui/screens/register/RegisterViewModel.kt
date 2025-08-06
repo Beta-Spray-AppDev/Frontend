@@ -38,7 +38,7 @@ class RegisterViewModel : ViewModel() {
         username = new
     }
 
-    fun registerUser(context: Context) {
+    fun registerUser(context: Context, onLoginSuccess: () -> Unit) {
         viewModelScope.launch {
             try {
                 val request = RegisterRequest(
@@ -49,7 +49,35 @@ class RegisterViewModel : ViewModel() {
                 val response = RetrofitInstance.getApi(context).register(request)
 
                 if (response.isSuccessful) {
-                    message = "Registrierung erfolgreich!"
+
+                    //Registrierung erfolgreich, jetzt automatisch einloggen
+                    val loginRequest = com.example.sprayconnectapp.data.dto.LoginRequest(
+                        username = username,
+                        password = password
+                    )
+
+                    val loginResponse = RetrofitInstance.getApi(context).login(loginRequest)
+
+
+                    if (loginResponse.isSuccessful) {
+                        val token = loginResponse.body()
+
+                        if (!token.isNullOrBlank()) {
+                            com.example.sprayconnectapp.util.saveTokenToPrefs(context, token)
+                            RetrofitInstance.resetRetrofit()
+                            message = "Registrierung & Login erfolgreich"
+                            onLoginSuccess()
+                        } else {
+                            message = "Registrierung ok, aber Login fehlgeschlagen"
+                        }
+
+                    }
+                    else {
+                        message = "Registrierung ok, aber Login fehlgeschlagen: ${loginResponse.code()}"
+                    }
+
+
+
                 } else {
                     message = "Registrierung fehlgeschlagen: ${response.code()}"
                 }
