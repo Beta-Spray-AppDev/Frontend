@@ -1,6 +1,7 @@
 package com.example.sprayconnectapp.ui.screens.spraywall
 
 // Jetpack Compose
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.clickable
@@ -49,6 +50,7 @@ import androidx.compose.runtime.LaunchedEffect
 
 // Icons
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -82,7 +84,24 @@ fun SpraywallDetailScreen(
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    navController.navigate("addSpraywall/$gymId/$gymName")
+                },
+                containerColor = Color(0xFF26C6DA), // Türkis
+                contentColor = Color.White,
+                elevation = FloatingActionButtonDefaults.elevation(
+                    defaultElevation = 8.dp,
+                    pressedElevation = 12.dp
+                )
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Neue Spraywall hinzufügen")
+            }
         }
+
+
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -119,6 +138,11 @@ fun SpraywallDetailScreen(
 
 @Composable
 fun SpraywallCard(spraywall: SpraywallDTO) {
+    val cleanUrl = spraywall.photoUrl.trim() //entferne /n am ende der url
+
+    Log.d("SpraywallCard", "URL geladen: [$cleanUrl]")
+
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -132,8 +156,9 @@ fun SpraywallCard(spraywall: SpraywallDTO) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
+
             AsyncImage(
-                model = spraywall.photoUrl,
+                model = cleanUrl,
                 contentDescription = "Spraywall Bild",
                 modifier = Modifier
                     .fillMaxWidth()
@@ -144,4 +169,5 @@ fun SpraywallCard(spraywall: SpraywallDTO) {
         }
     }
 }
+
 

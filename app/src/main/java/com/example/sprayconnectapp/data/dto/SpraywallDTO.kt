@@ -1,11 +1,12 @@
 package com.example.sprayconnectapp.data.dto
 
+import com.google.gson.annotations.SerializedName
 import java.util.UUID
 
 data class SpraywallDTO(
     val name: String,
     val description: String,
     val photoUrl: String,
-    val gymId: UUID,
-    val isPublic: Boolean
+    @SerializedName("isPublic") val isPublic: Boolean,
+    val gymId: UUID
 )
