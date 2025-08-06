@@ -1,6 +1,8 @@
 package com.example.sprayconnectapp.ui.screens.home
 
 import android.widget.Toast
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -27,6 +29,13 @@ import androidx.navigation.NavController
 import com.example.sprayconnectapp.data.dto.CreateGymDTO
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
+
+
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,6 +45,7 @@ fun AddGymScreen(
     viewModel: HomeViewModel = viewModel()
 ) {
     val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
 
     var name by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }
@@ -56,29 +66,47 @@ fun AddGymScreen(
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(24.dp)
-                .fillMaxSize(),
+                .fillMaxSize()
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+                ) {
+                    focusManager.clearFocus()
+                }
+                .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             OutlinedTextField(
                 value = name,
-                onValueChange = { name = it },
+                onValueChange = { if (it.length <= 20) name = it },
                 label = { Text("Name") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                )
             )
 
             OutlinedTextField(
                 value = location,
-                onValueChange = { location = it },
+                onValueChange = { if (it.length <= 20) location = it },
                 label = { Text("Ort") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                )
             )
 
             OutlinedTextField(
                 value = description,
-                onValueChange = { description = it },
+                onValueChange = { if (it.length <= 100) description = it },
                 label = { Text("Beschreibung") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(
+                    onDone = { focusManager.clearFocus() }
+                )
             )
 
             Button(
@@ -104,3 +132,5 @@ fun AddGymScreen(
         }
     }
 }
+
+

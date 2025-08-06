@@ -57,6 +57,7 @@ dependencies {
     implementation("androidx.room:room-ktx:2.6.1")
     implementation(libs.androidx.runtime)
     implementation(libs.androidx.compiler)
+    implementation(libs.androidx.foundation)
     ksp("androidx.room:room-compiler:2.6.1")
 
     implementation(libs.androidx.core.ktx)
@@ -74,6 +75,8 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
     implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("androidx.compose.ui:ui:1.6.1")
+    implementation("androidx.compose.ui:ui-text:1.6.1")
 
 
 

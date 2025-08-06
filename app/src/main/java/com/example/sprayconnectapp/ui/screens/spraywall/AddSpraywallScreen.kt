@@ -9,9 +9,12 @@ import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
@@ -19,21 +22,24 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.sprayconnectapp.data.dto.SpraywallDTO
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.util.*
+import androidx.compose.ui.text.input.ImeAction
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,6 +51,7 @@ fun AddSpraywallScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
 
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var uploadedImageUrl by remember { mutableStateOf<String?>(null) }
@@ -74,6 +81,12 @@ fun AddSpraywallScreen(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+                ) {
+                    focusManager.clearFocus()
+                }
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -99,16 +112,24 @@ fun AddSpraywallScreen(
 
             OutlinedTextField(
                 value = name,
-                onValueChange = { name = it },
+                onValueChange = { if (it.length <= 20) name = it },
                 label = { Text("Name") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                )
             )
 
             OutlinedTextField(
                 value = description,
-                onValueChange = { description = it },
+                onValueChange = { if (it.length <= 20) description = it },
                 label = { Text("Beschreibung") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(
+                    onDone = { focusManager.clearFocus() }
+                )
             )
 
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -173,6 +194,7 @@ fun AddSpraywallScreen(
         }
     }
 }
+
 
 fun uploadToNextcloudViaWebDAV(
     context: Context,
