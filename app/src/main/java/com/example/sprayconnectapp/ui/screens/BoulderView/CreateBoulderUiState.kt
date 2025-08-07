@@ -6,5 +6,7 @@ import com.example.sprayconnectapp.data.dto.HoldType
 data class CreateBoulderUiState(
     val selectedType: HoldType = HoldType.RED,
     val holds: List<Hold> = emptyList(),
-    val spraywallUrl: String = ""
+    val spraywallUrl: String = "",
+    val selectedHoldId: String? = null
+
 )

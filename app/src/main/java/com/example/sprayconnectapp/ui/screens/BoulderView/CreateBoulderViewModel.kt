@@ -68,5 +68,21 @@ class CreateBoulderViewModel : ViewModel() {
             } catch (e: Exception) {
                 //  Netzwerkfehler
             }
-        }    }
+        }
+    }
+
+    fun updateHoldPosition(id: String, newX: Float, newY: Float) {
+        _uiState.value = _uiState.value.copy(
+            holds = _uiState.value.holds.map {
+                if (it.id == id) it.copy(x = newX, y = newY) else it
+            }
+        )
+    }
+
+
+    fun selectHold(id: String) {
+        _uiState.value = _uiState.value.copy(selectedHoldId = id)
+    }
+
+
 }

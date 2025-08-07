@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
@@ -34,20 +35,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.sprayconnectapp.R
 import com.example.sprayconnectapp.data.dto.HoldType
 import kotlin.math.roundToInt
-import com.example.sprayconnectapp.data.dto.Hold
 
 
 
 
 
-/**
- * Version **v3** – jetzt konsequent mit *normierten* Koordinaten (0‥1).
- * Dadurch ist die Positionierung unabhängig von Auflösung & Zoom.
- *
- * ➜ Datenmodell: `Hold(nx, ny, type)` (nx/ny normiert).
- * ➜ Beim Long‑Press wird der Tap → nx/ny umgerechnet und an `viewModel.addHoldNorm(nx,ny)` geschickt.
- * ➜ Beim Zeichnen werden nx/ny wieder in Pixel der aktuell gerenderten Bild-Box umgewandelt.
- */
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateBoulderScreen(
@@ -62,8 +56,9 @@ fun CreateBoulderScreen(
     var showDialog by remember { mutableStateOf(false) }
     var boulderName by remember { mutableStateOf("") }
     var boulderDifficulty by remember { mutableStateOf("") }
+    var isDraggingHold by remember { mutableStateOf(false) }
 
-    /* ----------------------------- Scaffold ----------------------------- */
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -86,8 +81,7 @@ fun CreateBoulderScreen(
         val bmpW = painter.intrinsicSize.width
         val bmpH = painter.intrinsicSize.height
 
-        var laidOut by remember { mutableStateOf(IntSize.Zero) }  // Bild-Box VOR Zoom
-
+        var laidOut by remember { mutableStateOf(IntSize.Zero) }
         val scale = remember { mutableStateOf(1f) }
         val pan = remember { mutableStateOf(Offset.Zero) }
 
@@ -96,7 +90,6 @@ fun CreateBoulderScreen(
             pan.value += offset
         }
 
-        /* ------------------------ Gestenbereich ------------------------ */
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -113,22 +106,14 @@ fun CreateBoulderScreen(
 
                                 val parentW = size.width.toFloat()
                                 val parentH = size.height.toFloat()
-
                                 val unscaledW = laidOut.width.toFloat()
                                 val unscaledH = laidOut.height.toFloat()
-
                                 val scaledW = unscaledW * scale.value
                                 val scaledH = unscaledH * scale.value
 
-                                // Mittelpunkt des Bildes nach Pan
                                 val center = Offset(parentW / 2f, parentH / 2f) + pan.value
-
-
                                 val topLeft = center - Offset(scaledW / 2f, scaledH / 2f)
-
-
-                                val correction = Offset(x = -150f, y = -200f) //Kreis leicht über tap
-                                val rel = (tapRoot - topLeft) + correction
+                                val rel = (tapRoot - topLeft)
 
                                 if (rel.x !in 0f..scaledW || rel.y !in 0f..scaledH) return@detectTapGestures
 
@@ -137,18 +122,16 @@ fun CreateBoulderScreen(
                                 val ny = unscaled.y / unscaledH
 
                                 viewModel.addHoldNorm(nx, ny)
-
                             }
                         )
                     }
             ) {
-                //Bild + Holds
                 val aspect = bmpW / bmpH
 
                 Box(
                     modifier = Modifier
                         .graphicsLayer {
-                            transformOrigin = TransformOrigin(0.5f, 0.5f)  // pivot = Mitte
+                            transformOrigin = TransformOrigin.Center
                             scaleX = scale.value
                             scaleY = scale.value
                             translationX = pan.value.x
@@ -169,24 +152,67 @@ fun CreateBoulderScreen(
                             modifier = Modifier.fillMaxSize()
                         )
 
-                        //Holds (Pixel ← normiert)
+                        var draggedHoldId by remember { mutableStateOf<String?>(null) }
+                        var dragOffset by remember { mutableStateOf(Offset.Zero) }
+                        var dragPosition by remember { mutableStateOf(Offset.Zero) }
+
+                        var dragStartNorm by remember { mutableStateOf<Offset?>(null) }
+
                         uiState.holds.forEach { hold ->
                             val color = HoldType.valueOf(hold.type).color
+                            val isSelected = uiState.selectedHoldId == hold.id
 
-                            val px = hold.x * laidOut.width
-                            val py = hold.y * laidOut.height
-
+                            val baseX = hold.x * laidOut.width
+                            val baseY = hold.y * laidOut.height
 
                             Box(
                                 modifier = Modifier
-                                    .offset { IntOffset(px.roundToInt(), py.roundToInt()) }
+                                    .offset { IntOffset(baseX.roundToInt(), baseY.roundToInt()) }
                                     .size(28.dp)
+                                    .pointerInput(hold.id) {
+                                        detectTapGestures(
+                                            onTap = { viewModel.selectHold(hold.id) }
+                                        )
+                                    }
+                                    .pointerInput(hold.id, laidOut, scale.value) {
+                                        detectDragGestures(
+                                            onDragStart = {
+                                                // Wähle den Griff automatisch aus, wenn noch nicht ausgewählt
+                                                if (uiState.selectedHoldId != hold.id) {
+                                                    viewModel.selectHold(hold.id)
+                                                }
+                                                dragStartNorm = Offset(hold.x, hold.y)
+                                            },
+                                            onDrag = { change, dragAmount ->
+                                                change.consume()
+                                                dragStartNorm?.let { start ->
+                                                    val dx = dragAmount.x / (laidOut.width * scale.value)
+                                                    val dy = dragAmount.y / (laidOut.height * scale.value)
+                                                    val newX = (start.x + dx).coerceIn(0f, 1f)
+                                                    val newY = (start.y + dy).coerceIn(0f, 1f)
+                                                    viewModel.updateHoldPosition(hold.id, newX, newY)
+                                                    dragStartNorm = Offset(newX, newY)
+                                                }
+                                            },
+                                            onDragEnd = {
+                                                dragStartNorm = null
+                                            },
+                                            onDragCancel = {
+                                                dragStartNorm = null
+                                            }
+                                        )
+                                    }
+
                                     .drawBehind {
-                                        drawCircle(Color.White, style = Stroke(6.dp.toPx()))
+                                        drawCircle(
+                                            color = if (isSelected) Color.Yellow else Color.White,
+                                            style = Stroke(6.dp.toPx())
+                                        )
                                         drawCircle(color, style = Stroke(3.dp.toPx()))
                                     }
                             )
                         }
+
                     }
                 }
             }
@@ -214,7 +240,7 @@ fun CreateBoulderScreen(
             }
         }
 
-        //Save-Dialog
+        // Save Dialog
         if (showDialog) {
             AlertDialog(
                 onDismissRequest = { showDialog = false },
