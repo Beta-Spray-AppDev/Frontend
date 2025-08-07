@@ -17,10 +17,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PaintingStyle.Companion.Stroke
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -34,8 +33,21 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.sprayconnectapp.R
 import com.example.sprayconnectapp.data.dto.HoldType
+import kotlin.math.roundToInt
+import com.example.sprayconnectapp.data.dto.Hold
 
 
+
+
+
+/**
+ * Version **v3** – jetzt konsequent mit *normierten* Koordinaten (0‥1).
+ * Dadurch ist die Positionierung unabhängig von Auflösung & Zoom.
+ *
+ * ➜ Datenmodell: `Hold(nx, ny, type)` (nx/ny normiert).
+ * ➜ Beim Long‑Press wird der Tap → nx/ny umgerechnet und an `viewModel.addHoldNorm(nx,ny)` geschickt.
+ * ➜ Beim Zeichnen werden nx/ny wieder in Pixel der aktuell gerenderten Bild-Box umgewandelt.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateBoulderScreen(
@@ -43,18 +55,15 @@ fun CreateBoulderScreen(
     viewModel: CreateBoulderViewModel = viewModel(),
     onSave: () -> Unit = {},
     onBack: () -> Unit = {}
-
 ) {
-    val uistate by viewModel.uiState
+    val uiState by viewModel.uiState
     val context = LocalContext.current
-
-
 
     var showDialog by remember { mutableStateOf(false) }
     var boulderName by remember { mutableStateOf("") }
     var boulderDifficulty by remember { mutableStateOf("") }
 
-
+    /* ----------------------------- Scaffold ----------------------------- */
     Scaffold(
         topBar = {
             TopAppBar(
@@ -70,96 +79,111 @@ fun CreateBoulderScreen(
             FloatingActionButton(onClick = { showDialog = true }) {
                 Icon(Icons.Default.Check, contentDescription = "Speichern")
             }
-
         }
     ) { padding ->
 
+        val painter = painterResource(id = R.drawable.spray1)
+        val bmpW = painter.intrinsicSize.width
+        val bmpH = painter.intrinsicSize.height
+
+        var laidOut by remember { mutableStateOf(IntSize.Zero) }  // Bild-Box VOR Zoom
+
+        val scale = remember { mutableStateOf(1f) }
+        val pan = remember { mutableStateOf(Offset.Zero) }
+
+        val tfState = rememberTransformableState { zoom, offset, _ ->
+            scale.value = (scale.value * zoom).coerceIn(1f, 4f)
+            pan.value += offset
+        }
+
+        /* ------------------------ Gestenbereich ------------------------ */
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Spraywall-Bild - später vom server laden momentan lokal
-            // Vorbereitung
-            val image = painterResource(id = R.drawable.spray1)
-            val imageWidth = image.intrinsicSize.width
-            val imageHeight = image.intrinsicSize.height
-
-            var imageSize by remember { mutableStateOf<IntSize>(IntSize.Zero) }
-            val scale = remember { mutableStateOf(1f) }
-            val offset = remember { mutableStateOf(Offset.Zero) }
-
-            val minScale = 1f
-            val maxScale = 4f
-
-            val transformState = rememberTransformableState { zoomChange, panChange, _ ->
-                scale.value = (scale.value * zoomChange).coerceIn(minScale, maxScale)
-                offset.value += panChange
-            }
-
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .transformable(state = transformState)
-                    .pointerInput(Unit) {
+                    .transformable(tfState)
+                    .pointerInput(scale.value, pan.value, laidOut) {
                         detectTapGestures(
-                            onLongPress = { offsetInBox ->
-                                val imageOffset = (offsetInBox - offset.value) / scale.value
-                                viewModel.addHold(imageOffset.x, imageOffset.y)
+                            onLongPress = { tapRoot ->
+                                if (laidOut == IntSize.Zero) return@detectTapGestures
+
+                                val parentW = size.width.toFloat()
+                                val parentH = size.height.toFloat()
+
+                                val unscaledW = laidOut.width.toFloat()
+                                val unscaledH = laidOut.height.toFloat()
+
+                                val scaledW = unscaledW * scale.value
+                                val scaledH = unscaledH * scale.value
+
+                                // Mittelpunkt des Bildes nach Pan
+                                val center = Offset(parentW / 2f, parentH / 2f) + pan.value
+
+
+                                val topLeft = center - Offset(scaledW / 2f, scaledH / 2f)
+
+
+                                val correction = Offset(x = -150f, y = -200f) //Kreis leicht über tap
+                                val rel = (tapRoot - topLeft) + correction
+
+                                if (rel.x !in 0f..scaledW || rel.y !in 0f..scaledH) return@detectTapGestures
+
+                                val unscaled = rel / scale.value
+                                val nx = unscaled.x / unscaledW
+                                val ny = unscaled.y / unscaledH
+
+                                viewModel.addHoldNorm(nx, ny)
+
                             }
                         )
                     }
             ) {
+                //Bild + Holds
+                val aspect = bmpW / bmpH
+
                 Box(
                     modifier = Modifier
                         .graphicsLayer {
+                            transformOrigin = TransformOrigin(0.5f, 0.5f)  // pivot = Mitte
                             scaleX = scale.value
                             scaleY = scale.value
-                            translationX = offset.value.x
-                            translationY = offset.value.y
+                            translationX = pan.value.x
+                            translationY = pan.value.y
                         }
                         .align(Alignment.Center)
                 ) {
-                    val aspectRatio = image.intrinsicSize.width / image.intrinsicSize.height
-
                     Box(
                         modifier = Modifier
-                            .aspectRatio(aspectRatio)
+                            .aspectRatio(aspect)
                             .fillMaxHeight()
-                            .onGloballyPositioned { imageSize = it.size }
+                            .onGloballyPositioned { laidOut = it.size }
                     ) {
                         Image(
-                            painter = image,
+                            painter = painter,
                             contentDescription = "Spraywall",
                             contentScale = ContentScale.Fit,
                             modifier = Modifier.fillMaxSize()
                         )
 
-                        // Holds zeichnen (INNEN, damit sie mitskalieren!)
-                        uistate.holds.forEach { hold ->
+                        //Holds (Pixel ← normiert)
+                        uiState.holds.forEach { hold ->
                             val color = HoldType.valueOf(hold.type).color
 
-                            val scaleX = imageSize.width.toFloat() / imageWidth
-                            val scaleY = imageSize.height.toFloat() / imageHeight
+                            val px = hold.x * laidOut.width
+                            val py = hold.y * laidOut.height
+
 
                             Box(
                                 modifier = Modifier
-                                    .offset {
-                                        IntOffset(
-                                            (hold.x * scaleX).toInt(),
-                                            (hold.y * scaleY).toInt()
-                                        )
-                                    }
+                                    .offset { IntOffset(px.roundToInt(), py.roundToInt()) }
                                     .size(28.dp)
                                     .drawBehind {
-                                        drawCircle(
-                                            color = Color.White,
-                                            style = Stroke(width = 6.dp.toPx())
-                                        )
-                                        drawCircle(
-                                            color = color,
-                                            style = Stroke(width = 3.dp.toPx())
-                                        )
+                                        drawCircle(Color.White, style = Stroke(6.dp.toPx()))
+                                        drawCircle(color, style = Stroke(3.dp.toPx()))
                                     }
                             )
                         }
@@ -167,11 +191,7 @@ fun CreateBoulderScreen(
                 }
             }
 
-
-
-
-
-            // Farb-Auswahl unten für Kreise
+            // Farb-Auswahl
             Row(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -182,61 +202,54 @@ fun CreateBoulderScreen(
                     Box(
                         modifier = Modifier
                             .size(50.dp)
-                            .background(color = type.color, shape = CircleShape)
+                            .background(type.color, CircleShape)
                             .border(
-                                width = if (type == uistate.selectedType) 4.dp else 2.dp,
-                                color = if (type == uistate.selectedType) Color.Black else Color.LightGray,
+                                width = if (type == uiState.selectedType) 4.dp else 2.dp,
+                                color = if (type == uiState.selectedType) Color.Black else Color.LightGray,
                                 shape = CircleShape
                             )
                             .clickable { viewModel.selectHoldType(type) }
                     )
                 }
             }
+        }
 
-
-            //Dialogfenster wenn User Boulder speichern will
-            if (showDialog) {
-                AlertDialog(
-                    onDismissRequest = { showDialog = false },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            viewModel.saveBoulder(
-                                context = context,
-                                name = boulderName,
-                                difficulty = boulderDifficulty,
-                                spraywallId = spraywallId
-                            )
-                            showDialog = false
-                            onSave()
-                        }) {
-                            Text("Speichern")
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showDialog = false }) {
-                            Text("Abbrechen")
-                        }
-                    },
-                    title = { Text("Boulder speichern") },
-                    text = {
-                        Column {
-                            OutlinedTextField(
-                                value = boulderName,
-                                onValueChange = { boulderName = it },
-                                label = { Text("Name") }
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            OutlinedTextField(
-                                value = boulderDifficulty,
-                                onValueChange = { boulderDifficulty = it },
-                                label = { Text("Schwierigkeit") }
-                            )
-                        }
+        //Save-Dialog
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                confirmButton = {
+                    TextButton(onClick = {
+                        viewModel.saveBoulder(
+                            context = context,
+                            name = boulderName,
+                            difficulty = boulderDifficulty,
+                            spraywallId = spraywallId
+                        )
+                        showDialog = false
+                        onSave()
+                    }) { Text("Speichern") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDialog = false }) { Text("Abbrechen") }
+                },
+                title = { Text("Boulder speichern") },
+                text = {
+                    Column {
+                        OutlinedTextField(
+                            value = boulderName,
+                            onValueChange = { boulderName = it },
+                            label = { Text("Name") }
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = boulderDifficulty,
+                            onValueChange = { boulderDifficulty = it },
+                            label = { Text("Schwierigkeit") }
+                        )
                     }
-                )
-            }
-
-
+                }
+            )
         }
     }
 }

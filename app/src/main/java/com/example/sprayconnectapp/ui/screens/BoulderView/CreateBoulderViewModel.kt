@@ -9,7 +9,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.sprayconnectapp.data.dto.CreateBoulderRequest
 import com.example.sprayconnectapp.data.dto.Hold
 import com.example.sprayconnectapp.data.dto.HoldType
-import com.example.sprayconnectapp.network.BoulderApi
 import com.example.sprayconnectapp.network.RetrofitInstance
 import kotlinx.coroutines.launch
 import java.util.*
@@ -34,15 +33,18 @@ class CreateBoulderViewModel : ViewModel() {
 
 
     //fügt Hold an der getappten Position hinzu
-    fun addHold(x: Float, y: Float) {
+    fun addHoldNorm(nx: Float, ny: Float) {
         val newHold = Hold(
             id = UUID.randomUUID().toString(),
-            x = x,
-            y = y,
+            x = nx,
+            y = ny,
             type = _uiState.value.selectedType.name
         )
-        _uiState.value = _uiState.value.copy(holds = _uiState.value.holds + newHold)
+        _uiState.value = _uiState.value.copy(
+            holds = _uiState.value.holds + newHold
+        )
     }
+
 
     fun saveBoulder(context: Context, name: String, difficulty: String, spraywallId: String) {
         viewModelScope.launch {
