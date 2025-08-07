@@ -35,11 +35,11 @@ fun GymDetailScreen(
 
         Button(
             onClick = {
-                // TODO: Boulde-Liste anzeigen
+               navController.navigate("profile")
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Boulder anzeigen")
+            Text("Profil anzeigen")
         }
 
         Spacer(modifier = Modifier.height(16.dp))

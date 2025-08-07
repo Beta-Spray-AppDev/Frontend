@@ -8,8 +8,7 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.converter.scalars.ScalarsConverterFactory
 
 import com.example.sprayconnectapp.util.getTokenFromPrefs
-
-
+import retrofit2.http.GET
 
 
 object RetrofitInstance {
@@ -39,8 +38,10 @@ object RetrofitInstance {
                 val requestBuilder = original.newBuilder()
 
                 //Token nicht mitschicken bei auth endpoint
-                val isAuthEndpoint = original.url.encodedPath.startsWith("/auth/")
-                if(!isAuthEndpoint){
+                val publicEndpoints = listOf("/auth/login", "/auth/register")
+                val isPublic = publicEndpoints.any { original.url.encodedPath.startsWith(it) }
+
+                if(!isPublic){
 
                     val freshToken = getTokenFromPrefs(context)
                     // Wenn Token vorhanden: Authorization-Header hinzufügen
@@ -74,6 +75,9 @@ object RetrofitInstance {
     fun getBoulderApi(context: Context): BoulderApi {
         return getRetrofit(context).create(BoulderApi::class.java)
     }
+
+
+
 
 
 

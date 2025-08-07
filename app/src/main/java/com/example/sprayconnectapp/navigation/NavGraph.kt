@@ -7,6 +7,8 @@ import com.example.sprayconnectapp.ui.screens.BoulderList.BoulderListScreen
 import com.example.sprayconnectapp.ui.screens.BoulderView.CreateBoulderScreen
 import com.example.sprayconnectapp.ui.screens.spraywall.AddSpraywallScreen
 import com.example.sprayconnectapp.ui.screens.GymDetail.GymDetailScreen
+import com.example.sprayconnectapp.ui.screens.Profile.EditProfileScreen
+import com.example.sprayconnectapp.ui.screens.Profile.ProfileScreen
 import com.example.sprayconnectapp.ui.screens.login.LoginScreen
 import com.example.sprayconnectapp.ui.screens.register.RegisterScreen
 import com.example.sprayconnectapp.ui.screens.StartScreen
@@ -58,6 +60,14 @@ fun NavGraph (navController: NavHostController){
             val spraywallName = backStackEntry.arguments?.getString("spraywallName") ?: ""
             BoulderListScreen(navController, spraywallId, spraywallName)
         }
+
+        composable("profile") {
+            ProfileScreen(navController)
+        }
+        composable("editProfile") {
+            EditProfileScreen(navController)
+        }
+
 
 
 
