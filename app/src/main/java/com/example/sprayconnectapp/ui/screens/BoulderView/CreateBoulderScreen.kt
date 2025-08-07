@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -20,11 +22,14 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PaintingStyle.Companion.Stroke
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.sprayconnectapp.R
@@ -75,48 +80,96 @@ fun CreateBoulderScreen(
                 .padding(padding)
         ) {
             // Spraywall-Bild - später vom server laden momentan lokal
-            Image(
-                painter = painterResource(id = R.drawable.spray1),
-                contentDescription = "Spraywall",
+            // Vorbereitung
+            val image = painterResource(id = R.drawable.spray1)
+            val imageWidth = image.intrinsicSize.width
+            val imageHeight = image.intrinsicSize.height
+
+            var imageSize by remember { mutableStateOf<IntSize>(IntSize.Zero) }
+            val scale = remember { mutableStateOf(1f) }
+            val offset = remember { mutableStateOf(Offset.Zero) }
+
+            val minScale = 1f
+            val maxScale = 4f
+
+            val transformState = rememberTransformableState { zoomChange, panChange, _ ->
+                scale.value = (scale.value * zoomChange).coerceIn(minScale, maxScale)
+                offset.value += panChange
+            }
+
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
+                    .transformable(state = transformState)
                     .pointerInput(Unit) {
-                        detectTapGestures(onLongPress = { offset: Offset ->
-                            val x = offset.x
-                            val y = offset.y
-                            viewModel.addHold(x, y)
-                        })
-                    },
-                contentScale = ContentScale.Crop
-            )
+                        detectTapGestures(
+                            onLongPress = { offsetInBox ->
+                                val imageOffset = (offsetInBox - offset.value) / scale.value
+                                viewModel.addHold(imageOffset.x, imageOffset.y)
+                            }
+                        )
+                    }
+            ) {
+                Box(
+                    modifier = Modifier
+                        .graphicsLayer {
+                            scaleX = scale.value
+                            scaleY = scale.value
+                            translationX = offset.value.x
+                            translationY = offset.value.y
+                        }
+                        .align(Alignment.Center)
+                ) {
+                    val aspectRatio = image.intrinsicSize.width / image.intrinsicSize.height
 
-            // Holds zeichnen
-            Box {
-                uistate.holds.forEach { hold ->
-                    val color = HoldType.valueOf(hold.type).color
                     Box(
                         modifier = Modifier
-                            .offset {
-                                IntOffset(hold.x.toInt(), hold.y.toInt())
-                            }
-                            .size(28.dp) // äußere Größe
-                            .drawBehind {
-                                // Weißer äußerer Ring
-                                drawCircle(
-                                    color = Color.White,
-                                    style = Stroke(width = 6.dp.toPx())
-                                )
+                            .aspectRatio(aspectRatio)
+                            .fillMaxHeight()
+                            .onGloballyPositioned { imageSize = it.size }
+                    ) {
+                        Image(
+                            painter = image,
+                            contentDescription = "Spraywall",
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier.fillMaxSize()
+                        )
 
-                                // Farbiger innerer Ring
-                                drawCircle(
-                                    color = color,
-                                    style = Stroke(width = 3.dp.toPx())
-                                )
-                            }
+                        // Holds zeichnen (INNEN, damit sie mitskalieren!)
+                        uistate.holds.forEach { hold ->
+                            val color = HoldType.valueOf(hold.type).color
 
-                    )
+                            val scaleX = imageSize.width.toFloat() / imageWidth
+                            val scaleY = imageSize.height.toFloat() / imageHeight
+
+                            Box(
+                                modifier = Modifier
+                                    .offset {
+                                        IntOffset(
+                                            (hold.x * scaleX).toInt(),
+                                            (hold.y * scaleY).toInt()
+                                        )
+                                    }
+                                    .size(28.dp)
+                                    .drawBehind {
+                                        drawCircle(
+                                            color = Color.White,
+                                            style = Stroke(width = 6.dp.toPx())
+                                        )
+                                        drawCircle(
+                                            color = color,
+                                            style = Stroke(width = 3.dp.toPx())
+                                        )
+                                    }
+                            )
+                        }
+                    }
                 }
             }
+
+
+
+
 
             // Farb-Auswahl unten für Kreise
             Row(
