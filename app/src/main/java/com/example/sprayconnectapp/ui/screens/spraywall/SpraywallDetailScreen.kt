@@ -54,6 +54,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import com.example.sprayconnectapp.ui.screens.BottomNavigationBar
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -76,7 +77,7 @@ fun SpraywallDetailScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = { Text(text = gymName) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
@@ -85,21 +86,7 @@ fun SpraywallDetailScreen(
                 }
             )
         },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    navController.navigate("addSpraywall/$gymId/$gymName")
-                },
-                containerColor = Color(0xFF26C6DA), // Türkis
-                contentColor = Color.White,
-                elevation = FloatingActionButtonDefaults.elevation(
-                    defaultElevation = 8.dp,
-                    pressedElevation = 12.dp
-                )
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Neue Spraywall hinzufügen")
-            }
-        }
+        bottomBar = {BottomNavigationBar(navController) }
 
 
     ) { innerPadding ->
@@ -149,7 +136,7 @@ fun SpraywallCard(spraywall: SpraywallDTO, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .shadow(2.dp)
-            .clickable{onClick()},
+            .clickable { onClick() },
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {

@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.ui.graphics.Color
+import com.example.sprayconnectapp.ui.screens.BottomNavigationBar
 import com.example.sprayconnectapp.util.getTokenFromPrefs
 import com.example.sprayconnectapp.util.getUsernameFromToken
 
@@ -42,21 +43,10 @@ fun HomeScreen(navController: NavController) {
     }
 
     Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    navController.navigate("addGym")
-                },
-                containerColor = Color(0xFF26C6DA), // Türkis
-                contentColor = Color.White,
-                elevation = FloatingActionButtonDefaults.elevation(
-                    defaultElevation = 6.dp,
-                    pressedElevation = 10.dp
-                )
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Neues Gym hinzufügen")
-            }
+        bottomBar = {
+            BottomNavigationBar(navController)
         }
+
     ) { innerPadding ->
 
         Column(
@@ -70,7 +60,7 @@ fun HomeScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(32.dp))
 
             Text(
-                text = "Willkommen ${username}!",
+                text = "Hallo ${username}!",
                 style = MaterialTheme.typography.headlineMedium
             )
 

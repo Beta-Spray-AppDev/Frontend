@@ -34,6 +34,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
+import com.example.sprayconnectapp.ui.screens.BottomNavigationBar
 import com.example.sprayconnectapp.util.getTokenFromPrefs
 import com.example.sprayconnectapp.util.getUserIdFromToken
 import java.util.UUID
@@ -62,7 +63,8 @@ fun AddGymScreen(
                     }
                 }
             )
-        }
+        },
+        bottomBar = {BottomNavigationBar(navController)}
     ) { padding ->
         Column(
             modifier = Modifier

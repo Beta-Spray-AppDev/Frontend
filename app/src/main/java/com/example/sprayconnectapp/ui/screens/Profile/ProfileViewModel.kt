@@ -4,9 +4,11 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.sprayconnectapp.data.dto.BoulderDTO
 import com.example.sprayconnectapp.data.dto.UpdateProfileRequest
 import com.example.sprayconnectapp.data.dto.UserProfile
 import com.example.sprayconnectapp.network.RetrofitInstance
+import com.example.sprayconnectapp.util.clearTokenFromPrefs
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -22,6 +24,10 @@ class ProfileViewModel : ViewModel() {
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
+
+    private val _myBoulders = MutableStateFlow<List<BoulderDTO>>(emptyList())
+    val myBoulders: StateFlow<List<BoulderDTO>> = _myBoulders
+
 
 
 
@@ -85,5 +91,30 @@ class ProfileViewModel : ViewModel() {
             }
         }
     }
+
+
+
+
+    fun loadMyBoulders(context: Context) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitInstance.getBoulderApi(context).getMyBoulders()
+                if (response.isSuccessful) {
+                    _myBoulders.value = response.body() ?: emptyList()
+                } else {
+                    Log.e("ProfileVM", "Fehler beim Laden der Boulder: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                Log.e("ProfileVM", "Netzwerkfehler: ${e.localizedMessage}")
+            }
+        }
+    }
+
+    fun logout(context: Context) {
+        clearTokenFromPrefs(context)
+        RetrofitInstance.resetRetrofit()
+    }
+
+
 
 }
