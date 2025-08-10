@@ -17,20 +17,9 @@ import okio.sink
 
 private const val DL_TAG = "SprayDL"
 
-// -----------------------------
-// Namens-/URL-Helfer (Nextcloud)
-// -----------------------------
-
-/** Fallback-Dateiname aus Token, wenn aus der Preview-URL kein echter Name hervorgeht. */
 fun sprayFileName(token: String): String = "spray_${token}.jpg"
 
-/**
- * Baut aus einer Nextcloud-Preview-URL die korrekte Download-URL.
- * - Single-File:  https://host/index.php/s/<TOKEN>/preview
- *                  -> https://host/index.php/s/<TOKEN>/download
- * - Ordner-Share: https://host/index.php/s/<TOKEN>/preview?file=/sub/001.jpg
- *                  -> https://host/index.php/s/<TOKEN>/download?path=%2Fsub&files=001.jpg
- */
+
 fun buildDownloadUrlFromPreview(previewUrl: String): String? {
     val token = Regex("/s/([^/]+)/").find(previewUrl)?.groupValues?.get(1) ?: return null
     val uri = Uri.parse(previewUrl)
@@ -48,7 +37,7 @@ fun buildDownloadUrlFromPreview(previewUrl: String): String? {
     }
 }
 
-/** Lokaler Dateiname: echtes `file=` aus Preview oder Fallback mit Token. */
+
 fun localOutputNameFromPreview(previewUrl: String, tokenFallback: String): String {
     val uri = Uri.parse(previewUrl)
     val fileParam = uri.getQueryParameter("file")
@@ -60,15 +49,12 @@ fun localOutputNameFromPreview(previewUrl: String, tokenFallback: String): Strin
     }
 }
 
-/** Referer-Header für manche Nextcloud-Setups hilfreich. */
+
 fun refererFromPreview(previewUrl: String): String? {
     val token = Regex("/s/([^/]+)/").find(previewUrl)?.groupValues?.get(1) ?: return null
     return "https://leitln.at/maltacloud/index.php/s/$token/preview"
 }
 
-// -----------------------------
-// Datei-Helfer (App-privater Ordner)
-// -----------------------------
 
 fun getPrivateImageFileByName(context: Context, outName: String): File {
     val dir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
@@ -88,13 +74,9 @@ fun getPrivateImageFile(context: Context, token: String): File {
 fun getPrivateImageUri(context: Context, token: String): Uri =
     Uri.fromFile(getPrivateImageFile(context, token))
 
-// -----------------------------
-// Silent Direct Download (OkHttp) mit Redirect-Fix
-// -----------------------------
-
 private val http by lazy {
     OkHttpClient.Builder()
-        .followRedirects(false)    // Redirects behandeln wir selbst (http -> https hochbiegen)
+        .followRedirects(false)
         .followSslRedirects(false)
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(60, TimeUnit.SECONDS)
@@ -110,11 +92,7 @@ private fun buildRequest(url: String, referer: String?): Request {
     return b.build()
 }
 
-/**
- * Lädt `url` leise in den app-privaten Pictures-Ordner.
- * Kein DownloadManager, keine Notification. Gibt immer eine file://-Uri zurück
- * oder wirft eine Exception bei Fehlern.
- */
+
 suspend fun downloadDirectToPrivate(
     context: Context,
     url: String,
