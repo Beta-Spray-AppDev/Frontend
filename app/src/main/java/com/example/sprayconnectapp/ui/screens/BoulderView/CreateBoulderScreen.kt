@@ -4,7 +4,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
@@ -23,7 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
@@ -35,12 +36,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.sprayconnectapp.R
 import com.example.sprayconnectapp.data.dto.HoldType
 import kotlin.math.roundToInt
-
-
-
-
-
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,8 +51,9 @@ fun CreateBoulderScreen(
     var showDialog by remember { mutableStateOf(false) }
     var boulderName by remember { mutableStateOf("") }
     var boulderDifficulty by remember { mutableStateOf("") }
-    var isDraggingHold by remember { mutableStateOf(false) }
 
+    // Sperrt das Parent-Transformable, solange ein Finger auf einem Hold liegt
+    var isPointerDownOnHold by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -94,11 +90,12 @@ fun CreateBoulderScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .transformable(tfState, enabled = !isPointerDownOnHold)
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .transformable(tfState)
+                    // Long-Press auf den Hintergrund zum Hold hinzufügen bleibt wie gehabt
                     .pointerInput(scale.value, pan.value, laidOut) {
                         detectTapGestures(
                             onLongPress = { tapRoot ->
@@ -152,12 +149,6 @@ fun CreateBoulderScreen(
                             modifier = Modifier.fillMaxSize()
                         )
 
-                        var draggedHoldId by remember { mutableStateOf<String?>(null) }
-                        var dragOffset by remember { mutableStateOf(Offset.Zero) }
-                        var dragPosition by remember { mutableStateOf(Offset.Zero) }
-
-                        var dragStartNorm by remember { mutableStateOf<Offset?>(null) }
-
                         uiState.holds.forEach { hold ->
                             val color = HoldType.valueOf(hold.type).color
                             val isSelected = uiState.selectedHoldId == hold.id
@@ -168,39 +159,49 @@ fun CreateBoulderScreen(
                             Box(
                                 modifier = Modifier
                                     .offset { IntOffset(baseX.roundToInt(), baseY.roundToInt()) }
-                                    .size(28.dp)
-                                    .pointerInput(hold.id) {
-                                        detectTapGestures(
-                                            onTap = { viewModel.selectHold(hold.id) }
-                                        )
-                                    }
+                                    .size(32.dp)
                                     .pointerInput(hold.id, laidOut, scale.value) {
-                                        detectDragGestures(
-                                            onDragStart = {
-                                                // Wähle den Griff automatisch aus, wenn noch nicht ausgewählt
-                                                if (uiState.selectedHoldId != hold.id) {
-                                                    viewModel.selectHold(hold.id)
-                                                }
-                                                dragStartNorm = Offset(hold.x, hold.y)
-                                            },
-                                            onDrag = { change, dragAmount ->
-                                                change.consume()
-                                                dragStartNorm?.let { start ->
-                                                    val dx = dragAmount.x / (laidOut.width * scale.value)
-                                                    val dy = dragAmount.y / (laidOut.height * scale.value)
-                                                    val newX = (start.x + dx).coerceIn(0f, 1f)
-                                                    val newY = (start.y + dy).coerceIn(0f, 1f)
-                                                    viewModel.updateHoldPosition(hold.id, newX, newY)
-                                                    dragStartNorm = Offset(newX, newY)
-                                                }
-                                            },
-                                            onDragEnd = {
-                                                dragStartNorm = null
-                                            },
-                                            onDragCancel = {
-                                                dragStartNorm = null
+                                        awaitEachGesture {
+                                            val down = awaitFirstDown(requireUnconsumed = false)
+
+
+                                            val startHold = uiState.holds.first { it.id == hold.id }
+                                            var currentNorm = Offset(startHold.x, startHold.y)
+
+                                            if (uiState.selectedHoldId != hold.id) {
+                                                viewModel.selectHold(hold.id)
                                             }
-                                        )
+
+                                            isPointerDownOnHold = true
+                                            down.consume()
+                                            var lastPos = down.position
+
+                                            try {
+                                                while (true) {
+                                                    val event = awaitPointerEvent()
+                                                    val change = event.changes.firstOrNull { it.id == down.id }
+                                                        ?: event.changes.first()
+
+                                                    val deltaPx = change.position - lastPos
+                                                    lastPos = change.position
+                                                    change.consume()
+
+                                                    if (laidOut.width != 0 && laidOut.height != 0) {
+                                                        val dx = deltaPx.x / (laidOut.width * scale.value)
+                                                        val dy = deltaPx.y / (laidOut.height * scale.value)
+                                                        currentNorm = Offset(
+                                                            (currentNorm.x + dx).coerceIn(0f, 1f),
+                                                            (currentNorm.y + dy).coerceIn(0f, 1f)
+                                                        )
+                                                        viewModel.updateHoldPosition(hold.id, currentNorm.x, currentNorm.y)
+                                                    }
+
+                                                    if (!change.pressed) break
+                                                }
+                                            } finally {
+                                                isPointerDownOnHold = false
+                                            }
+                                        }
                                     }
 
                                     .drawBehind {
@@ -211,8 +212,8 @@ fun CreateBoulderScreen(
                                         drawCircle(color, style = Stroke(3.dp.toPx()))
                                     }
                             )
-                        }
 
+                        }
                     }
                 }
             }
