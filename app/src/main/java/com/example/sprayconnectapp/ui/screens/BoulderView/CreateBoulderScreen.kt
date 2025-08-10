@@ -139,7 +139,7 @@ fun CreateBoulderScreen(
                         )
                     }
             ) {
-                // --- Transformierter Container (wie gehabt) ---
+                //Transformierter Container
                 Box(
                     modifier = Modifier
                         .graphicsLayer {
