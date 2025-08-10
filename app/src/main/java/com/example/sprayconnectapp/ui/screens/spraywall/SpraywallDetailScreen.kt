@@ -44,6 +44,21 @@ import com.example.sprayconnectapp.util.downloadDirectToPrivate
 import com.example.sprayconnectapp.util.getPrivateImageFileByName
 import com.example.sprayconnectapp.util.localOutputNameFromPreview
 import kotlinx.coroutines.launch
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+
+// LaunchedEffect
+import androidx.compose.runtime.LaunchedEffect
+
+// Icons
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import com.example.sprayconnectapp.ui.screens.BottomNavigationBar
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -118,7 +133,7 @@ fun SpraywallDetailScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = { Text(text = gymName) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
@@ -127,19 +142,7 @@ fun SpraywallDetailScreen(
                 }
             )
         },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    val id   = Uri.encode(gymId)
-                    val name = Uri.encode(gymName)
-                    navController.navigate("addSpraywall/$id/$name")
-                },
-                containerColor = Color(0xFF26C6DA),
-                contentColor = Color.White,
-                elevation = FloatingActionButtonDefaults.elevation(8.dp, 12.dp)
-            ) { Icon(Icons.Default.Add, contentDescription = "Neue Spraywall hinzufügen") }
-        }
-
+        bottomBar = {BottomNavigationBar(navController) }
 
 
     ) { innerPadding ->
@@ -203,3 +206,5 @@ private fun SpraywallCard(
         }
     }
 }
+
+

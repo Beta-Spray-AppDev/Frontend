@@ -17,6 +17,10 @@ interface BoulderApi {
     @GET("boulders/spraywall/{spraywallId}")
     suspend fun getBouldersBySpraywall(@Path("spraywallId") spraywallId: UUID): Response<List<BoulderDTO>>
 
+    @GET("boulders/mine")
+    suspend fun getMyBoulders(): Response<List<BoulderDTO>>
+
+
     @GET("boulders/{boulderId}")
     suspend fun getBoulderById(
         @Path("boulderId") boulderId: UUID

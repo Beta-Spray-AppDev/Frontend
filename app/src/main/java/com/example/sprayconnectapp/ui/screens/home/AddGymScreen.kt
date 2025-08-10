@@ -34,8 +34,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
-
-
+import com.example.sprayconnectapp.ui.screens.BottomNavigationBar
+import com.example.sprayconnectapp.util.getTokenFromPrefs
+import com.example.sprayconnectapp.util.getUserIdFromToken
+import java.util.UUID
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -61,7 +63,8 @@ fun AddGymScreen(
                     }
                 }
             )
-        }
+        },
+        bottomBar = {BottomNavigationBar(navController)}
     ) { padding ->
         Column(
             modifier = Modifier
@@ -111,18 +114,35 @@ fun AddGymScreen(
 
             Button(
                 onClick = {
-                    val dto = CreateGymDTO(name, location, description)
-                    viewModel.createGym(
-                        context = context,
-                        dto = dto,
-                        onSuccess = {
-                            Toast.makeText(context, "Gym erfolgreich erstellt!", Toast.LENGTH_LONG).show()
-                            navController.popBackStack()
-                        },
-                        onError = {
-                            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
-                        }
-                    )
+                    val token = getTokenFromPrefs(context)
+                    val userId = token?.let { getUserIdFromToken(it) }
+
+                    if (userId != null){
+                        val dto = CreateGymDTO(
+                            name = name,
+                            location = location,
+                            description = description,
+                            createdBy = UUID.fromString(userId)
+                        )
+
+                        viewModel.createGym(
+                            context = context,
+                            dto = dto,
+                            onSuccess = {
+                                Toast.makeText(context, "Gym erfolgreich erstellt!", Toast.LENGTH_LONG).show()
+                                navController.popBackStack()
+                            },
+                            onError = {
+                                Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+                            }
+                        )
+                    }
+
+                    else{
+                        Toast.makeText(context, "Fehler: Benutzer nicht erkannt", Toast.LENGTH_LONG).show()
+                    }
+
+
                 },
                 enabled = name.isNotBlank() && location.isNotBlank(),
                 modifier = Modifier.fillMaxWidth()
