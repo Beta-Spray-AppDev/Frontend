@@ -21,4 +21,9 @@ interface BoulderApi {
     suspend fun getMyBoulders(): Response<List<BoulderDTO>>
 
 
+    @GET("boulders/{boulderId}")
+    suspend fun getBoulderById(
+        @Path("boulderId") boulderId: UUID
+    ): Response<BoulderDTO>
+
 }
