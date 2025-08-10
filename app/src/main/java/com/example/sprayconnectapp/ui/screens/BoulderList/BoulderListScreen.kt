@@ -1,5 +1,6 @@
 package com.example.sprayconnectapp.ui.screens.BoulderList
 
+import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -19,12 +20,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.ui.graphics.Color
 
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BoulderListScreen(
     navController: NavController,
     spraywallId: String,
-    spraywallName: String
+    spraywallName: String,
+    imageUri: String?
 ) {
     val context = LocalContext.current
     val viewModel: BoulderListViewmodel = viewModel()
@@ -52,7 +55,8 @@ fun BoulderListScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    navController.navigate("create_boulder/$spraywallId")
+                    val encodedUri = Uri.encode(imageUri) 
+                    navController.navigate("create_boulder/$spraywallId?imageUri=$encodedUri")
                 },
                 containerColor = Color(0xFF26C6DA),
                 contentColor = Color.White,
@@ -61,9 +65,11 @@ fun BoulderListScreen(
                     pressedElevation = 12.dp
                 )
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Neue Spraywall hinzufügen")
+                Icon(Icons.Default.Add, contentDescription = "Neuen Boulder hinzufügen")
             }
         }
+
+
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -86,11 +92,20 @@ fun BoulderListScreen(
                     ) {
                         items(boulders) { boulder ->
                             Card(
+
+                                onClick = {
+                                    val id = boulder.id ?: return@Card
+                                    val encoded = Uri.encode(imageUri ?: "")
+
+                                    navController.navigate("view_boulder/$id/$encoded")
+                                }
+                                ,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp),
                                 shape = RoundedCornerShape(12.dp),
                                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+
                             ) {
                                 Column(modifier = Modifier.padding(16.dp)) {
                                     Text(

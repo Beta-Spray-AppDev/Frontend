@@ -1,5 +1,6 @@
 package com.example.sprayconnectapp.ui.screens.home
 
+import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -90,16 +91,19 @@ fun HomeScreen(navController: NavController) {
                     items(viewModel.gyms.value) { gym ->
                         Card(
                             onClick = {
-                                navController.navigate("gymDetail/${gym.id}/${gym.name}")
+                                val id   = gym.id.toString()
+                                val name = Uri.encode(gym.name)
+                                navController.navigate("spraywallDetail/$id/$name")
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
+                            Column(Modifier.padding(16.dp)) {
                                 Text(gym.name, style = MaterialTheme.typography.titleMedium)
                                 Text(gym.location, style = MaterialTheme.typography.bodySmall)
                             }
                         }
                     }
+
                 }
             }
 

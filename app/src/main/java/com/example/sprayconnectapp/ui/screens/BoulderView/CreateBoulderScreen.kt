@@ -1,5 +1,7 @@
 package com.example.sprayconnectapp.ui.screens.BoulderView
 
+import android.graphics.BitmapFactory
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -28,19 +30,22 @@ import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.sprayconnectapp.R
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.sprayconnectapp.data.dto.HoldType
 import kotlin.math.roundToInt
+import coil.size.Size
+import androidx.core.net.toUri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateBoulderScreen(
     spraywallId: String,
+    imageUri: String,
     viewModel: CreateBoulderViewModel = viewModel(),
     onSave: () -> Unit = {},
     onBack: () -> Unit = {}
@@ -52,8 +57,24 @@ fun CreateBoulderScreen(
     var boulderName by remember { mutableStateOf("") }
     var boulderDifficulty by remember { mutableStateOf("") }
 
-    // Sperrt das Parent-Transformable, solange ein Finger auf einem Hold liegt
     var isPointerDownOnHold by remember { mutableStateOf(false) }
+
+    // Bildgröße lesen, um die Aspect Ratio korrekt zu setzen
+    var imgW by remember(imageUri) { mutableStateOf(1) }
+    var imgH by remember(imageUri) { mutableStateOf(1) }
+
+    LaunchedEffect(imageUri) {
+        if (imageUri.isBlank()) return@LaunchedEffect
+        val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        context.contentResolver.openInputStream(imageUri.toUri())?.use { input ->
+            BitmapFactory.decodeStream(input, null, opts)
+        }
+        // Fallbacks gegen 0
+        imgW = if (opts.outWidth > 0) opts.outWidth else 1
+        imgH = if (opts.outHeight > 0) opts.outHeight else 1
+    }
+
+    val aspect = remember(imgW, imgH) { imgW.toFloat() / imgH.toFloat() }
 
     Scaffold(
         topBar = {
@@ -73,10 +94,6 @@ fun CreateBoulderScreen(
         }
     ) { padding ->
 
-        val painter = painterResource(id = R.drawable.spray1)
-        val bmpW = painter.intrinsicSize.width
-        val bmpH = painter.intrinsicSize.height
-
         var laidOut by remember { mutableStateOf(IntSize.Zero) }
         val scale = remember { mutableStateOf(1f) }
         val pan = remember { mutableStateOf(Offset.Zero) }
@@ -95,7 +112,6 @@ fun CreateBoulderScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    // Long-Press auf den Hintergrund zum Hold hinzufügen bleibt wie gehabt
                     .pointerInput(scale.value, pan.value, laidOut) {
                         detectTapGestures(
                             onLongPress = { tapRoot ->
@@ -123,8 +139,7 @@ fun CreateBoulderScreen(
                         )
                     }
             ) {
-                val aspect = bmpW / bmpH
-
+                // --- Transformierter Container (wie gehabt) ---
                 Box(
                     modifier = Modifier
                         .graphicsLayer {
@@ -136,19 +151,33 @@ fun CreateBoulderScreen(
                         }
                         .align(Alignment.Center)
                 ) {
+                    // Bildrahmen mit korrekter Aspect Ratio
                     Box(
                         modifier = Modifier
                             .aspectRatio(aspect)
                             .fillMaxHeight()
                             .onGloballyPositioned { laidOut = it.size }
                     ) {
-                        Image(
-                            painter = painter,
-                            contentDescription = "Spraywall",
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier.fillMaxSize()
-                        )
+                        // hier lokale URI laden
+                        if (imageUri.isNotBlank()) {
+                            AsyncImage(
+                                model = ImageRequest.Builder(context)
+                                    .data(imageUri.toUri())
+                                    .size(Size.ORIGINAL)
+                                    .build(),
+                                contentDescription = "Spraywall",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Fit
+                            )
+                        } else {
+                            // Fallback, falls keine URI ankommt
+                            Text(
+                                "Kein Bild verfügbar",
+                                modifier = Modifier.align(Alignment.Center)
+                            )
+                        }
 
+                        // Holds zeichnen
                         uiState.holds.forEach { hold ->
                             val color = HoldType.valueOf(hold.type).color
                             val isSelected = uiState.selectedHoldId == hold.id
@@ -163,7 +192,6 @@ fun CreateBoulderScreen(
                                     .pointerInput(hold.id, laidOut, scale.value) {
                                         awaitEachGesture {
                                             val down = awaitFirstDown(requireUnconsumed = false)
-
 
                                             val startHold = uiState.holds.first { it.id == hold.id }
                                             var currentNorm = Offset(startHold.x, startHold.y)
@@ -203,7 +231,6 @@ fun CreateBoulderScreen(
                                             }
                                         }
                                     }
-
                                     .drawBehind {
                                         drawCircle(
                                             color = if (isSelected) Color.Yellow else Color.White,
@@ -212,7 +239,6 @@ fun CreateBoulderScreen(
                                         drawCircle(color, style = Stroke(3.dp.toPx()))
                                     }
                             )
-
                         }
                     }
                 }
@@ -241,7 +267,6 @@ fun CreateBoulderScreen(
             }
         }
 
-        // Save Dialog
         if (showDialog) {
             AlertDialog(
                 onDismissRequest = { showDialog = false },
@@ -263,17 +288,9 @@ fun CreateBoulderScreen(
                 title = { Text("Boulder speichern") },
                 text = {
                     Column {
-                        OutlinedTextField(
-                            value = boulderName,
-                            onValueChange = { boulderName = it },
-                            label = { Text("Name") }
-                        )
+                        OutlinedTextField(value = boulderName, onValueChange = { boulderName = it }, label = { Text("Name") })
                         Spacer(Modifier.height(8.dp))
-                        OutlinedTextField(
-                            value = boulderDifficulty,
-                            onValueChange = { boulderDifficulty = it },
-                            label = { Text("Schwierigkeit") }
-                        )
+                        OutlinedTextField(value = boulderDifficulty, onValueChange = { boulderDifficulty = it }, label = { Text("Schwierigkeit") })
                     }
                 }
             )
