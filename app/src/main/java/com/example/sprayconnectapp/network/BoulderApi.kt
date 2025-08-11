@@ -2,6 +2,7 @@ package com.example.sprayconnectapp.network
 
 import com.example.sprayconnectapp.data.dto.BoulderDTO
 import com.example.sprayconnectapp.data.dto.CreateBoulderRequest
+import com.example.sprayconnectapp.data.dto.TickDto
 import retrofit2.http.POST
 import retrofit2.http.Body
 import retrofit2.Response
@@ -32,6 +33,10 @@ interface BoulderApi {
         @Path("boulderId") boulderId: String,
         @Body request: BoulderDTO
     ): Response<BoulderDTO>
+
+
+    @POST("boulders/{boulderId}/ticks")
+    suspend fun tickBoulder(@Path("boulderId") boulderId: String): Response<TickDto>
 
 
 

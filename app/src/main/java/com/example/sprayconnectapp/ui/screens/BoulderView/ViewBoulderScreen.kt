@@ -4,20 +4,28 @@ import androidx.compose.runtime.Composable
 
 import android.graphics.BitmapFactory
 import android.net.Uri
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.NavigateBefore
+import androidx.compose.material.icons.filled.NavigateNext
 
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,10 +47,20 @@ import coil.size.Size
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.sprayconnectapp.data.dto.BoulderDTO
 import com.example.sprayconnectapp.data.dto.HoldType
+import com.example.sprayconnectapp.ui.screens.BoulderList.BoulderListViewmodel
 import com.example.sprayconnectapp.util.getTokenFromPrefs
 import com.example.sprayconnectapp.util.getUserIdFromToken
+
+import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CenterAlignedTopAppBar
+
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.text.font.FontWeight
+import java.text.DateFormat
+import java.util.Date
+
 
 import kotlin.math.roundToInt
 
@@ -58,12 +76,36 @@ fun ViewBoulderScreen(
     onBack: () -> Unit,
     viewModel: CreateBoulderViewModel = viewModel()
 ) {
+
+
+    //Liste vom vorherigen Screen
+    val listEntry = navController.previousBackStackEntry
+    val listVm: BoulderListViewmodel? = listEntry?.let { viewModel(it) }
+    val list = listVm?.boulders?.value ?: emptyList()
+
+
+    //Ui-State holen
     val context = LocalContext.current
     val uiState by viewModel.uiState
-
     val boulder = uiState.boulder
 
-    // Backend call starten
+    //Prev & Next berechnen
+    val currentId = boulder?.id
+    val idx = list.indexOfFirst { it.id == currentId }
+    val prevId = if (idx > 0) list[idx - 1].id else null
+    val nextId = if (idx >= 0 && idx + 1 < list.size) list[idx + 1].id else null
+
+
+    // Sate für Dialoge
+    var showTickDialog by remember { mutableStateOf(false) }
+    var showInfo by remember { mutableStateOf(false) }
+
+
+
+
+
+
+    // Boulder laden
     LaunchedEffect(boulderId) {
         viewModel.loadBoulder(context, boulderId)
     }
@@ -72,6 +114,8 @@ fun ViewBoulderScreen(
     var imgW by remember { mutableStateOf(1) }
     var imgH by remember { mutableStateOf(1) }
     var laidOut by remember { mutableStateOf(IntSize.Zero) }
+
+
 
     LaunchedEffect(imageUri) {
         if (imageUri.isBlank()) return@LaunchedEffect
@@ -87,16 +131,41 @@ fun ViewBoulderScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(uiState.boulder?.name ?: "Boulder anzeigen") },
+            CenterAlignedTopAppBar(
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                title = {Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "Boulder: ${boulder?.name ?: "/"}",
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Text(
+                        text = "set by: ${boulder?.createdByUsername ?: "Unbekannter Setter"}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
+                    )
+                }},
+
+                //Zurück Button
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Zurück")
+                    IconButton(onClick = onBack, modifier = Modifier.padding(start = 8.dp)) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Zurück", modifier = Modifier.size(28.dp))
+                    }
+                },
+                // Info Button
+                actions = {
+                    IconButton(onClick = { showInfo = true }, modifier = Modifier.padding(end = 8.dp)) {
+                        Icon(Icons.Default.Info, contentDescription = "Info", modifier = Modifier.size(28.dp))
                     }
                 }
             )
         },
-
+        // FAB nur anzeigen, wenn aktueller User der Setter ist
         floatingActionButton = {
             val token = getTokenFromPrefs(context)
             val currentUserId = token?.let { getUserIdFromToken(it) }
@@ -112,6 +181,54 @@ fun ViewBoulderScreen(
                 ) {
                     Icon(Icons.Default.Edit, contentDescription = "Bearbeiten")
                 }
+            }
+        },
+        bottomBar = {
+
+            BottomAppBar(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                tonalElevation = 4.dp,
+                contentPadding = PaddingValues(horizontal = 12.dp)   ) {
+
+                val iconSize = 35.dp
+
+                //Prev Button
+                IconButton(enabled = prevId != null, onClick = {
+                    prevId?.let { navController.navigate("view_boulder/$it/$spraywallId/${Uri.encode(imageUri)}"){
+                        launchSingleTop = true
+                    } }
+                }) {
+                    Icon(Icons.Default.NavigateBefore, contentDescription = "Vorheriger Boulder", modifier = Modifier.size(iconSize))
+                }
+
+                Spacer(Modifier.weight(1f))
+
+
+                //Boulder eintragen Button
+                IconButton(
+                    enabled = boulder?.id != null,
+                    onClick = { showTickDialog = true }
+                ) {
+                    Icon(Icons.Default.Done, contentDescription = "Eintragen", modifier = Modifier.size(iconSize))
+                }
+
+
+
+                Spacer(Modifier.weight(1f))
+
+
+                // Next Button
+                IconButton(enabled = nextId != null, onClick = {
+                    nextId?.let { navController.navigate("view_boulder/$it/$spraywallId/${Uri.encode(imageUri)}"){
+                        launchSingleTop = true
+                    } }
+                }) {
+                    Icon(
+                        Icons.Default.NavigateNext,
+                        contentDescription = "Nächster Boulder",
+                        modifier = Modifier.size(iconSize)
+                    )                }
             }
         }
 
@@ -187,5 +304,71 @@ fun ViewBoulderScreen(
             }
         }
     }
+
+    // Info-Dialog
+    if (showInfo) {
+        val created = formatDate(uiState.boulder?.createdAt)
+        val updated = formatDate(uiState.boulder?.lastUpdated)
+        AlertDialog(
+            onDismissRequest = { showInfo = false },
+            confirmButton = { TextButton(onClick = { showInfo = false }) { Text("OK") } },
+            title = { Text("Boulder - Info") },
+            text = {
+                Column {
+                    Text("Erstellt von: ${uiState.boulder?.createdByUsername ?: uiState.boulder?.createdBy?.take(8) ?: "-"}")
+                    Text("Erstellt am: $created")
+                    Text("Zuletzt aktualisiert: $updated")
+                }
+            }
+        )
+    }
+
+
+    // Tick-Bestätigungsdialog
+    if (showTickDialog) {
+        val title = "Boulder eintragen?"
+        val name = boulder?.name ?: "diesen Boulder"
+        AlertDialog(
+            onDismissRequest = { showTickDialog = false },
+            title = { Text(title) },
+            text  = { Text("Möchtest du „$name“ wirklich eintragen?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showTickDialog = false
+                        boulder?.id?.let { viewModel.tickBoulder(context, it) }
+                    }
+                ) { Text("Ja, eintragen") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTickDialog = false }) { Text("Abbrechen") }
+            }
+        )
+    }
+
+
+
+
+
 }
+
+// Hilfsfunktion für Datum
+private fun formatDate(ms: Long?): String {
+    if (ms == null) return "-"
+    val df = DateFormat.getDateInstance()
+    return df.format(Date(ms))
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 

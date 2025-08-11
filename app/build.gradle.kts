@@ -79,6 +79,9 @@ dependencies {
     implementation("androidx.compose.ui:ui:1.6.1")
     implementation("androidx.compose.ui:ui-text:1.6.1")
 
+    implementation("androidx.compose.material:material-icons-extended")
+
+
 
 
     testImplementation(libs.junit)
