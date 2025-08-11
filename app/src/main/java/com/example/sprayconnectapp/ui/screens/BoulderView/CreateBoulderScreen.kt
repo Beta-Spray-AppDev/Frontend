@@ -1,8 +1,8 @@
 package com.example.sprayconnectapp.ui.screens.BoulderView
 
 import android.graphics.BitmapFactory
-import android.net.Uri
-import androidx.compose.foundation.Image
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,7 +16,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,26 +35,34 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.*
+
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import coil.size.Size
 import com.example.sprayconnectapp.data.dto.HoldType
 import kotlin.math.roundToInt
-import coil.size.Size
-import androidx.core.net.toUri
+
+// --- Modus: Erstellen vs. Bearbeiten ---
+sealed interface BoulderScreenMode {
+    data object Create : BoulderScreenMode
+    data class Edit(val boulderId: String) : BoulderScreenMode
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateBoulderScreen(
     spraywallId: String,
     imageUri: String,
+    mode: BoulderScreenMode = BoulderScreenMode.Create,
     viewModel: CreateBoulderViewModel = viewModel(),
     onSave: () -> Unit = {},
     onBack: () -> Unit = {}
@@ -63,13 +80,26 @@ fun CreateBoulderScreen(
     var imgW by remember(imageUri) { mutableStateOf(1) }
     var imgH by remember(imageUri) { mutableStateOf(1) }
 
+    // Prefill des Dialogs, sobald Daten da sind
+    LaunchedEffect(uiState.boulder) {
+        boulderName = uiState.boulder?.name.orEmpty()
+        boulderDifficulty = uiState.boulder?.difficulty.orEmpty()
+    }
+
+    LaunchedEffect(mode) {
+        if (mode is BoulderScreenMode.Edit) {
+            viewModel.loadBoulder(context, mode.boulderId)
+        }
+    }
+
+
+    // Bildmaße lesen
     LaunchedEffect(imageUri) {
         if (imageUri.isBlank()) return@LaunchedEffect
         val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         context.contentResolver.openInputStream(imageUri.toUri())?.use { input ->
             BitmapFactory.decodeStream(input, null, opts)
         }
-        // Fallbacks gegen 0
         imgW = if (opts.outWidth > 0) opts.outWidth else 1
         imgH = if (opts.outHeight > 0) opts.outHeight else 1
     }
@@ -79,7 +109,12 @@ fun CreateBoulderScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Boulder erstellen") },
+                title = {
+                    Text(
+                        if (mode is BoulderScreenMode.Edit) "Boulder bearbeiten"
+                        else "Boulder erstellen"
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Zurück")
@@ -89,7 +124,11 @@ fun CreateBoulderScreen(
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { showDialog = true }) {
-                Icon(Icons.Default.Check, contentDescription = "Speichern")
+                Icon(
+                    Icons.Default.Check,
+                    contentDescription = if (mode is BoulderScreenMode.Edit)
+                        "Änderungen speichern" else "Speichern"
+                )
             }
         }
     ) { padding ->
@@ -109,6 +148,7 @@ fun CreateBoulderScreen(
                 .padding(padding)
                 .transformable(tfState, enabled = !isPointerDownOnHold)
         ) {
+            // Gesten-Ebene für Long-Press zum Hinzufügen neuer Holds
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -139,7 +179,7 @@ fun CreateBoulderScreen(
                         )
                     }
             ) {
-                //Transformierter Container
+                // Transformierter Container (Zoom/Pan)
                 Box(
                     modifier = Modifier
                         .graphicsLayer {
@@ -158,7 +198,6 @@ fun CreateBoulderScreen(
                             .fillMaxHeight()
                             .onGloballyPositioned { laidOut = it.size }
                     ) {
-                        // hier lokale URI laden
                         if (imageUri.isNotBlank()) {
                             AsyncImage(
                                 model = ImageRequest.Builder(context)
@@ -170,14 +209,13 @@ fun CreateBoulderScreen(
                                 contentScale = ContentScale.Fit
                             )
                         } else {
-                            // Fallback, falls keine URI ankommt
                             Text(
                                 "Kein Bild verfügbar",
                                 modifier = Modifier.align(Alignment.Center)
                             )
                         }
 
-                        // Holds zeichnen
+                        // Holds zeichnen + Draggen
                         uiState.holds.forEach { hold ->
                             val color = HoldType.valueOf(hold.type).color
                             val isSelected = uiState.selectedHoldId == hold.id
@@ -221,7 +259,11 @@ fun CreateBoulderScreen(
                                                             (currentNorm.x + dx).coerceIn(0f, 1f),
                                                             (currentNorm.y + dy).coerceIn(0f, 1f)
                                                         )
-                                                        viewModel.updateHoldPosition(hold.id, currentNorm.x, currentNorm.y)
+                                                        viewModel.updateHoldPosition(
+                                                            hold.id,
+                                                            currentNorm.x,
+                                                            currentNorm.y
+                                                        )
                                                     }
 
                                                     if (!change.pressed) break
@@ -232,10 +274,12 @@ fun CreateBoulderScreen(
                                         }
                                     }
                                     .drawBehind {
+                                        // Außenring (Selection)
                                         drawCircle(
                                             color = if (isSelected) Color.Yellow else Color.White,
                                             style = Stroke(6.dp.toPx())
                                         )
+                                        // Innenring (Hold-Farbe)
                                         drawCircle(color, style = Stroke(3.dp.toPx()))
                                     }
                             )
@@ -267,33 +311,74 @@ fun CreateBoulderScreen(
             }
         }
 
+        // Speichern-Dialog
         if (showDialog) {
             AlertDialog(
                 onDismissRequest = { showDialog = false },
                 confirmButton = {
                     TextButton(onClick = {
-                        viewModel.saveBoulder(
-                            context = context,
-                            name = boulderName,
-                            difficulty = boulderDifficulty,
-                            spraywallId = spraywallId
-                        )
+                        Log.d("BoulderUpdate","Confirm clicked. mode=$mode  name=$boulderName  diff=$boulderDifficulty")
+
+                        if (mode is BoulderScreenMode.Edit) {
+                            viewModel.updateBoulder(
+                                context = context,
+                                name = boulderName,
+                                difficulty = boulderDifficulty,
+                                spraywallId = spraywallId,
+                                boulderIdOverride = mode.boulderId
+                            )
+                            Toast
+                                .makeText(context, "Boulder aktualisiert", Toast.LENGTH_SHORT)
+                                .show()
+                        } else {
+                            viewModel.saveBoulder(
+                                context = context,
+                                name = boulderName,
+                                difficulty = boulderDifficulty,
+                                spraywallId = spraywallId
+                            )
+                            Toast
+                                .makeText(context, "Boulder erstellt", Toast.LENGTH_SHORT)
+                                .show()
+                        }
+
                         showDialog = false
                         onSave()
-                    }) { Text("Speichern") }
+                        onBack() // Einen Screen zurück
+                    }) {
+                        Text(if (mode is BoulderScreenMode.Edit) "Speichern" else "Anlegen")
+                    }
                 },
                 dismissButton = {
                     TextButton(onClick = { showDialog = false }) { Text("Abbrechen") }
                 },
-                title = { Text("Boulder speichern") },
+                title = {
+                    Text(
+                        if (mode is BoulderScreenMode.Edit) "Boulder speichern"
+                        else "Boulder anlegen"
+                    )
+                },
                 text = {
                     Column {
-                        OutlinedTextField(value = boulderName, onValueChange = { boulderName = it }, label = { Text("Name") })
+                        OutlinedTextField(
+                            value = boulderName,
+                            onValueChange = { boulderName = it },
+                            label = { Text("Name") }
+                        )
                         Spacer(Modifier.height(8.dp))
-                        OutlinedTextField(value = boulderDifficulty, onValueChange = { boulderDifficulty = it }, label = { Text("Schwierigkeit") })
+                        OutlinedTextField(
+                            value = boulderDifficulty,
+                            onValueChange = { boulderDifficulty = it },
+                            label = { Text("Schwierigkeit") }
+                        )
                     }
                 }
             )
         }
+
+
     }
 }
+
+// --- kleine Extension für null-sichere Strings ---
+private fun String?.orElseEmpty() = this ?: ""

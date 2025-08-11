@@ -55,8 +55,9 @@ fun BoulderListScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    val encodedUri = Uri.encode(imageUri) 
-                    navController.navigate("create_boulder/$spraywallId?imageUri=$encodedUri")
+                    val encodedUri = Uri.encode(imageUri)
+                    navController.navigate("create_boulder/$spraywallId?imageUri=$encodedUri&mode=create")
+
                 },
                 containerColor = Color(0xFF26C6DA),
                 contentColor = Color.White,
@@ -92,14 +93,12 @@ fun BoulderListScreen(
                     ) {
                         items(boulders) { boulder ->
                             Card(
-
                                 onClick = {
                                     val id = boulder.id ?: return@Card
                                     val encoded = Uri.encode(imageUri ?: "")
+                                    navController.navigate("view_boulder/$id/$spraywallId/$encoded")
+                                },
 
-                                    navController.navigate("view_boulder/$id/$encoded")
-                                }
-                                ,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp),

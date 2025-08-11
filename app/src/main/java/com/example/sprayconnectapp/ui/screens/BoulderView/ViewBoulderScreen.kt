@@ -9,7 +9,10 @@ import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
+
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -35,21 +38,30 @@ import coil.request.ImageRequest
 import coil.size.Size
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.sprayconnectapp.data.dto.Hold
+import androidx.navigation.NavController
+import com.example.sprayconnectapp.data.dto.BoulderDTO
 import com.example.sprayconnectapp.data.dto.HoldType
+import com.example.sprayconnectapp.util.getTokenFromPrefs
+import com.example.sprayconnectapp.util.getUserIdFromToken
+
 import kotlin.math.roundToInt
+
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ViewBoulderScreen(
-    imageUri: String,
+    navController: NavController,
     boulderId: String,
+    spraywallId: String,
+    imageUri: String,
     onBack: () -> Unit,
     viewModel: CreateBoulderViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState
+
+    val boulder = uiState.boulder
 
     // Backend call starten
     LaunchedEffect(boulderId) {
@@ -64,7 +76,7 @@ fun ViewBoulderScreen(
     LaunchedEffect(imageUri) {
         if (imageUri.isBlank()) return@LaunchedEffect
         val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        context.contentResolver.openInputStream(Uri.parse(imageUri))?.use {
+        context.contentResolver.openInputStream(imageUri.toUri())?.use {
             BitmapFactory.decodeStream(it, null, opts)
         }
         imgW = if (opts.outWidth > 0) opts.outWidth else 1
@@ -83,7 +95,28 @@ fun ViewBoulderScreen(
                     }
                 }
             )
+        },
+
+        floatingActionButton = {
+            val token = getTokenFromPrefs(context)
+            val currentUserId = token?.let { getUserIdFromToken(it) }
+
+            if ( boulder?.createdBy == currentUserId) {
+                FloatingActionButton(
+                    onClick = {
+                        val encodedUri = Uri.encode(imageUri)
+                        navController.navigate(
+                            "create_boulder/$spraywallId?imageUri=$encodedUri&mode=edit&boulderId=$boulderId"
+                        )
+                    }
+                ) {
+                    Icon(Icons.Default.Edit, contentDescription = "Bearbeiten")
+                }
+            }
         }
+
+
+
     ) { padding ->
         val scale = remember { mutableStateOf(1f) }
         val pan = remember { mutableStateOf(Offset.Zero) }
@@ -147,6 +180,8 @@ fun ViewBoulderScreen(
                                     drawCircle(color = color, style = Stroke(3.dp.toPx()))
                                 }
                         )
+
+
                     }
                 }
             }

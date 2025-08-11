@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.sprayconnectapp.ui.screens.BoulderList.BoulderListScreen
+import com.example.sprayconnectapp.ui.screens.BoulderView.BoulderScreenMode
 import com.example.sprayconnectapp.ui.screens.BoulderView.CreateBoulderScreen
 import com.example.sprayconnectapp.ui.screens.spraywall.AddSpraywallScreen
 import com.example.sprayconnectapp.ui.screens.GymDetail.GymDetailScreen
@@ -67,18 +68,29 @@ fun NavGraph (navController: NavHostController){
 
         // NavGraph.kt
         composable(
-            route = "create_boulder/{spraywallId}?imageUri={imageUri}",
+            "create_boulder/{spraywallId}?imageUri={imageUri}&mode={mode}&boulderId={boulderId}",
             arguments = listOf(
                 navArgument("spraywallId") { type = NavType.StringType },
-                navArgument("imageUri") { type = NavType.StringType }
+                navArgument("imageUri") { type = NavType.StringType; defaultValue = "" },
+                navArgument("mode") { type = NavType.StringType; defaultValue = "create" },
+                navArgument("boulderId") { type = NavType.StringType; defaultValue = "" }
             )
         ) { backStackEntry ->
-            val spraywallId = backStackEntry.arguments?.getString("spraywallId")!!
-            val imageUri = backStackEntry.arguments?.getString("imageUri")!!
+            val spraywallId = backStackEntry.arguments?.getString("spraywallId") ?: ""
+            val imageUri = backStackEntry.arguments?.getString("imageUri") ?: ""
+            val mode = backStackEntry.arguments?.getString("mode") ?: "create"
+            val boulderId = backStackEntry.arguments?.getString("boulderId") ?: ""
+
+            val screenMode = if (mode == "edit") {
+                BoulderScreenMode.Edit(boulderId)
+            } else {
+                BoulderScreenMode.Create
+            }
+
             CreateBoulderScreen(
                 spraywallId = spraywallId,
                 imageUri = imageUri,
-                onSave = { navController.popBackStack() },
+                mode = screenMode,
                 onBack = { navController.popBackStack() }
             )
         }
@@ -121,21 +133,25 @@ fun NavGraph (navController: NavHostController){
         }
 
         composable(
-            route = "view_boulder/{boulderId}/{imageUri}",
+            "view_boulder/{boulderId}/{spraywallId}/{imageUri}",
             arguments = listOf(
                 navArgument("boulderId") { type = NavType.StringType },
+                navArgument("spraywallId") { type = NavType.StringType },
                 navArgument("imageUri") { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            val boulderId = backStackEntry.arguments?.getString("boulderId").orEmpty()
-            val imageUri = backStackEntry.arguments?.getString("imageUri").orEmpty()
-
+            val boulderId = backStackEntry.arguments?.getString("boulderId") ?: ""
+            val spraywallId = backStackEntry.arguments?.getString("spraywallId") ?: ""
+            val imageUri = backStackEntry.arguments?.getString("imageUri") ?: ""
             ViewBoulderScreen(
+                navController = navController,
                 boulderId = boulderId,
+                spraywallId = spraywallId,
                 imageUri = imageUri,
                 onBack = { navController.popBackStack() }
             )
         }
+
 
 
 

@@ -13,6 +13,8 @@ import com.example.sprayconnectapp.data.dto.HoldType
 import com.example.sprayconnectapp.network.RetrofitInstance
 import kotlinx.coroutines.launch
 import java.util.*
+import com.google.gson.Gson
+
 
 
 class CreateBoulderViewModel : ViewModel() {
@@ -95,11 +97,14 @@ class CreateBoulderViewModel : ViewModel() {
             try {
                 val res = RetrofitInstance.getBoulderApi(context)
                     .getBoulderById(UUID.fromString(boulderId))
+
                 if (res.isSuccessful) {
-                    val boulder = res.body()
-                    if (boulder != null) {
-                        _uiState.value = _uiState.value.copy(boulder = boulder)
-                    }
+                    val boulder = res.body() ?: return@launch
+                    _uiState.value = _uiState.value.copy(
+                        boulder = boulder,
+                        holds = boulder.holds,
+                        selectedHoldId = null
+                    )
                 } else {
                     Log.e("Boulder", "Fehler: ${res.code()}")
                 }
@@ -108,5 +113,64 @@ class CreateBoulderViewModel : ViewModel() {
             }
         }
     }
+
+
+    fun updateBoulder(
+        context: Context,
+        name: String,
+        difficulty: String,
+        spraywallId: String,
+        boulderIdOverride: String? = null
+    ) {
+        val effectiveId = boulderIdOverride ?: _uiState.value.boulder?.id
+        if (effectiveId.isNullOrBlank()) {
+            _errorMessage.value = "Kein Boulder zum Aktualisieren geladen (fehlende ID)."
+            android.util.Log.e("BoulderUpdate", "ABORT: no id (override/state both null)")
+            return
+        }
+
+        val updatedDto = BoulderDTO(
+            id = effectiveId, // <— ID IM BODY MITGEBEN
+            name = name,
+            difficulty = difficulty,
+            spraywallId = spraywallId,
+            holds = _uiState.value.holds
+        )
+        android.util.Log.d("BoulderUpdate", "REQUEST JSON => ${com.google.gson.Gson().toJson(updatedDto)}")
+
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val api = RetrofitInstance.getBoulderApi(context)
+                val response = api.updateBoulder(effectiveId, updatedDto)
+                android.util.Log.d("BoulderUpdate", "response => code=${response.code()} success=${response.isSuccessful}")
+
+                if (!response.isSuccessful) {
+                    val raw = response.errorBody()?.string()
+                    _errorMessage.value = "Update fehlgeschlagen (${response.code()}): $raw"
+                    android.util.Log.e("BoulderUpdate", "ERROR ${response.code()} ${response.message()}\n$raw")
+                    return@launch
+                }
+
+                response.body()?.let { updated ->
+                    _uiState.value = _uiState.value.copy(
+                        boulder = updated,
+                        holds = updated.holds,
+                        selectedHoldId = null
+                    )
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = e.message
+                android.util.Log.e("BoulderUpdate", "EXCEPTION", e)
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+
+
+
+
 
 }

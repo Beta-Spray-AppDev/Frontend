@@ -7,5 +7,6 @@ data class BoulderDTO(
     val name: String = "",
     val difficulty: String = "",
     val spraywallId: String = "",
-    val holds: List<Hold> = emptyList()
+    val holds: List<Hold> = emptyList(),
+    val createdBy: String? = null
 )
