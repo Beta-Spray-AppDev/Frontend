@@ -62,6 +62,10 @@ import java.text.DateFormat
 import java.util.Date
 
 
+import com.example.sprayconnectapp.ui.screens.Profile.ProfileViewModel
+
+
+
 import kotlin.math.roundToInt
 
 
@@ -77,11 +81,24 @@ fun ViewBoulderScreen(
     viewModel: CreateBoulderViewModel = viewModel()
 ) {
 
+    // previous entry - BoulderList ODER Profile
+    val prevEntry = navController.previousBackStackEntry
 
-    //Liste vom vorherigen Screen
-    val listEntry = navController.previousBackStackEntry
-    val listVm: BoulderListViewmodel? = listEntry?.let { viewModel(it) }
-    val list = listVm?.boulders?.value ?: emptyList()
+
+    //Falls man vom BoulderListScreen kommt
+    val listVm: BoulderListViewmodel? = prevEntry?.let { viewModel(it) }
+    val gymList = listVm?.boulders?.value ?: emptyList()
+
+
+    //Falls man vom Profil kommt
+    val profileVm: ProfileViewModel? = prevEntry?.let { viewModel(it) }
+
+    val myListState = if (profileVm != null) profileVm.myBoulders.collectAsState() else null
+    val myList = myListState?.value ?: emptyList()
+
+
+
+    val list = myList.ifEmpty { gymList }
 
 
     //Ui-State holen
@@ -119,12 +136,16 @@ fun ViewBoulderScreen(
 
     LaunchedEffect(imageUri) {
         if (imageUri.isBlank()) return@LaunchedEffect
-        val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        context.contentResolver.openInputStream(imageUri.toUri())?.use {
-            BitmapFactory.decodeStream(it, null, opts)
+        val uri = imageUri.toUri()
+        if(uri.scheme == "content" || uri.scheme == "file"){
+            val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            context.contentResolver.openInputStream(imageUri.toUri())?.use {
+                BitmapFactory.decodeStream(it, null, opts)
+            }
+            imgW = if (opts.outWidth > 0) opts.outWidth else 1
+            imgH = if (opts.outHeight > 0) opts.outHeight else 1
         }
-        imgW = if (opts.outWidth > 0) opts.outWidth else 1
-        imgH = if (opts.outHeight > 0) opts.outHeight else 1
+
     }
 
     val aspect = remember(imgW, imgH) { imgW.toFloat() / imgH.toFloat() }
@@ -268,7 +289,7 @@ fun ViewBoulderScreen(
                     if (imageUri.isNotBlank()) {
                         AsyncImage(
                             model = ImageRequest.Builder(context)
-                                .data(imageUri.toUri())
+                                .data(imageUri)
                                 .size(Size.ORIGINAL)
                                 .build(),
                             contentDescription = "Boulder",
