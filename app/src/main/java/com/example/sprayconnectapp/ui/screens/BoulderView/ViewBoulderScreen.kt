@@ -55,6 +55,7 @@ import com.example.sprayconnectapp.util.getUserIdFromToken
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.Divider
 
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.text.font.FontWeight
@@ -330,15 +331,27 @@ fun ViewBoulderScreen(
     if (showInfo) {
         val created = formatDate(uiState.boulder?.createdAt)
         val updated = formatDate(uiState.boulder?.lastUpdated)
+        val difficulty   = uiState.boulder?.difficulty ?: "-"
+
+
+
         AlertDialog(
             onDismissRequest = { showInfo = false },
             confirmButton = { TextButton(onClick = { showInfo = false }) { Text("OK") } },
-            title = { Text("Boulder - Info") },
+            title = { Text(uiState.boulder?.name ?: "Boulder") },
             text = {
-                Column {
-                    Text("Erstellt von: ${uiState.boulder?.createdByUsername ?: uiState.boulder?.createdBy?.take(8) ?: "-"}")
-                    Text("Erstellt am: $created")
-                    Text("Zuletzt aktualisiert: $updated")
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    InfoLine("Setter", uiState.boulder?.createdByUsername
+                        ?: uiState.boulder?.createdBy?.take(8) ?: "-")
+                    InfoLine("Schwierigkeit", difficulty)
+                    InfoLine("Gym", boulder?.gymName ?: "-")
+                    InfoLine("Spraywall", boulder?.spraywallName ?: "-")
+
+
+                    Spacer(Modifier.height(4.dp))
+                    Divider()
+                    InfoLine("Erstellt am", created)
+                    InfoLine("Zuletzt aktualisiert", updated)
                 }
             }
         )
@@ -371,7 +384,30 @@ fun ViewBoulderScreen(
 
 
 
+
+
+
 }
+
+
+@Composable
+private fun InfoLine(label: String, value: String) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+        )
+    }
+}
+
+
+
 
 // Hilfsfunktion für Datum
 private fun formatDate(ms: Long?): String {
