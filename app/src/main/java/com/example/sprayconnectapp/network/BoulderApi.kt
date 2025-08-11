@@ -5,6 +5,7 @@ import com.example.sprayconnectapp.data.dto.CreateBoulderRequest
 import retrofit2.http.POST
 import retrofit2.http.Body
 import retrofit2.Response
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.PUT
 import retrofit2.http.Path
@@ -32,6 +33,11 @@ interface BoulderApi {
         @Path("boulderId") boulderId: String,
         @Body request: BoulderDTO
     ): Response<BoulderDTO>
+
+
+    // BoulderApi
+    @DELETE("boulders/{boulderId}")
+    suspend fun deleteBoulder(@Path("boulderId") boulderId: String): Response<Unit>
 
 
 
