@@ -1,6 +1,7 @@
 package com.example.sprayconnectapp.data.repository
 
 import android.util.Log
+import androidx.room.Transaction
 import com.example.sprayconnectapp.data.local.GymDao
 import com.example.sprayconnectapp.data.model.GymEntity
 import com.example.sprayconnectapp.data.dto.Gym
@@ -8,6 +9,26 @@ import com.example.sprayconnectapp.data.dto.Gym
 class GymRepository(
     private val gymDao: GymDao
 ) {
+
+    @Transaction
+    suspend fun syncGymsFromBackend(gymDtos: List<Gym>, keepPinned: Boolean = true) {
+        // 1) Upserts
+        val remoteIds = gymDtos.map { it.id.toString() }.toSet()
+        for (gymDto in gymDtos) {
+            saveGymFromBackend(gymDto)
+        }
+
+        // 2) Pruning: alles löschen, was nicht mehr im Backend ist (außer ggf. pinned)
+        val locals = gymDao.getAll()
+        for (local in locals) {
+            val notInBackend = local.id !in remoteIds
+            val canDelete = !keepPinned || (keepPinned && !local.isPinned)
+            if (notInBackend && canDelete) {
+                gymDao.deleteById(local.id)
+                Log.d("GymSync", "Lokal gelöscht (nicht mehr im Backend): ${local.name}")
+            }
+        }
+    }
 
     // Speichert oder aktualisiert einen Gym aus dem Backend
     suspend fun saveGymFromBackend(gymDto: Gym, pinned: Boolean = false) {

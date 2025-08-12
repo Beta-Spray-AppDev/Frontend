@@ -67,14 +67,12 @@ fun SpraywallDetailScreen(
     gymName: String,
     viewModel: SpraywallViewModel = viewModel()
 ) {
-
     val spraywalls by viewModel.spraywalls
     val isLoading by viewModel.isLoading
     val errorMessage by viewModel.errorMessage
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val DL_TAG = "SprayDL"
-
 
     fun startDownloadAndOpen(s: SpraywallDTO) {
         val preview = s.photoUrl.trim()
@@ -97,18 +95,12 @@ fun SpraywallDetailScreen(
             val queryPart = encodedImage?.let { "?imageUri=$it" } ?: ""
             val spraywallId = s.id?.toString() ?: ""
             val spraywallName = Uri.encode(s.name)
-
-
             navController.navigate("boulders/$spraywallId/$spraywallName$queryPart")
         }
 
-
-
         if (file.exists()) {
-            // Lokale Datei schon da → gleich weiter
             navigateToBoulderList(Uri.fromFile(file))
         } else {
-            // Download im Hintergrund starten, danach weiter
             val referer = "https://leitln.at/maltacloud/index.php/s/$token/preview"
             scope.launch {
                 try {
@@ -117,18 +109,17 @@ fun SpraywallDetailScreen(
                 } catch (e: Exception) {
                     Log.e(DL_TAG, "Download fehlgeschlagen: ${e.message}", e)
                     Toast.makeText(context, "Download fehlgeschlagen: ${e.message}", Toast.LENGTH_SHORT).show()
-                    // Auch bei Fehler weitergehen, aber ohne Bild
                     navigateToBoulderList(null)
                 }
             }
         }
     }
 
-
     LaunchedEffect(gymId) {
         viewModel.loadSpraywalls(context, gymId)
     }
 
+    val encodedGymName = Uri.encode(gymName)
 
     Scaffold(
         topBar = {
@@ -137,6 +128,13 @@ fun SpraywallDetailScreen(
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Zurück")
+                    }
+                },
+                actions = {
+                    IconButton(
+                        onClick = { navController.navigate("addSpraywall/$gymId/$encodedGymName") }
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Spraywall hinzufügen")
                     }
                 }
             )
@@ -156,9 +154,7 @@ fun SpraywallDetailScreen(
                 Icon(Icons.Default.Add, contentDescription = "Neue Spraywall hinzufügen")
             }
         },
-        bottomBar = {BottomNavigationBar(navController) }
-
-
+        bottomBar = { BottomNavigationBar(navController) }
     ) { innerPadding ->
         Column(
             modifier = Modifier
