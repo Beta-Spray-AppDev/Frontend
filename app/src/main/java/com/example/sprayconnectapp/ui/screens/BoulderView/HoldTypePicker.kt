@@ -113,7 +113,7 @@ fun TypeChip(
             // Kreisfläche
             Box(
                 Modifier
-                    .padding(2.dp) // ⬅️ kleiner, damit das Icon mehr Platz hat
+                    .padding(2.dp)
                     .fillMaxSize()
                     .background(if (selected) Color(0xFF2B2B2B) else Color(0xFF323232), CircleShape)
                     .border(1.dp, Color.White.copy(alpha = if (selected) 0.20f else 0.12f), CircleShape)
@@ -123,7 +123,7 @@ fun TypeChip(
                 Image(
                     painter = painterResource(id = type.iconRes()),
                     contentDescription = type.displayName,
-                    modifier = Modifier.fillMaxSize(0.94f), // ⬅️ füllt den Kreis fast komplett
+                    modifier = Modifier.fillMaxSize(0.94f),
                     colorFilter = ColorFilter.tint(Color.White.copy(alpha = if (selected) 1f else 0.9f))
                 )
             }

@@ -1,6 +1,7 @@
 package com.example.sprayconnectapp.ui.screens.BoulderView
 
 import android.graphics.BitmapFactory
+import android.media.ExifInterface
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -37,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -56,6 +58,9 @@ import kotlin.math.roundToInt
 // oben bei den Imports
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalDensity
+
 
 
 // --- Modus: Erstellen vs. Bearbeiten ---
@@ -77,6 +82,13 @@ fun CreateBoulderScreen(
 ) {
     val uiState by viewModel.uiState
     val context = LocalContext.current
+    val haptics = LocalHapticFeedback.current
+
+    val density = LocalDensity.current
+    val markerSizeDp = 32.dp
+    val markerRadiusPx = with(density) { (markerSizeDp / 2).toPx() }
+
+
 
     var showDialog by remember { mutableStateOf(false) }
     var boulderName by remember { mutableStateOf("") }
@@ -116,15 +128,14 @@ fun CreateBoulderScreen(
 
 
     // Bildmaße lesen
+    // Bildmaße lesen (EXIF-beachtet)
     LaunchedEffect(imageUri) {
         if (imageUri.isBlank()) return@LaunchedEffect
-        val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        context.contentResolver.openInputStream(imageUri.toUri())?.use { input ->
-            BitmapFactory.decodeStream(input, null, opts)
-        }
-        imgW = if (opts.outWidth > 0) opts.outWidth else 1
-        imgH = if (opts.outHeight > 0) opts.outHeight else 1
+        val (w, h) = readImageSizeRespectingExif(context, imageUri.toUri())
+        imgW = w
+        imgH = h
     }
+
 
     val aspect = remember(imgW, imgH) { imgW.toFloat() / imgH.toFloat() }
 
@@ -199,6 +210,8 @@ fun CreateBoulderScreen(
                                 val ny = unscaled.y / unscaledH
 
                                 viewModel.addHoldNorm(nx, ny)
+
+                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                             }
                         )
                     }
@@ -251,8 +264,13 @@ fun CreateBoulderScreen(
 
                             Box(
                                 modifier = Modifier
-                                    .offset { IntOffset(baseX.roundToInt(), baseY.roundToInt()) }
-                                    .size(32.dp)
+                                    .offset {
+                                        IntOffset(
+                                            (baseX - markerRadiusPx).roundToInt(),
+                                            (baseY - markerRadiusPx).roundToInt()
+                                        )
+                                    }
+                                    .size(markerSizeDp)
                                     .onGloballyPositioned { coords -> holdCoords = coords }
                                     .pointerInput(hold.id, laidOut, scale.value) {
                                         awaitEachGesture {
@@ -471,6 +489,39 @@ fun CreateBoulderScreen(
 
 
 }
+
+private fun readImageSizeRespectingExif(
+    context: android.content.Context,
+    uri: android.net.Uri
+): Pair<Int, Int> {
+    // Rohmaße (ignoriert Rotation)
+    val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    context.contentResolver.openInputStream(uri)?.use { input ->
+        BitmapFactory.decodeStream(input, null, opts)
+    }
+    var w = if (opts.outWidth > 0) opts.outWidth else 1
+    var h = if (opts.outHeight > 0) opts.outHeight else 1
+
+    // EXIF-Orientation lesen
+    val orientation = context.contentResolver.openInputStream(uri)?.use { input ->
+        ExifInterface(input).getAttributeInt(
+            ExifInterface.TAG_ORIENTATION,
+            ExifInterface.ORIENTATION_NORMAL
+        )
+    } ?: ExifInterface.ORIENTATION_NORMAL
+
+    // 90°/270° → w/h tauschen
+    val needsSwap = orientation == ExifInterface.ORIENTATION_ROTATE_90 ||
+            orientation == ExifInterface.ORIENTATION_TRANSPOSE ||
+            orientation == ExifInterface.ORIENTATION_TRANSVERSE ||
+            orientation == ExifInterface.ORIENTATION_ROTATE_270
+
+    if (needsSwap) {
+        val tmp = w; w = h; h = tmp
+    }
+    return w to h
+}
+
 
 
 // --- kleine Extension für null-sichere Strings ---
