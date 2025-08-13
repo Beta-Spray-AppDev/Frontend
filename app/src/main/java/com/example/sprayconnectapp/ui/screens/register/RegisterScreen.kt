@@ -86,8 +86,17 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
                         value = viewModel.username,
                         onValueChange = viewModel::onUsernameChange,
                         label = { Text("Benutzername") },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        isError = viewModel.usernameError != null
                     )
+
+                    if (viewModel.usernameError != null) {
+                        Text(
+                            text = viewModel.usernameError ?: "",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -96,8 +105,18 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
                         value = viewModel.email,
                         onValueChange = viewModel::onEmailChange,
                         label = { Text("E-Mail") },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        isError = viewModel.emailError != null
+
                     )
+
+                    if (viewModel.emailError != null) {
+                        Text(
+                            text = viewModel.emailError ?: "",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
