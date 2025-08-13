@@ -1,5 +1,6 @@
 package com.example.sprayconnectapp.ui.screens.Profile
 
+import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -90,7 +91,7 @@ fun ProfileScreen(navController: NavController) {
                         ProfileCard(profile = profile!!, navController = navController)
                         Spacer(modifier = Modifier.height(17.dp))
 
-                        BoulderListCard(boulders = boulders)
+                        BoulderListCard(boulders = boulders, navController = navController)
 
                     }
 
@@ -158,7 +159,7 @@ fun ProfileCard(profile: UserProfile, navController: NavController) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BoulderCard(boulder: BoulderDTO) {
+fun BoulderCard(boulder: BoulderDTO, onClick: (() -> Unit)? = null) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -166,7 +167,7 @@ fun BoulderCard(boulder: BoulderDTO) {
         ),
         elevation = CardDefaults.cardElevation(4.dp),
         onClick = {
-            // navController.navigate("boulderDetail/${boulder.id}")
+             onClick?.invoke()
         }
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -179,7 +180,7 @@ fun BoulderCard(boulder: BoulderDTO) {
 
 
 @Composable
-fun BoulderListCard(boulders: List<BoulderDTO>) {
+fun BoulderListCard(boulders: List<BoulderDTO>, navController: NavController) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(6.dp)
@@ -198,7 +199,13 @@ fun BoulderListCard(boulders: List<BoulderDTO>) {
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     boulders.forEach { boulder ->
-                        BoulderCard(boulder)
+                        BoulderCard(boulder,
+                            onClick = {
+                                val imageUri = boulder.spraywallImageUrl ?: ""
+                                val route = "view_boulder/${boulder.id}/${boulder.spraywallId}/${Uri.encode(imageUri)}"
+                                navController.navigate(route)
+                        }
+                        )
                     }
                 }
             }

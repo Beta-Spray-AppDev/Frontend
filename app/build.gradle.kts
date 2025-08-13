@@ -81,6 +81,9 @@ dependencies {
     implementation("androidx.compose.ui:ui-text:1.6.1")
     implementation("androidx.exifinterface:exifinterface:1.3.7")
 
+    implementation("androidx.compose.material:material-icons-extended")
+
+
 
 
     testImplementation(libs.junit)

@@ -155,6 +155,25 @@ class CreateBoulderViewModel : ViewModel() {
 
 
 
+
+    fun tickBoulder(context: Context, boulderId: String) {
+        viewModelScope.launch {
+            try {
+                val res = RetrofitInstance.getBoulderApi(context).tickBoulder(boulderId)
+                if (res.isSuccessful) {
+                    android.widget.Toast.makeText(context, "Eingetragen!", android.widget.Toast.LENGTH_SHORT).show()
+                } else {
+                    android.widget.Toast.makeText(context, "Eintragen fehlgeschlagen (${res.code()})", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                android.widget.Toast.makeText(context, "Netzwerkfehler: ${e.localizedMessage}", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+
+
+
     fun updateBoulder(
         context: Context,
         name: String,
