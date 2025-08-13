@@ -1,7 +1,7 @@
 package com.example.sprayconnectapp.ui.screens.BoulderView
 
 import android.graphics.BitmapFactory
-import android.media.ExifInterface
+import androidx.exifinterface.media.ExifInterface
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -43,7 +43,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInWindow
-import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
@@ -57,6 +57,7 @@ import com.example.sprayconnectapp.data.dto.HoldType
 import kotlin.math.roundToInt
 // oben bei den Imports
 import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalDensity
@@ -83,6 +84,8 @@ fun CreateBoulderScreen(
     val uiState by viewModel.uiState
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
+    var hasBuzzedOverTrash by remember { mutableStateOf(false) }
+
 
     val density = LocalDensity.current
     val markerSizeDp = 32.dp
@@ -125,6 +128,20 @@ fun CreateBoulderScreen(
             viewModel.loadBoulder(context, mode.boulderId)
         }
     }
+
+    LaunchedEffect(showTrash, overTrash) {
+        if (!showTrash) {
+            // Drag zu Ende -> zurücksetzen
+            hasBuzzedOverTrash = false
+        } else if (overTrash && !hasBuzzedOverTrash) {
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            hasBuzzedOverTrash = true
+        } else if (!overTrash) {
+            // wieder raus -> erlaub nächstes Buzz, falls erneut rein
+            hasBuzzedOverTrash = false
+        }
+    }
+
 
 
     // Bildmaße lesen
@@ -281,57 +298,44 @@ fun CreateBoulderScreen(
                                             val startHold = uiState.holds.first { it.id == hold.id }
                                             var currentNorm = Offset(startHold.x, startHold.y)
 
-                                            if (uiState.selectedHoldId != hold.id) {
-                                                viewModel.selectHold(hold.id)
-                                            }
+                                            if (uiState.selectedHoldId != hold.id) viewModel.selectHold(hold.id)
 
                                             isPointerDownOnHold = true
                                             down.consume()
-                                            var lastPos = down.position
+
+                                            // <<< neu: letzte Fingerposition in Window-Koordinaten merken
+                                            var lastFingerWindow: Offset? = holdCoords?.localToWindow(down.position)
 
                                             try {
                                                 while (true) {
                                                     val event = awaitPointerEvent()
-                                                    val change =
-                                                        event.changes.firstOrNull { it.id == down.id }
-                                                            ?: event.changes.first()
+                                                    val change = event.changes.firstOrNull { it.id == down.id } ?: event.changes.first()
 
-                                                    val deltaPx = change.position - lastPos
-                                                    lastPos = change.position
+                                                    val deltaPx = change.positionChange()
                                                     change.consume()
 
                                                     if (laidOut.width != 0 && laidOut.height != 0) {
-                                                        val dx =
-                                                            deltaPx.x / (laidOut.width * scale.value)
-                                                        val dy =
-                                                            deltaPx.y / (laidOut.height * scale.value)
+                                                        val dx = deltaPx.x / (laidOut.width * scale.value)
+                                                        val dy = deltaPx.y / (laidOut.height * scale.value)
                                                         currentNorm = Offset(
                                                             (currentNorm.x + dx).coerceIn(0f, 1f),
                                                             (currentNorm.y + dy).coerceIn(0f, 1f)
                                                         )
-                                                        viewModel.updateHoldPosition(
-                                                            hold.id,
-                                                            currentNorm.x,
-                                                            currentNorm.y
-                                                        )
+                                                        viewModel.updateHoldPosition(hold.id, currentNorm.x, currentNorm.y)
                                                     }
 
-                                                    val fingerInWindow =
-                                                        holdCoords?.localToWindow(change.position)
-                                                    overTrash = trashBounds?.contains(
-                                                        fingerInWindow ?: Offset.Zero
-                                                    ) == true
+
+                                                    val fingerInWindow = holdCoords?.localToWindow(change.position)
+                                                    if (fingerInWindow != null) lastFingerWindow = fingerInWindow
+                                                    overTrash = trashBounds?.contains(fingerInWindow ?: lastFingerWindow ?: Offset.Zero) == true
 
                                                     if (!change.pressed) break
                                                 }
                                             } finally {
-                                                val fingerUpInWindow =
-                                                    holdCoords?.localToWindow(lastPos)
-                                                if (trashBounds?.contains(
-                                                        fingerUpInWindow ?: Offset.Zero
-                                                    ) == true
-                                                ) {
+                                                //löschen, wenn der finger über dem Trash liegt
+                                                if (trashBounds?.contains(lastFingerWindow ?: Offset.Zero) == true) {
                                                     viewModel.removeHold(hold.id)
+
                                                 }
                                                 showTrash = false
                                                 overTrash = false
@@ -339,6 +343,7 @@ fun CreateBoulderScreen(
                                             }
                                         }
                                     }
+
                                     .drawBehind {
 
                                         // Außenring (Selection)
