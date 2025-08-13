@@ -24,7 +24,7 @@ import com.example.sprayconnectapp.ui.screens.BoulderView.ViewBoulderScreen
 fun NavGraph (navController: NavHostController){
     NavHost(
     navController = navController,
-    startDestination = "start"
+    startDestination = "login"
     ){
         composable("start"){ StartScreen(navController) }
         composable("login"){ LoginScreen(navController) }

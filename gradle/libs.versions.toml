@@ -14,6 +14,7 @@ compiler = "3.2.0-alpha11"
 foundation = "1.8.3"
 material = "1.12.0"
 animationCore = "1.8.3"
+foundationLayout = "1.8.3"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -36,6 +37,7 @@ androidx-compiler = { group = "androidx.databinding", name = "compiler", version
 androidx-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-animation-core = { group = "androidx.compose.animation", name = "animation-core", version.ref = "animationCore" }
+androidx-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

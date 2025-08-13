@@ -6,7 +6,9 @@ import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import com.example.sprayconnectapp.R
+import androidx.compose.ui.res.colorResource
+
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -18,7 +20,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.NavigateBefore
+import androidx.compose.material.icons.filled.NavigateNext
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -28,6 +33,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -99,6 +105,8 @@ fun CreateBoulderScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
 
 
+
+    // Farbverlauf-Hintergrund
     val screenBg = Brush.verticalGradient(
         colors = listOf(
             Color(0xFF53535B),
@@ -120,6 +128,7 @@ fun CreateBoulderScreen(
         boulderDifficulty = uiState.boulder?.difficulty.orEmpty()
     }
 
+    // Falls im Edit-Modus dann Boulder-Daten laden
     LaunchedEffect(mode) {
         if (mode is BoulderScreenMode.Edit) {
             viewModel.loadBoulder(context, mode.boulderId)
@@ -139,9 +148,21 @@ fun CreateBoulderScreen(
 
     val aspect = remember(imgW, imgH) { imgW.toFloat() / imgH.toFloat() }
 
+
+    val BarColor = colorResource(id = R.color.hold_type_bar)
+
+
     Scaffold(
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = BarColor,
+                    scrolledContainerColor = BarColor,
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White,
+                    actionIconContentColor = Color.White
+
+                ),
                 title = {
                     Text(if (mode is BoulderScreenMode.Edit) "Boulder bearbeiten" else "Boulder erstellen")
                 },
@@ -151,11 +172,14 @@ fun CreateBoulderScreen(
                     }
                 },
                 actions = {
+                    //Lösch Button nur im Edit Modus
                     if (mode is BoulderScreenMode.Edit) {
                         IconButton(onClick = { showDeleteDialog = true }) {
                             Icon(Icons.Default.Delete, contentDescription = "Boulder löschen")
                         }
                     }
+
+                    //Speichern Button
                     IconButton(onClick = { showDialog = true }) {
                         Icon(Icons.Default.Check, contentDescription = "Speichern")
                     }
@@ -447,10 +471,18 @@ fun CreateBoulderScreen(
                             label = { Text("Name") }
                         )
                         Spacer(Modifier.height(8.dp))
-                        OutlinedTextField(
-                            value = boulderDifficulty,
-                            onValueChange = { boulderDifficulty = it },
-                            label = { Text("Schwierigkeit") }
+
+                        // Schwierigkeitsauswahl als Stepper
+                        val fbGrades = listOf(
+                            "3", "4", "5A", "5b", "5c",
+                            "6A", "6A+", "6B", "6B+", "6C", "6C+",
+                            "7A", "7A+", "7B", "7B+", "7C", "7C+",
+                            "8A", "8A+", "8B", "8B+", "8C", "8C+", "9a"
+                        )
+                        DifficultyStepper(
+                            options = fbGrades,
+                            value = boulderDifficulty.ifEmpty { fbGrades.first() },
+                            onValueChange = { boulderDifficulty = it }
                         )
                     }
                 }
@@ -526,3 +558,59 @@ private fun readImageSizeRespectingExif(
 
 // --- kleine Extension für null-sichere Strings ---
 private fun String?.orElseEmpty() = this ?: ""
+
+
+
+
+// Schwierigkeitsauswahl
+@Composable
+fun DifficultyStepper(
+    label: String = "Schwierigkeit",
+    options: List<String>,
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // falls value noch leer/ungültig - erstes Element
+    val currentIndex = options.indexOf(value).let { if (it >= 0) it else 0 }
+
+    Column(modifier) {
+        Text(label)
+        Spacer(Modifier.height(4.dp))
+        Row(
+            modifier = Modifier
+                .height(56.dp)
+                .fillMaxWidth()
+                .border(1.dp, Color(0x33000000), shape = CircleShape)
+                .padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            IconButton(
+                onClick = {
+                    val newIndex = (currentIndex - 1).coerceAtLeast(0)
+                    onValueChange(options[newIndex])
+                },
+                enabled = currentIndex > 0
+            ) {
+                Icon(Icons.Default.NavigateBefore, contentDescription = "Niedriger")
+            }
+
+            Text(
+                text = options.getOrElse(currentIndex) { options.firstOrNull().orEmpty() },
+                style = androidx.compose.material3.MaterialTheme.typography.titleMedium
+            )
+
+            IconButton(
+                onClick = {
+                    val newIndex = (currentIndex + 1).coerceAtMost(options.lastIndex)
+                    onValueChange(options[newIndex])
+                },
+                enabled = currentIndex < options.lastIndex
+            ) {
+                Icon(Icons.Default.NavigateNext, contentDescription = "Höher")
+            }
+        }
+    }
+}
+

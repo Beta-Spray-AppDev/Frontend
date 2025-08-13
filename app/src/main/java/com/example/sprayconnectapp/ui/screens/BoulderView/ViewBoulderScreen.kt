@@ -9,7 +9,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 
@@ -60,12 +59,17 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Divider
 
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import java.text.DateFormat
 import java.util.Date
 
 
 import com.example.sprayconnectapp.ui.screens.Profile.ProfileViewModel
+import com.example.sprayconnectapp.R
+
+
 
 
 
@@ -153,186 +157,217 @@ fun ViewBoulderScreen(
 
     val aspect = remember(imgW, imgH) { imgW.toFloat() / imgH.toFloat() }
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
-                ),
-                title = {Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "Boulder: ${boulder?.name ?: "/"}",
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                    Text(
-                        text = "set by: ${boulder?.createdByUsername ?: "Unbekannter Setter"}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
-                    )
-                }},
+    val BarColor = colorResource(id = R.color.hold_type_bar)
 
-                //Zurück Button
-                navigationIcon = {
-                    IconButton(onClick = onBack, modifier = Modifier.padding(start = 8.dp)) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Zurück", modifier = Modifier.size(28.dp))
-                    }
-                },
-                // Info Button
-                actions = {
-                    IconButton(onClick = { showInfo = true }, modifier = Modifier.padding(end = 8.dp)) {
-                        Icon(Icons.Default.Info, contentDescription = "Info", modifier = Modifier.size(28.dp))
-                    }
-                }
-            )
-        },
-        // FAB nur anzeigen, wenn aktueller User der Setter ist
-        floatingActionButton = {
-            val token = getTokenFromPrefs(context)
-            val currentUserId = token?.let { getUserIdFromToken(it) }
 
-            if ( boulder?.createdBy == currentUserId) {
-                FloatingActionButton(
-                    onClick = {
-                        val encodedUri = Uri.encode(imageUri)
-                        navController.navigate(
-                            "create_boulder/$spraywallId?imageUri=$encodedUri&mode=edit&boulderId=$boulderId"
+    // Farbverlauf
+    val screenBg = Brush.verticalGradient(
+        colors = listOf(
+            Color(0xFF53535B),
+            Color(0xFF767981),
+            Color(0xFFA8ABB2)
+        )
+    )
+
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(screenBg)
+    ){
+
+
+
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                CenterAlignedTopAppBar(
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = BarColor,
+                        scrolledContainerColor = BarColor,
+                        titleContentColor = Color.White,
+                        navigationIconContentColor = Color.White,
+                        actionIconContentColor = Color.White
+
+                    ),
+                    title = {Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "Boulder: ${boulder?.name ?: "/"}",
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onPrimary
                         )
+                        Text(
+                            text = "Grad: ${boulder?.difficulty ?: "Unbekannt"}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
+                        )
+                    }},
+
+                    //Zurück Button
+                    navigationIcon = {
+                        IconButton(onClick = onBack, modifier = Modifier.padding(start = 8.dp)) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Zurück", modifier = Modifier.size(28.dp))
+                        }
+                    },
+                    // Info Button
+                    actions = {
+                        IconButton(onClick = { showInfo = true }, modifier = Modifier.padding(end = 8.dp)) {
+                            Icon(Icons.Default.Info, contentDescription = "Info", modifier = Modifier.size(28.dp))
+                        }
                     }
-                ) {
-                    Icon(Icons.Default.Edit, contentDescription = "Bearbeiten")
+                )
+            },
+            // FAB nur anzeigen, wenn aktueller User der Setter ist
+            floatingActionButton = {
+                val token = getTokenFromPrefs(context)
+                val currentUserId = token?.let { getUserIdFromToken(it) }
+
+                if ( boulder?.createdBy == currentUserId) {
+                    FloatingActionButton(
+                        onClick = {
+                            val encodedUri = Uri.encode(imageUri)
+                            navController.navigate(
+                                "create_boulder/$spraywallId?imageUri=$encodedUri&mode=edit&boulderId=$boulderId"
+                            )
+                        }
+                    ) {
+                        Icon(Icons.Default.Edit, contentDescription = "Bearbeiten")
+                    }
+                }
+            },
+            bottomBar = {
+
+                BottomAppBar(
+                    containerColor = BarColor,
+                    contentColor = Color.White,
+                    tonalElevation = 0.dp,
+                    contentPadding = PaddingValues(horizontal = 12.dp)   ) {
+
+                    val iconSize = 35.dp
+
+                    //Prev Button
+                    IconButton(enabled = prevId != null, onClick = {
+                        prevId?.let { navController.navigate("view_boulder/$it/$spraywallId/${Uri.encode(imageUri)}"){
+                            launchSingleTop = true
+                        } }
+                    }) {
+                        Icon(Icons.Default.NavigateBefore, contentDescription = "Vorheriger Boulder", modifier = Modifier.size(iconSize))
+                    }
+
+                    Spacer(Modifier.weight(1f))
+
+
+                    //Boulder eintragen Button
+                    IconButton(
+                        enabled = boulder?.id != null,
+                        onClick = { showTickDialog = true }
+                    ) {
+                        Icon(Icons.Default.Done, contentDescription = "Eintragen", modifier = Modifier.size(iconSize))
+                    }
+
+
+
+                    Spacer(Modifier.weight(1f))
+
+
+                    // Next Button
+                    IconButton(enabled = nextId != null, onClick = {
+                        nextId?.let { navController.navigate("view_boulder/$it/$spraywallId/${Uri.encode(imageUri)}"){
+                            launchSingleTop = true
+                        } }
+                    }) {
+                        Icon(
+                            Icons.Default.NavigateNext,
+                            contentDescription = "Nächster Boulder",
+                            modifier = Modifier.size(iconSize)
+                        )                }
                 }
             }
-        },
-        bottomBar = {
-
-            BottomAppBar(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                tonalElevation = 4.dp,
-                contentPadding = PaddingValues(horizontal = 12.dp)   ) {
-
-                val iconSize = 35.dp
-
-                //Prev Button
-                IconButton(enabled = prevId != null, onClick = {
-                    prevId?.let { navController.navigate("view_boulder/$it/$spraywallId/${Uri.encode(imageUri)}"){
-                        launchSingleTop = true
-                    } }
-                }) {
-                    Icon(Icons.Default.NavigateBefore, contentDescription = "Vorheriger Boulder", modifier = Modifier.size(iconSize))
-                }
-
-                Spacer(Modifier.weight(1f))
-
-
-                //Boulder eintragen Button
-                IconButton(
-                    enabled = boulder?.id != null,
-                    onClick = { showTickDialog = true }
-                ) {
-                    Icon(Icons.Default.Done, contentDescription = "Eintragen", modifier = Modifier.size(iconSize))
-                }
 
 
 
-                Spacer(Modifier.weight(1f))
-
-
-                // Next Button
-                IconButton(enabled = nextId != null, onClick = {
-                    nextId?.let { navController.navigate("view_boulder/$it/$spraywallId/${Uri.encode(imageUri)}"){
-                        launchSingleTop = true
-                    } }
-                }) {
-                    Icon(
-                        Icons.Default.NavigateNext,
-                        contentDescription = "Nächster Boulder",
-                        modifier = Modifier.size(iconSize)
-                    )                }
+        ) { padding ->
+            val scale = remember { mutableStateOf(1f) }
+            val pan = remember { mutableStateOf(Offset.Zero) }
+            val tfState = rememberTransformableState { zoom, offset, _ ->
+                scale.value = (scale.value * zoom).coerceIn(1f, 4f)
+                pan.value += offset
             }
-        }
 
-
-
-    ) { padding ->
-        val scale = remember { mutableStateOf(1f) }
-        val pan = remember { mutableStateOf(Offset.Zero) }
-        val tfState = rememberTransformableState { zoom, offset, _ ->
-            scale.value = (scale.value * zoom).coerceIn(1f, 4f)
-            pan.value += offset
-        }
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .transformable(tfState)
-        ) {
             Box(
                 modifier = Modifier
-                    .graphicsLayer {
-                        transformOrigin = TransformOrigin.Center
-                        scaleX = scale.value
-                        scaleY = scale.value
-                        translationX = pan.value.x
-                        translationY = pan.value.y
-                    }
-                    .align(Alignment.Center)
+                    .fillMaxSize()
+                    .padding(padding)
+                    .transformable(tfState)
             ) {
                 Box(
                     modifier = Modifier
-                        .aspectRatio(aspect)
-                        .fillMaxHeight()
-                        .onGloballyPositioned { laidOut = it.size }
+                        .graphicsLayer {
+                            transformOrigin = TransformOrigin.Center
+                            scaleX = scale.value
+                            scaleY = scale.value
+                            translationX = pan.value.x
+                            translationY = pan.value.y
+                        }
+                        .align(Alignment.Center)
                 ) {
-                    if (imageUri.isNotBlank()) {
-                        AsyncImage(
-                            model = ImageRequest.Builder(context)
-                                .data(imageUri)
-                                .size(Size.ORIGINAL)
-                                .build(),
-                            contentDescription = "Boulder",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Fit
-                        )
-                    } else {
-                        Text(
-                            "Kein Bild verfügbar",
-                            modifier = Modifier.align(Alignment.Center)
-                        )
-                    }
+                    Box(
+                        modifier = Modifier
+                            .aspectRatio(aspect)
+                            .fillMaxHeight()
+                            .onGloballyPositioned { laidOut = it.size }
+                    ) {
+                        if (imageUri.isNotBlank()) {
+                            AsyncImage(
+                                model = ImageRequest.Builder(context)
+                                    .data(imageUri)
+                                    .size(Size.ORIGINAL)
+                                    .build(),
+                                contentDescription = "Boulder",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Fit
+                            )
+                        } else {
+                            Text(
+                                "Kein Bild verfügbar",
+                                modifier = Modifier.align(Alignment.Center)
+                            )
+                        }
 
-                    // Holds aus ViewModel zeichnen
-                    uiState.boulder?.holds?.forEach { hold ->
-                        val color = HoldType.valueOf(hold.type).color
-                        val posX = hold.x * laidOut.width
-                        val posY = hold.y * laidOut.height
+                        // Holds aus ViewModel zeichnen
+                        uiState.boulder?.holds?.forEach { hold ->
+                            val color = HoldType.valueOf(hold.type).color
+                            val posX = hold.x * laidOut.width
+                            val posY = hold.y * laidOut.height
 
-                        Box(
-                            modifier = Modifier
-                                .offset {
-                                    IntOffset(
-                                        (posX - markerRadiusPx).roundToInt(),
-                                        (posY - markerRadiusPx).roundToInt()
-                                    )
-                                }
-                                .size(markerSizeDp)
-                                .drawBehind {
-                                    drawCircle(color = Color.White, style = Stroke(6.dp.toPx()))
-                                    drawCircle(color = color, style = Stroke(3.dp.toPx()))
-                                }
-                        )
+                            Box(
+                                modifier = Modifier
+                                    .offset {
+                                        IntOffset(
+                                            (posX - markerRadiusPx).roundToInt(),
+                                            (posY - markerRadiusPx).roundToInt()
+                                        )
+                                    }
+                                    .size(markerSizeDp)
+                                    .drawBehind {
+                                        drawCircle(color = Color.White, style = Stroke(6.dp.toPx()))
+                                        drawCircle(color = color, style = Stroke(3.dp.toPx()))
+                                    }
+                            )
 
 
+                        }
                     }
                 }
             }
         }
+
+
+
+
     }
+
+
 
     // Info-Dialog
     if (showInfo) {

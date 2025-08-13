@@ -2,6 +2,7 @@ package com.example.sprayconnectapp.ui.screens.Profile
 
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -20,12 +21,15 @@ import com.example.sprayconnectapp.data.dto.UserProfile
 import com.example.sprayconnectapp.ui.screens.BottomNavigationBar
 
 import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.colorResource
+import com.example.sprayconnectapp.R
 import com.example.sprayconnectapp.util.getPrivateImageFileByName
 import com.example.sprayconnectapp.util.localOutputNameFromPreview
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,12 +47,44 @@ fun ProfileScreen(navController: NavController) {
         viewModel.loadMyBoulders(context)
     }
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
+    val BarColor = colorResource(id = R.color.hold_type_bar)
+
+
+    // Farbverlauf Hintergrund
+    val screenBg = Brush.verticalGradient(
+        colors = listOf(
+            Color(0xFF53535B),
+            Color(0xFF767981),
+            Color(0xFFA8ABB2)
+        )
+    )
+
+
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(screenBg)
+    ){
+
+
+
+
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                CenterAlignedTopAppBar(
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = BarColor,
+                        scrolledContainerColor = BarColor,
+                        titleContentColor = Color.White,
+                        navigationIconContentColor = Color.White,
+                        actionIconContentColor = Color.White
+
+                    ),
                     title = { Text("Mein Profil") },
                     navigationIcon = {
-                        IconButton(onClick = { navController.popBackStack() }) {
+                        IconButton(onClick = { navController.popBackStack() }, ) {
                             Icon(Icons.Default.ArrowBack, contentDescription = "Zurück")
                         }
                     },
@@ -63,48 +99,53 @@ fun ProfileScreen(navController: NavController) {
                         }
                     }
 
-            )
+                )
 
-        },
-        bottomBar = { BottomNavigationBar(navController) }
-    ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item {
-                when {
-                    isLoading -> {
-                        Box(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
+            },
+            bottomBar = { BottomNavigationBar(navController) }
+        ) { innerPadding ->
+            LazyColumn(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item {
+                    when {
+                        isLoading -> {
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
                         }
-                    }
 
-                    error != null -> {
-                        Text("Fehler: $error", color = MaterialTheme.colorScheme.error)
-                    }
+                        error != null -> {
+                            Text("Fehler: $error", color = MaterialTheme.colorScheme.error)
+                        }
 
-                    profile != null -> {
-                        ProfileCard(profile = profile!!, navController = navController)
-                        Spacer(modifier = Modifier.height(17.dp))
+                        profile != null -> {
+                            ProfileCard(profile = profile!!, navController = navController)
+                            Spacer(modifier = Modifier.height(17.dp))
 
-                        BoulderListCard(boulders = boulders, navController = navController)
+                            BoulderListCard(boulders = boulders, navController = navController)
 
-                    }
+                        }
 
-                    else -> {
-                        Text("Keine Profildaten vorhanden.")
+                        else -> {
+                            Text("Keine Profildaten vorhanden.")
+                        }
                     }
                 }
             }
         }
+
+
+
     }
+
 }
 
 
@@ -118,8 +159,7 @@ fun ProfileInfoRow(label: String, value: String) {
     ) {
         Text(
             text = "$label:",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary
+            style = MaterialTheme.typography.titleMedium
         )
         Text(
             text = value,
@@ -150,6 +190,10 @@ fun ProfileCard(profile: UserProfile, navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
             Button(
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colorResource(R.color.button_normal),
+                    contentColor = Color.White
+                ),
                 onClick = { navController.navigate("editProfile") },
                 modifier = Modifier.fillMaxWidth()
             ) {

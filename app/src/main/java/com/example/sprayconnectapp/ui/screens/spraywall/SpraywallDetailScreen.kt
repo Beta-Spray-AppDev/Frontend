@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Build
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.core.content.ContextCompat
 
 // Compose
@@ -52,10 +53,11 @@ import androidx.compose.runtime.LaunchedEffect
 
 // Icons
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.colorResource
+import com.example.sprayconnectapp.R
 import com.example.sprayconnectapp.ui.screens.BottomNavigationBar
 
 
@@ -121,67 +123,90 @@ fun SpraywallDetailScreen(
 
     val encodedGymName = Uri.encode(gymName)
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text(text = gymName) },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Zurück")
+    val BarColor = colorResource(id = R.color.hold_type_bar)
+
+
+    // Farbverlauf Hintergrund
+    val screenBg = Brush.verticalGradient(
+        colors = listOf(
+            Color(0xFF53535B),
+            Color(0xFF767981),
+            Color(0xFFA8ABB2)
+        )
+    )
+
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(screenBg)
+    ){
+
+
+
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = { Text(text = gymName) },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = BarColor,
+                        scrolledContainerColor = BarColor,
+                        titleContentColor = Color.White,
+                        navigationIconContentColor = Color.White,
+                        actionIconContentColor = Color.White
+
+                    ),
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Zurück")
+                        }
+                    },
+                    actions = {
+                        IconButton(
+                            onClick = { navController.navigate("addSpraywall/$gymId/$encodedGymName") }
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = "Spraywall hinzufügen")
+                        }
                     }
-                },
-                actions = {
-                    IconButton(
-                        onClick = { navController.navigate("addSpraywall/$gymId/$encodedGymName") }
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = "Spraywall hinzufügen")
-                    }
-                }
-            )
-        }
-        ,floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    navController.navigate("addSpraywall/$gymId/${Uri.encode(gymName)}")
-                },
-                containerColor = Color(0xFF26C6DA),
-                contentColor = Color.White,
-                elevation = FloatingActionButtonDefaults.elevation(
-                    defaultElevation = 8.dp,
-                    pressedElevation = 12.dp
                 )
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Neue Spraywall hinzufügen")
             }
-        },
-        bottomBar = { BottomNavigationBar(navController) }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .padding(16.dp)
-                .fillMaxSize()
-        ) {
-            when {
-                isLoading -> CircularProgressIndicator()
-                errorMessage != null -> Text(
-                    text = errorMessage ?: "Unbekannter Fehler",
-                    color = MaterialTheme.colorScheme.error
-                )
-                spraywalls.isEmpty() -> Text("Keine Spraywalls gefunden.")
-                else -> {
-                    LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items(spraywalls) { spraywall ->
-                            SpraywallCard(
-                                spraywall = spraywall,
-                                onClick = { startDownloadAndOpen(spraywall) }
-                            )
+            ,
+            bottomBar = { BottomNavigationBar(navController) }
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .padding(16.dp)
+                    .fillMaxSize()
+            ) {
+                when {
+                    isLoading -> CircularProgressIndicator()
+                    errorMessage != null -> Text(
+                        text = errorMessage ?: "Unbekannter Fehler",
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    spraywalls.isEmpty() -> Text("Keine Spraywalls gefunden.")
+                    else -> {
+                        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            items(spraywalls) { spraywall ->
+                                SpraywallCard(
+                                    spraywall = spraywall,
+                                    onClick = { startDownloadAndOpen(spraywall) }
+                                )
+                            }
                         }
                     }
                 }
             }
         }
+
+
+
     }
+
+
+
 }
 
 @Composable

@@ -60,6 +60,7 @@ dependencies {
     implementation(libs.androidx.foundation)
     implementation(libs.material)
     implementation(libs.androidx.animation.core)
+    implementation(libs.androidx.foundation.layout)
     ksp("androidx.room:room-compiler:2.6.1")
 
     implementation(libs.androidx.core.ktx)
@@ -70,6 +71,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
@@ -80,6 +82,7 @@ dependencies {
     implementation("androidx.compose.ui:ui:1.6.1")
     implementation("androidx.compose.ui:ui-text:1.6.1")
     implementation("androidx.exifinterface:exifinterface:1.3.7")
+
 
     implementation("androidx.compose.material:material-icons-extended")
 

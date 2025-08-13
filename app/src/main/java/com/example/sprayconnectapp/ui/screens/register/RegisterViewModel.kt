@@ -47,7 +47,7 @@ class RegisterViewModel : ViewModel() {
     fun onUsernameChange(new: String) {
         username = new
         usernameError = null // Fehlermeldung zurücksetzen
-        message = ""         
+        message = ""
     }
 
     fun registerUser(context: Context, onLoginSuccess: () -> Unit) {
