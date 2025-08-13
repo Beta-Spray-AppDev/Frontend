@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Button
@@ -49,6 +50,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -62,6 +64,9 @@ fun LoginScreen(
 
     val headerHeight = 240.dp
     val cardOverlap  = 40.dp
+
+
+    val headerShape = RoundedCornerShape(bottomStart = 36.dp, bottomEnd = 36.dp)
 
 
 
@@ -90,13 +95,28 @@ fun LoginScreen(
         Surface(
             tonalElevation = 0.dp,
             shadowElevation = 0.dp,
-            color = colorResource(id = R.color.button_normal),
-            shape = RoundedCornerShape(bottomStart = 36.dp, bottomEnd = 36.dp),
+            color = Color.Transparent,
+            shape = headerShape,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(380.dp)
                 .align(Alignment.TopCenter)
         ) {
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(headerShape)
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFF7FBABF),
+                                Color(0xFF3F888F),
+                                Color(0xFF2B5E63)
+                            )
+                        )
+                    )
+            ){
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Top,
@@ -121,6 +141,8 @@ fun LoginScreen(
                     textAlign = TextAlign.Center
                 )
             }
+
+        }
         }
 
 
@@ -132,7 +154,9 @@ fun LoginScreen(
                 .align(Alignment.TopCenter)
                 .offset(y  = headerHeight - cardOverlap), // Card schwebt in Header hinein
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFFDFDFE))
+            colors = CardDefaults.cardColors(
+                containerColor = Color(0xFFE0E0E0) // helles Grau
+            )
         ) {
             Column(
                 modifier = Modifier
@@ -161,7 +185,9 @@ fun LoginScreen(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF00796B),
                         cursorColor = Color(0xFF00796B),
-                        focusedLabelColor = Color(0xFF00796B)
+                        focusedLabelColor = Color(0xFF00796B),
+                        unfocusedContainerColor = Color.White,
+                        focusedContainerColor = Color.White
                     )
                 )
                 if (viewModel.usernameError != null) {
@@ -200,7 +226,9 @@ fun LoginScreen(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF00796B),
                         cursorColor = Color(0xFF00796B),
-                        focusedLabelColor = Color(0xFF00796B)
+                        focusedLabelColor = Color(0xFF00796B),
+                        unfocusedContainerColor = Color.White,
+                        focusedContainerColor = Color.White
                     )
                 )
                 if (viewModel.passwordError != null) {
@@ -221,7 +249,8 @@ fun LoginScreen(
                     onClick = { viewModel.loginUser(context) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(48.dp),
+                        .height(48.dp)
+                        .wrapContentWidth(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = colorResource(R.color.button_normal),
                         contentColor = Color.White
@@ -237,7 +266,7 @@ fun LoginScreen(
                 if (viewModel.message.isNotBlank()) {
                     Text(
                         text = viewModel.message,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = colorResource(id = R.color.button_normal),
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(top = 4.dp)
                     )
@@ -256,5 +285,14 @@ fun LoginScreen(
                 }
             }
         }
+        Text(
+            text = "Powered by MaltaCloud",
+            color = Color.White.copy(alpha = 0.6f),
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 12.dp)
+        )
+
     }
 }

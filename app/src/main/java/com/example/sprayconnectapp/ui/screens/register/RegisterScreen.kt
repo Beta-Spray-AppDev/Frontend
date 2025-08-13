@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
@@ -40,6 +41,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -75,6 +77,10 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
     val cardOverlap  = 40.dp // Überlappung der Card nach unten
 
 
+    val headerShape = RoundedCornerShape(bottomStart = 36.dp, bottomEnd = 36.dp)
+
+
+
 
 
 
@@ -87,13 +93,28 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
         Surface(
             tonalElevation = 0.dp,
             shadowElevation = 0.dp,
-            color = colorResource(id = R.color.button_normal),
+            color = Color.Transparent,
             shape = RoundedCornerShape(bottomStart = 36.dp, bottomEnd = 36.dp),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(380.dp)
                 .align(Alignment.TopCenter)
-        ){
+        ) {
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(headerShape)
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFF7FBABF),
+                                Color(0xFF3F888F),
+                                Color(0xFF2B5E63)
+                            )
+                        )
+                    )
+            ){
 
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -101,7 +122,7 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(top = 48.dp) // Abstand von oben
-            ){
+            ) {
 
 
                 // App Logo
@@ -121,6 +142,7 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
                     textAlign = TextAlign.Center
                 )
             }
+        }
 
         }
 
@@ -128,7 +150,7 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
         Card(
             shape = RoundedCornerShape(24.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFFDFDFE)),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFE0E0E0)), // helles Grau
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
@@ -166,7 +188,9 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF00796B),
                         cursorColor = Color(0xFF00796B),
-                        focusedLabelColor = Color(0xFF00796B)
+                        focusedLabelColor = Color(0xFF00796B),
+                        unfocusedContainerColor = Color.White,
+                        focusedContainerColor = Color.White    
                     ),
                     supportingText = {
                         // Fehlermeldung falls vorhanden
@@ -193,7 +217,9 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF00796B),
                         cursorColor = Color(0xFF00796B),
-                        focusedLabelColor = Color(0xFF00796B)
+                        focusedLabelColor = Color(0xFF00796B),
+                        unfocusedContainerColor = Color.White,
+                        focusedContainerColor = Color.White
                     ),
                     supportingText = {
                         if (viewModel.emailError != null) {
@@ -228,7 +254,9 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF00796B),
                         cursorColor = Color(0xFF00796B),
-                        focusedLabelColor = Color(0xFF00796B)
+                        focusedLabelColor = Color(0xFF00796B),
+                        unfocusedContainerColor = Color.White,
+                        focusedContainerColor = Color.White
                     )
                 )
 
@@ -248,7 +276,8 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(48.dp),
+                        .height(48.dp)
+                        .wrapContentWidth(),
                     shape = RoundedCornerShape(50),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = colorResource(R.color.button_normal),
@@ -266,7 +295,7 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
                 if (viewModel.message.isNotBlank()) {
                     Text(
                         text = viewModel.message,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = colorResource(id = R.color.button_normal),
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(top = 4.dp)
                     )
@@ -277,7 +306,7 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
 
 
                 Row {
-                    Text("Schon registriert?")
+                    Text("Schon registriert? ")
                     Text(
                         text = "Login",
                         color = colorResource(id = R.color.button_normal),
@@ -292,6 +321,15 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
 
 
         }
+
+        Text(
+            text = "Powered by MaltaCloud",
+            color = Color.White.copy(alpha = 0.6f),
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 12.dp)
+        )
 
 
 

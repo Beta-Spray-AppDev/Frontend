@@ -196,6 +196,7 @@ fun ProfileCard(profile: UserProfile, navController: NavController) {
                 ),
                 onClick = { navController.navigate("editProfile") },
                 modifier = Modifier.fillMaxWidth()
+                    .wrapContentWidth()
             ) {
                 Text("Profil bearbeiten")
             }
