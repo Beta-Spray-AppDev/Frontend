@@ -1,6 +1,7 @@
 package com.example.sprayconnectapp.ui.screens.Profile
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -23,6 +24,8 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import com.example.sprayconnectapp.util.getPrivateImageFileByName
+import com.example.sprayconnectapp.util.localOutputNameFromPreview
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -181,14 +184,14 @@ fun BoulderCard(boulder: BoulderDTO, onClick: (() -> Unit)? = null) {
 
 @Composable
 fun BoulderListCard(boulders: List<BoulderDTO>, navController: NavController) {
+    val context = LocalContext.current
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(6.dp)
     ) {
         Column(
-            modifier = Modifier
-                .padding(24.dp)
-                .fillMaxWidth(),
+            modifier = Modifier.padding(24.dp).fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text("Meine Boulder", style = MaterialTheme.typography.headlineSmall)
@@ -199,13 +202,38 @@ fun BoulderListCard(boulders: List<BoulderDTO>, navController: NavController) {
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     boulders.forEach { boulder ->
-                        BoulderCard(boulder,
-                            onClick = {
-                                val imageUri = boulder.spraywallImageUrl ?: ""
-                                val route = "view_boulder/${boulder.id}/${boulder.spraywallId}/${Uri.encode(imageUri)}"
+                        BoulderCard(boulder) {
+                            // 1) Preview-URL -> lokalen Dateinamen bestimmen
+                            val preview = (boulder.spraywallImageUrl ?: "").trim()
+                            val token = Regex("/s/([^/]+)/").find(preview)?.groupValues?.get(1)
+
+                            // Wenn wir keine valide Preview haben, brech ab (kein Download hier!)
+                            if (preview.isEmpty() || token.isNullOrEmpty()) {
+
+                                Toast.makeText(context, "Kein lokales Bild gefunden", Toast.LENGTH_SHORT).show()
+                                val route = "view_boulder/${boulder.id}/${boulder.spraywallId}/"
                                 navController.navigate(route)
+                                return@BoulderCard
+                            }
+
+                            // 2) Lokale Datei wie in SpraywallDetail benennen und nachschauen
+                            val outName = localOutputNameFromPreview(preview, token)
+                            val file = getPrivateImageFileByName(context, outName)
+
+                            val encodedImage = if (file.exists()) {
+                                Uri.encode(Uri.fromFile(file).toString())
+                            } else {
+                                // Kein Download im Profil: ohne Bild weiter
+                                ""
+                            }
+
+                            val route = if (encodedImage.isNotEmpty()) {
+                                "view_boulder/${boulder.id}/${boulder.spraywallId}/$encodedImage"
+                            } else {
+                                "view_boulder/${boulder.id}/${boulder.spraywallId}/"
+                            }
+                            navController.navigate(route)
                         }
-                        )
                     }
                 }
             }

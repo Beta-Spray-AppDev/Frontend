@@ -3,6 +3,7 @@ package com.example.sprayconnectapp.ui.screens.BoulderView
 import androidx.compose.runtime.Composable
 
 import android.graphics.BitmapFactory
+import android.media.ExifInterface
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.rememberTransformableState
@@ -38,6 +39,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -106,6 +108,10 @@ fun ViewBoulderScreen(
     val context = LocalContext.current
     val uiState by viewModel.uiState
     val boulder = uiState.boulder
+    val density = LocalDensity.current
+    val markerSizeDp = 32.dp
+    val markerRadiusPx = with(density) { (markerSizeDp / 2).toPx() }
+
 
     //Prev & Next berechnen
     val currentId = boulder?.id
@@ -137,17 +143,13 @@ fun ViewBoulderScreen(
 
     LaunchedEffect(imageUri) {
         if (imageUri.isBlank()) return@LaunchedEffect
-        val uri = imageUri.toUri()
-        if(uri.scheme == "content" || uri.scheme == "file"){
-            val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            context.contentResolver.openInputStream(imageUri.toUri())?.use {
-                BitmapFactory.decodeStream(it, null, opts)
-            }
-            imgW = if (opts.outWidth > 0) opts.outWidth else 1
-            imgH = if (opts.outHeight > 0) opts.outHeight else 1
-        }
+
+        val (w, h) = readImageSizeRespectingExif(context, imageUri.toUri())
+        imgW = w
+        imgH = h
 
     }
+
 
     val aspect = remember(imgW, imgH) { imgW.toFloat() / imgH.toFloat() }
 
@@ -312,8 +314,13 @@ fun ViewBoulderScreen(
 
                         Box(
                             modifier = Modifier
-                                .offset { IntOffset(posX.roundToInt(), posY.roundToInt()) }
-                                .size(32.dp)
+                                .offset {
+                                    IntOffset(
+                                        (posX - markerRadiusPx).roundToInt(),
+                                        (posY - markerRadiusPx).roundToInt()
+                                    )
+                                }
+                                .size(markerSizeDp)
                                 .drawBehind {
                                     drawCircle(color = Color.White, style = Stroke(6.dp.toPx()))
                                     drawCircle(color = color, style = Stroke(3.dp.toPx()))
@@ -426,6 +433,36 @@ private fun formatDate(ms: Long?): String {
 
 
 
+
+
+
+
+private fun readImageSizeRespectingExif(
+    context: android.content.Context,
+    uri: android.net.Uri
+): Pair<Int, Int> {
+    val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    context.contentResolver.openInputStream(uri)?.use { input ->
+        BitmapFactory.decodeStream(input, null, opts)
+    }
+    var w = if (opts.outWidth > 0) opts.outWidth else 1
+    var h = if (opts.outHeight > 0) opts.outHeight else 1
+
+    val orientation = context.contentResolver.openInputStream(uri)?.use { input ->
+        ExifInterface(input).getAttributeInt(
+            ExifInterface.TAG_ORIENTATION,
+            ExifInterface.ORIENTATION_NORMAL
+        )
+    } ?: ExifInterface.ORIENTATION_NORMAL
+
+    val needsSwap = orientation == ExifInterface.ORIENTATION_ROTATE_90 ||
+            orientation == ExifInterface.ORIENTATION_TRANSPOSE ||
+            orientation == ExifInterface.ORIENTATION_TRANSVERSE ||
+            orientation == ExifInterface.ORIENTATION_ROTATE_270
+    if (needsSwap) { val t = w; w = h; h = t }
+
+    return w to h
+}
 
 
 
