@@ -18,4 +18,6 @@ interface GymApi {
     suspend fun createGym(@Body gym: CreateGymDTO): Response<Unit>
 
 
+
+
 }

@@ -59,6 +59,7 @@ dependencies {
     implementation(libs.androidx.compiler)
     implementation(libs.androidx.foundation)
     implementation(libs.material)
+    implementation(libs.androidx.animation.core)
     ksp("androidx.room:room-compiler:2.6.1")
 
     implementation(libs.androidx.core.ktx)
@@ -78,6 +79,7 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("androidx.compose.ui:ui:1.6.1")
     implementation("androidx.compose.ui:ui-text:1.6.1")
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
 
     implementation("androidx.compose.material:material-icons-extended")
 

@@ -55,11 +55,10 @@ class HomeViewModel : ViewModel() {
                     if (response.isSuccessful) {
                         val gymList = response.body() ?: emptyList()
 
-                        // Speichern in Room
-                        gymList.forEach { gym ->
-                            gymRepository.saveGymFromBackend(gym)
-                        }
+                        // EINZIGER CALL: upsert + prune
+                        gymRepository.syncGymsFromBackend(gymList, keepPinned = true)
 
+                        // frisch aus Room lesen
                         val localGyms = gymRepository.getAllGyms()
                         gyms.value = localGyms.map { entity ->
                             Gym(
@@ -72,7 +71,6 @@ class HomeViewModel : ViewModel() {
                                 lastUpdated = entity.lastUpdated
                             )
                         }
-
                     } else {
                         errorMessage.value = "Fehler: ${response.code()}"
                         val localGyms = gymRepository.getAllGyms()

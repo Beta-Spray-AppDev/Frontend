@@ -114,6 +114,46 @@ class CreateBoulderViewModel : ViewModel() {
         }
     }
 
+    fun removeHold(id: String) {
+        _uiState.value = _uiState.value.copy(
+            holds = _uiState.value.holds.filterNot { it.id == id },
+            selectedHoldId = if (_uiState.value.selectedHoldId == id) null else _uiState.value.selectedHoldId
+        )
+    }
+
+    // ViewModel
+    fun deleteBoulder(
+        context: Context,
+        boulderId: String,
+        onDone: () -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val res = RetrofitInstance.getBoulderApi(context).deleteBoulder(boulderId)
+                if (res.isSuccessful) {
+                    _uiState.value = _uiState.value.copy(
+                        boulder = null,
+                        holds = emptyList(),
+                        selectedHoldId = null
+                    )
+                    onDone()
+                } else {
+                    _errorMessage.value = "Löschen fehlgeschlagen (${res.code()})"
+                }
+            } catch (t: Throwable) {
+                _errorMessage.value = t.message
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+
+
+
+
+
 
 
     fun tickBoulder(context: Context, boulderId: String) {
