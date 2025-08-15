@@ -116,6 +116,7 @@ fun SpraywallDetailScreen(
     }
 
     LaunchedEffect(gymId) {
+        viewModel.initRepository(context)
         viewModel.loadSpraywalls(context, gymId)
     }
 
@@ -163,13 +164,15 @@ fun SpraywallDetailScreen(
                 .fillMaxSize()
         ) {
             when {
-                isLoading -> CircularProgressIndicator()
-                errorMessage != null -> Text(
-                    text = errorMessage ?: "Unbekannter Fehler",
-                    color = MaterialTheme.colorScheme.error
-                )
-                spraywalls.isEmpty() -> Text("Keine Spraywalls gefunden.")
-                else -> {
+                isLoading -> {
+                    CircularProgressIndicator()
+                }
+
+                spraywalls.isNotEmpty() -> {
+                    errorMessage?.let {
+                        Text(text = it, color = MaterialTheme.colorScheme.error)
+                        Spacer(Modifier.height(8.dp))
+                    }
                     LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         items(spraywalls) { spraywall ->
                             SpraywallCard(
@@ -179,7 +182,18 @@ fun SpraywallDetailScreen(
                         }
                     }
                 }
+
+                // Nur wenn wirklich keine Daten da sind, die Fehlermeldung groß zeigen
+                errorMessage != null -> {
+                    Text(text = errorMessage ?: "Unbekannter Fehler",
+                        color = MaterialTheme.colorScheme.error)
+                }
+
+                else -> {
+                    Text("Keine Spraywalls gefunden.")
+                }
             }
+
         }
     }
 }

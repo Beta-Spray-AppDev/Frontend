@@ -30,15 +30,16 @@ fun BoulderListScreen(
     imageUri: String?
 ) {
     val context = LocalContext.current
-    val viewModel: BoulderListViewmodel = viewModel()
+    val viewModel: BoulderListViewModel = viewModel()
 
     val boulders by viewModel.boulders
     val isLoading by viewModel.isLoading
     val errorMessage by viewModel.errorMessage
 
-    // Lade Boulder bei Start
-    LaunchedEffect(Unit) {
-        viewModel.loadBoulders(context, spraywallId)
+
+    LaunchedEffect(spraywallId) {
+        viewModel.initRepository(context)
+        viewModel.load(context, spraywallId)
     }
 
     Scaffold(
@@ -56,8 +57,9 @@ fun BoulderListScreen(
             FloatingActionButton(
                 onClick = {
                     val encodedUri = Uri.encode(imageUri)
-                    navController.navigate("create_boulder/$spraywallId?imageUri=$encodedUri&mode=create")
-
+                    navController.navigate(
+                        "create_boulder/$spraywallId?imageUri=$encodedUri&mode=create"
+                    )
                 },
                 containerColor = Color(0xFF26C6DA),
                 contentColor = Color.White,
@@ -69,25 +71,23 @@ fun BoulderListScreen(
                 Icon(Icons.Default.Add, contentDescription = "Neuen Boulder hinzufügen")
             }
         }
-
-
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
                 .padding(16.dp)
         ) {
-            when {
-                isLoading -> {
-                    CircularProgressIndicator()
+            if (isLoading) {
+                CircularProgressIndicator()
+            } else {
+                if (errorMessage != null) {
+                    Text("Hinweis: $errorMessage", color = MaterialTheme.colorScheme.error)
+                    Spacer(Modifier.height(8.dp))
                 }
-                errorMessage != null -> {
-                    Text("Fehler: $errorMessage")
-                }
-                boulders.isEmpty() -> {
+
+                if (boulders.isEmpty()) {
                     Text("Keine Boulder gefunden.")
-                }
-                else -> {
+                } else {
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
@@ -98,13 +98,11 @@ fun BoulderListScreen(
                                     val encoded = Uri.encode(imageUri ?: "")
                                     navController.navigate("view_boulder/$id/$spraywallId/$encoded")
                                 },
-
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp),
                                 shape = RoundedCornerShape(12.dp),
                                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-
                             ) {
                                 Column(modifier = Modifier.padding(16.dp)) {
                                     Text(
@@ -119,7 +117,6 @@ fun BoulderListScreen(
                                 }
                             }
                         }
-
                     }
                 }
             }
