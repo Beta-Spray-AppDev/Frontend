@@ -25,9 +25,19 @@ class RegisterViewModel : ViewModel() {
     var message by mutableStateOf("") // Rückmeldung in UI
 
 
+    var usernameError by mutableStateOf<String?>(null)
+        private set
+    var emailError by mutableStateOf<String?>(null)
+        private set
+
+
+
+
 
     fun onEmailChange(new: String) {
         email = new
+        emailError = null // Fehlermeldung zurücksetzen
+        message = ""
     }
 
     fun onPasswordChange(new: String) {
@@ -36,6 +46,8 @@ class RegisterViewModel : ViewModel() {
 
     fun onUsernameChange(new: String) {
         username = new
+        usernameError = null // Fehlermeldung zurücksetzen
+        message = ""
     }
 
     fun registerUser(context: Context, onLoginSuccess: () -> Unit) {
@@ -73,14 +85,18 @@ class RegisterViewModel : ViewModel() {
 
                     }
                     else {
-                        message = "Registrierung ok, aber Login fehlgeschlagen: ${loginResponse.code()}"
+                        message = "Registrierung ok, aber Login fehlgeschlagen"
                     }
 
 
 
                 } else {
-                    message = "Registrierung fehlgeschlagen: ${response.code()}"
-                }
+                    val errorBody = response.errorBody()?.string()?.trim().orEmpty()
+                    when (errorBody) {
+                        "username_taken" -> usernameError = "Benutzername ist bereits vergeben."
+                        "email_taken" -> emailError = "E-Mail ist bereits vergeben."
+                        else -> message = "Registrierung fehlgeschlagen: ${response.code()}"
+                    }                }
             } catch (e: Exception) {
                 message = "Netzwerkfehler: ${e.localizedMessage}"
                 Log.e("RegisterViewModel", "Fehler bei Registrierung", e)

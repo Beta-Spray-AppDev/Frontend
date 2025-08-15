@@ -14,5 +14,7 @@ data class BoulderDTO(
     val createdAt: Long? = null,
     val lastUpdated: Long? = null,
     val createdByUsername: String? = null,
-    val spraywallImageUrl: String? = null
+    val spraywallImageUrl: String? = null,
+    val gymName: String? = null,
+    val spraywallName: String? = null
 )

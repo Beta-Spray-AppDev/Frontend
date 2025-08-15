@@ -1,6 +1,7 @@
 package com.example.sprayconnectapp.ui.screens.Profile
 
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -21,10 +22,12 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.ImeAction
-
+import com.example.sprayconnectapp.R
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,157 +66,199 @@ fun EditProfileScreen(navController: NavController) {
         }
     }
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Profil bearbeiten") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Zurück")
+    val BarColor = colorResource(id = R.color.hold_type_bar)
+
+
+
+    //Farbverlauf
+    val screenBg = Brush.verticalGradient(
+        colors = listOf(
+            Color(0xFF53535B),
+            Color(0xFF767981),
+            Color(0xFFA8ABB2)
+        )
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(screenBg)
+    ){
+
+
+
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                CenterAlignedTopAppBar(
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = BarColor,
+                        scrolledContainerColor = BarColor,
+                        titleContentColor = Color.White,
+                        navigationIconContentColor = Color.White,
+                        actionIconContentColor = Color.White
+
+                    ),
+                    title = { Text("Profil bearbeiten") },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Zurück")
+                        }
                     }
-                }
-            )
-        }
-    ) { innerPadding ->
+                )
+            }
+        ) { innerPadding ->
 
 
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .padding(16.dp)
-                .widthIn(max = 560.dp)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(6.dp)
+            Column(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .padding(16.dp)
+                    .widthIn(max = 560.dp)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .padding(24.dp)
-                        .fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(6.dp)
                 ) {
-                    Text("Nutzerdaten bearbeiten", style = MaterialTheme.typography.headlineSmall)
-                    Divider()
-
-                    val tfColors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White,
-                        disabledContainerColor = Color.White,
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black
-                    )
-
-                    // Username Eingabe
-                    OutlinedTextField(
-                        value = username,
-                        onValueChange = { username = it },
-                        label = { Text("Benutzername") },
-                        colors = tfColors,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-
-                    // Email Eingabe
-                    OutlinedTextField(
-                        value = email,
-                        colors = tfColors,
-                        onValueChange = { email = it },
-                        label = { Text("E-Mail") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-
-
-                    // Passwort Eingabe
-                    OutlinedTextField(
-                        shape = RoundedCornerShape(12.dp),
-                        value = password,
-                        colors = tfColors,
-                        onValueChange = { password = it },
-                        label = { Text("Neues Passwort") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        visualTransformation = if (passwordVisible)
-                            VisualTransformation.None
-                        else PasswordVisualTransformation(),
-                        trailingIcon = {
-                            val (icon, desc) =
-                                if (passwordVisible) {
-                                    Icons.Default.VisibilityOff to "Passwort verbergen"
-                                } else {
-                                    Icons.Default.Visibility to "Passwort anzeigen"
-                                }
-
-                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                Icon(icon, contentDescription = desc)
-                            }
-                        },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Password,
-                            imeAction = ImeAction.Done
-                        )
-                    )
-
-                    // Speichern-Button
-                    Button(
-                        onClick = {
-                            viewModel.updateProfile(
-                                context,
-                                username,
-                                email,
-                                password,
-                                onSuccess = {
-
-                                    // Zurücknavigieren + Toast anzeigen
-                                    navController.popBackStack()
-                                    Toast.makeText(
-                                        context,
-                                        "Profil gespeichert ",
-                                        Toast.LENGTH_LONG
-                                    ).show()
-
-                                },
-                                onError = {
-                                    errorMessage = it
-
-                                }
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth()
+                    Column(
+                        modifier = Modifier
+                            .padding(24.dp)
+                            .fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Text("Speichern")
-                    }
+                        Text("Nutzerdaten bearbeiten", style = MaterialTheme.typography.headlineSmall)
+                        Divider()
+
+                        val tfColors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            disabledContainerColor = Color.White,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black
+                        )
+
+                        // Username Eingabe
+                        OutlinedTextField(
+                            value = username,
+                            onValueChange = { username = it },
+                            label = { Text("Benutzername") },
+                            colors = tfColors,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+
+                        // Email Eingabe
+                        OutlinedTextField(
+                            value = email,
+                            colors = tfColors,
+                            onValueChange = { email = it },
+                            label = { Text("E-Mail") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp)
+                        )
 
 
-                    // wie Profil aktualisiert
-                    infoMessage?.let {
-                        Text(it, color = MaterialTheme.colorScheme.primary)
-                    }
+                        // Passwort Eingabe
+                        OutlinedTextField(
+                            shape = RoundedCornerShape(12.dp),
+                            value = password,
+                            colors = tfColors,
+                            onValueChange = { password = it },
+                            label = { Text("Neues Passwort") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            visualTransformation = if (passwordVisible)
+                                VisualTransformation.None
+                            else PasswordVisualTransformation(),
+                            trailingIcon = {
+                                val (icon, desc) =
+                                    if (passwordVisible) {
+                                        Icons.Default.VisibilityOff to "Passwort verbergen"
+                                    } else {
+                                        Icons.Default.Visibility to "Passwort anzeigen"
+                                    }
 
-                    // Fehlertext
-                    errorMessage?.let {
-                        Text(it, color = MaterialTheme.colorScheme.error)
-                    }
+                                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                    Icon(icon, contentDescription = desc)
+                                }
+                            },
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Password,
+                                imeAction = ImeAction.Done
+                            )
+                        )
 
-                    if (isLoading) {
-                        CircularProgressIndicator()
-                    }
+                        // Speichern-Button
+                        Button(
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = colorResource(R.color.button_primary),
+                                contentColor = Color.White
+                            ),
+                            onClick = {
+                                viewModel.updateProfile(
+                                    context,
+                                    username,
+                                    email,
+                                    password,
+                                    onSuccess = {
 
-                    error?.let {
-                        Text("Fehler: $it", color = MaterialTheme.colorScheme.error)
+                                        // Zurücknavigieren + Toast anzeigen
+                                        navController.popBackStack()
+                                        Toast.makeText(
+                                            context,
+                                            "Profil gespeichert ",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+
+                                    },
+                                    onError = {
+                                        errorMessage = it
+
+                                    }
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Speichern")
+                        }
+
+
+                        // wie Profil aktualisiert
+                        infoMessage?.let {
+                            Text(it, color = MaterialTheme.colorScheme.primary)
+                        }
+
+                        // Fehlertext
+                        errorMessage?.let {
+                            Text(it, color = MaterialTheme.colorScheme.error)
+                        }
+
+                        if (isLoading) {
+                            CircularProgressIndicator()
+                        }
+
+                        error?.let {
+                            Text("Fehler: $it", color = MaterialTheme.colorScheme.error)
+                        }
+
                     }
 
                 }
 
             }
 
+
+
         }
 
 
 
+
     }
+
+
+
 }

@@ -1,63 +1,38 @@
 package com.example.sprayconnectapp.ui.screens.spraywall
 
-// Android / System
-import android.app.DownloadManager
-import android.content.IntentFilter
 import android.net.Uri
-import android.os.Build
 import android.util.Log
 import android.widget.Toast
-import androidx.core.content.ContextCompat
-
-// Compose
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
-
-// Navigation + Lifecycle
-import androidx.navigation.NavController
 import androidx.lifecycle.viewmodel.compose.viewModel
-
-// Coil
+import androidx.navigation.NavController
 import coil.compose.AsyncImage
-
-// Dein Model
+import com.example.sprayconnectapp.R
 import com.example.sprayconnectapp.data.dto.SpraywallDTO
-
-// Utils (Download)
-
+import com.example.sprayconnectapp.ui.screens.BottomNavigationBar
 import com.example.sprayconnectapp.util.buildDownloadUrlFromPreview
 import com.example.sprayconnectapp.util.downloadDirectToPrivate
 import com.example.sprayconnectapp.util.getPrivateImageFileByName
 import com.example.sprayconnectapp.util.localOutputNameFromPreview
 import kotlinx.coroutines.launch
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-
-// LaunchedEffect
-import androidx.compose.runtime.LaunchedEffect
-
-// Icons
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import com.example.sprayconnectapp.ui.screens.BottomNavigationBar
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,6 +45,7 @@ fun SpraywallDetailScreen(
     val spraywalls by viewModel.spraywalls
     val isLoading by viewModel.isLoading
     val errorMessage by viewModel.errorMessage
+
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val DL_TAG = "SprayDL"
@@ -121,79 +97,87 @@ fun SpraywallDetailScreen(
     }
 
     val encodedGymName = Uri.encode(gymName)
+    val BarColor = colorResource(id = R.color.hold_type_bar)
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text(text = gymName) },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Zurück")
-                    }
-                },
-                actions = {
-                    IconButton(
-                        onClick = { navController.navigate("addSpraywall/$gymId/$encodedGymName") }
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = "Spraywall hinzufügen")
-                    }
-                }
-            )
-        }
-        ,floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    navController.navigate("addSpraywall/$gymId/${Uri.encode(gymName)}")
-                },
-                containerColor = Color(0xFF26C6DA),
-                contentColor = Color.White,
-                elevation = FloatingActionButtonDefaults.elevation(
-                    defaultElevation = 8.dp,
-                    pressedElevation = 12.dp
-                )
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Neue Spraywall hinzufügen")
-            }
-        },
-        bottomBar = { BottomNavigationBar(navController) }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .padding(16.dp)
-                .fillMaxSize()
-        ) {
-            when {
-                isLoading -> {
-                    CircularProgressIndicator()
-                }
+    val screenBg = Brush.verticalGradient(
+        colors = listOf(
+            Color(0xFF53535B),
+            Color(0xFF767981),
+            Color(0xFFA8ABB2)
+        )
+    )
 
-                spraywalls.isNotEmpty() -> {
-                    errorMessage?.let {
-                        Text(text = it, color = MaterialTheme.colorScheme.error)
-                        Spacer(Modifier.height(8.dp))
-                    }
-                    LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items(spraywalls) { spraywall ->
-                            SpraywallCard(
-                                spraywall = spraywall,
-                                onClick = { startDownloadAndOpen(spraywall) }
-                            )
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(screenBg)
+    ) {
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = { Text(text = gymName) },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = BarColor,
+                        scrolledContainerColor = BarColor,
+                        titleContentColor = Color.White,
+                        navigationIconContentColor = Color.White,
+                        actionIconContentColor = Color.White
+                    ),
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Zurück")
+                        }
+                    },
+                    actions = {
+                        IconButton(
+                            onClick = { navController.navigate("addSpraywall/$gymId/$encodedGymName") }
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = "Spraywall hinzufügen")
                         }
                     }
-                }
+                )
+            },
+            bottomBar = { BottomNavigationBar(navController) }
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .padding(16.dp)
+                    .fillMaxSize()
+            ) {
+                when {
+                    isLoading -> {
+                        CircularProgressIndicator()
+                    }
 
-                // Nur wenn wirklich keine Daten da sind, die Fehlermeldung groß zeigen
-                errorMessage != null -> {
-                    Text(text = errorMessage ?: "Unbekannter Fehler",
-                        color = MaterialTheme.colorScheme.error)
-                }
+                    spraywalls.isNotEmpty() -> {
+                        errorMessage?.let {
+                            Text(text = it, color = MaterialTheme.colorScheme.error)
+                            Spacer(Modifier.height(8.dp))
+                        }
+                        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            items(spraywalls) { spraywall ->
+                                SpraywallCard(
+                                    spraywall = spraywall,
+                                    onClick = { startDownloadAndOpen(spraywall) }
+                                )
+                            }
+                        }
+                    }
 
-                else -> {
-                    Text("Keine Spraywalls gefunden.")
+                    errorMessage != null -> {
+                        Text(
+                            text = errorMessage ?: "Unbekannter Fehler",
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+
+                    else -> {
+                        Text("Keine Spraywalls gefunden.")
+                    }
                 }
             }
-
         }
     }
 }
@@ -203,7 +187,7 @@ private fun SpraywallCard(
     spraywall: SpraywallDTO,
     onClick: () -> Unit
 ) {
-    val cleanUrl = spraywall.photoUrl.trim() // Preview-URL
+    val cleanUrl = spraywall.photoUrl.trim()
     Log.d("SpraywallCard", "URL geladen: [$cleanUrl]")
 
     Card(
@@ -230,5 +214,3 @@ private fun SpraywallCard(
         }
     }
 }
-
-

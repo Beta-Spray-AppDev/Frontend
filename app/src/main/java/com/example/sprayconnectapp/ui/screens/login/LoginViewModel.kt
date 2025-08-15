@@ -26,16 +26,32 @@ class LoginViewModel : ViewModel() {
 
     var message by mutableStateOf("")
 
+    var usernameError by mutableStateOf<String?>(null)
+        private set
+
+    var passwordError by mutableStateOf<String?>(null)
+        private set
+
+
     fun onUsernameChange(new: String) {
         username = new
+        usernameError = null
+        message = ""
     }
 
     fun onPasswordChange(new: String) {
         password = new
+        passwordError = null
+        message = ""
     }
     fun loginUser(context: Context) {
         viewModelScope.launch {
             try {
+                //Reset
+                usernameError = null
+                passwordError = null
+                message = ""
+
                 val request = LoginRequest(
                     username = username,
                     password = password
@@ -47,14 +63,22 @@ class LoginViewModel : ViewModel() {
                     val token = response.body()
 
                     if (!token.isNullOrBlank() && token.startsWith("ey")) {
-                        message = "Login erfolgreich"
                         saveTokenToPrefs(context, token)
+                        message = "Login erfolgreich"
+
                     } else {
                         message = "Login fehlgeschlagen: Ungültige Antwort"
                     }
                 } else {
-                    message = "Login fehlgeschlagen: ${response.code()}"
-                }
+                    val raw = response.errorBody()?.string()?.trim().orEmpty()
+                //invalid credentials von Backend
+                    if (raw.contains("invalid_credentials")) {
+                        // Benutzername ODER Passwort ist falsch
+                        passwordError = "Benutzername oder Passwort ist falsch."
+                        message = ""
+                    } else {
+                        message = "Login fehlgeschlagen (${response.code()})"
+                    }                }
             } catch (e: Exception) {
                 message = "Netzwerkfehler: ${e.localizedMessage}"
                 Log.e("LoginViewModel", "Fehler beim Login", e)
