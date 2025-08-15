@@ -16,5 +16,9 @@ interface SpraywallApi {
     @POST("api/spraywalls")
     suspend fun createSpraywall(@Body dto: SpraywallDTO): Response<SpraywallDTO>
 
+    @GET("api/spraywalls/{id}")
+    suspend fun getSpraywallById(@Path("id") id: UUID): Response<SpraywallDTO>
+
+
 
 }

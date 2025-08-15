@@ -42,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -78,6 +79,14 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
 
 
     val headerShape = RoundedCornerShape(bottomStart = 36.dp, bottomEnd = 36.dp)
+
+    var showPw by remember { mutableStateOf(false) }
+
+    var hadEmailFocus by remember { mutableStateOf(false) }
+
+
+
+
 
 
 
@@ -212,7 +221,16 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
                     leadingIcon = { Icon(Icons.Filled.Email, null) },
                     singleLine = true,
                     shape = RoundedCornerShape(50),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onFocusChanged { f ->
+                            if (f.isFocused) {
+                                hadEmailFocus = true
+                            } else if (hadEmailFocus && viewModel.email.isNotBlank()) {
+                                viewModel.onEmailBlur()
+                            } // zeigt Fehler nach Verlassen an
+                        }
+                    ,
                     isError = viewModel.emailError != null,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF00796B),
@@ -263,6 +281,9 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
                 Spacer(Modifier.height(20.dp))
 
 
+                val canSubmit = viewModel.canSubmit()
+
+
                 // Registrieren-Button
                 Button(
                     onClick = {
@@ -274,6 +295,7 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
                             }
                         }
                     },
+                    enabled = canSubmit,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp)
@@ -281,8 +303,7 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
                     shape = RoundedCornerShape(50),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = colorResource(R.color.button_normal),
-                        contentColor = Color.White,
-                        disabledContainerColor = colorResource(R.color.button_normal).copy(alpha = 0.5f)
+                        contentColor = Color.White
                     )
                 ) {
                     Text("REGISTRIEREN")

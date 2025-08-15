@@ -93,7 +93,7 @@ fun BoulderListScreen(
                     actions = {
                         IconButton(
                             onClick = { val encodedUri = Uri.encode(imageUri)
-                                navController.navigate("create_boulder/$spraywallId?imageUri=$encodedUri&mode=create")}
+                                navController.navigate("create_boulder/$spraywallId?imageUri=$encodedUri&mode=create&fromPicker=false")}
                         ) {
                             Icon(Icons.Default.Add, contentDescription = "Spraywall hinzufügen")
                         }
@@ -111,7 +111,7 @@ fun BoulderListScreen(
             ) {
                 when {
                     isLoading -> {
-                        CircularProgressIndicator() // Ladeanzeige
+                        CircularProgressIndicator(color = colorResource(R.color.button_normal)) // Ladeanzeige
                     }
                     errorMessage != null -> {
                         Text("Fehler: $errorMessage")

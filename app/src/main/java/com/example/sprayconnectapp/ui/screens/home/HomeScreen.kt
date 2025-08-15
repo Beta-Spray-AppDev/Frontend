@@ -20,6 +20,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
+import com.example.sprayconnectapp.R
 import com.example.sprayconnectapp.ui.screens.BottomNavigationBar
 import com.example.sprayconnectapp.util.getTokenFromPrefs
 import com.example.sprayconnectapp.util.getUsernameFromToken
@@ -92,7 +94,7 @@ fun HomeScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(32.dp))
 
                 if (viewModel.isLoading.value) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = colorResource(R.color.button_normal))
                 } else if (viewModel.errorMessage.value != null) {
                     Text("Fehler: ${viewModel.errorMessage.value}", color = MaterialTheme.colorScheme.error)
                 } else {

@@ -44,7 +44,14 @@ class LoginViewModel : ViewModel() {
         passwordError = null
         message = ""
     }
+
+    var isLoading by mutableStateOf(false)
+        private set
     fun loginUser(context: Context) {
+
+        // Input validieren
+        if (!validateInputs()) return
+
         viewModelScope.launch {
             try {
                 //Reset
@@ -53,8 +60,8 @@ class LoginViewModel : ViewModel() {
                 message = ""
 
                 val request = LoginRequest(
-                    username = username,
-                    password = password
+                    username = username.trim(),
+                    password = password // Für später wie handeln wir Leerzeichen?
                 )
 
                 val response = RetrofitInstance.getApi(context).login(request)
@@ -71,8 +78,12 @@ class LoginViewModel : ViewModel() {
                     }
                 } else {
                     val raw = response.errorBody()?.string()?.trim().orEmpty()
+                    if(response.code() == 400){
+                        message = "Eingaben ungültig."
+                    }
                 //invalid credentials von Backend
-                    if (raw.contains("invalid_credentials")) {
+                 else if (raw.contains("invalid_credentials", ignoreCase = true) ||
+                        response.code() == 401) {
                         // Benutzername ODER Passwort ist falsch
                         passwordError = "Benutzername oder Passwort ist falsch."
                         message = ""
@@ -88,6 +99,24 @@ class LoginViewModel : ViewModel() {
 
 
 
+    fun clearMessage() {
+        message = ""
+    }
+
+
+    private fun validateInputs(): Boolean {
+        var ok = true
+        if (username.isBlank()) {
+            usernameError = "Bitte Benutzernamen eingeben."
+            ok = false
+        }
+        if (password.isBlank()) {
+            passwordError = "Bitte Passwort eingeben."
+            ok = false
+        }
+
+        return ok
+    }
 
 
 

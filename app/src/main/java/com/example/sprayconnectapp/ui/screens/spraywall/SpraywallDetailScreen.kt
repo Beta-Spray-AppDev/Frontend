@@ -181,7 +181,7 @@ fun SpraywallDetailScreen(
                     .fillMaxSize()
             ) {
                 when {
-                    isLoading -> CircularProgressIndicator()
+                    isLoading -> CircularProgressIndicator(color = colorResource(R.color.button_normal))
                     errorMessage != null -> Text(
                         text = errorMessage ?: "Unbekannter Fehler",
                         color = MaterialTheme.colorScheme.error

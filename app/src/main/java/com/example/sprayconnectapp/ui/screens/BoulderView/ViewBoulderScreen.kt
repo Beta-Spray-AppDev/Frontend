@@ -9,14 +9,19 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.BarChart
 
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.GridOn
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.NavigateBefore
 import androidx.compose.material.icons.filled.NavigateNext
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Place
 
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -55,11 +60,14 @@ import com.example.sprayconnectapp.util.getUserIdFromToken
 
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Divider
 
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import java.text.DateFormat
@@ -224,6 +232,7 @@ fun ViewBoulderScreen(
 
                 if ( boulder?.createdBy == currentUserId) {
                     FloatingActionButton(
+                        containerColor = Color(0xFF7FBABF),
                         onClick = {
                             val encodedUri = Uri.encode(imageUri)
                             navController.navigate(
@@ -379,15 +388,15 @@ fun ViewBoulderScreen(
 
         AlertDialog(
             onDismissRequest = { showInfo = false },
-            confirmButton = { TextButton(onClick = { showInfo = false }) { Text("OK") } },
+            confirmButton = { TextButton(onClick = { showInfo = false }) { Text("OK", color = colorResource(R.color.button_normal)) } },
             title = { Text(uiState.boulder?.name ?: "Boulder") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     InfoLine("Setter", uiState.boulder?.createdByUsername
-                        ?: uiState.boulder?.createdBy?.take(8) ?: "-")
-                    InfoLine("Schwierigkeit", difficulty)
-                    InfoLine("Gym", boulder?.gymName ?: "-")
-                    InfoLine("Spraywall", boulder?.spraywallName ?: "-")
+                        ?: uiState.boulder?.createdBy?.take(8) ?: "-", Icons.Default.Person)
+                    InfoLine("Schwierigkeit", difficulty, Icons.Default.BarChart)
+                    InfoLine("Gym", boulder?.gymName ?: "-", Icons.Filled.Place)
+                    InfoLine("Spraywall", boulder?.spraywallName ?: "-", Icons.Default.GridOn)
 
 
                     Spacer(Modifier.height(4.dp))
@@ -414,7 +423,7 @@ fun ViewBoulderScreen(
                         showTickDialog = false
                         boulder?.id?.let { viewModel.tickBoulder(context, it) }
                     }
-                ) { Text("Ja, eintragen") }
+                ) { Text("Ja, eintragen",color = colorResource(R.color.button_normal)) }
             },
             dismissButton = {
                 TextButton(onClick = { showTickDialog = false }) { Text("Abbrechen") }
@@ -433,19 +442,46 @@ fun ViewBoulderScreen(
 
 
 @Composable
-private fun InfoLine(label: String, value: String) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f)
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
-        )
+private fun InfoLine(label: String, value: String, icon: ImageVector? = null) {
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(12.dp)
+
+    ){
+        Row(Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 5.dp),
+        verticalAlignment = Alignment.CenterVertically) {
+
+            if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = Color(0xFF3F888F),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFF3F888F),
+                modifier = Modifier.weight(1f)
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+            )
+        }
     }
+
+
 }
 
 

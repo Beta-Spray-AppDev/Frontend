@@ -194,7 +194,7 @@ fun EditProfileScreen(navController: NavController) {
                         // Speichern-Button
                         Button(
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = colorResource(R.color.button_primary),
+                                containerColor = colorResource(R.color.button_normal),
                                 contentColor = Color.White
                             ),
                             onClick = {
@@ -221,6 +221,7 @@ fun EditProfileScreen(navController: NavController) {
                                 )
                             },
                             modifier = Modifier.fillMaxWidth()
+                                .wrapContentWidth()
                         ) {
                             Text("Speichern")
                         }
@@ -237,7 +238,7 @@ fun EditProfileScreen(navController: NavController) {
                         }
 
                         if (isLoading) {
-                            CircularProgressIndicator()
+                            CircularProgressIndicator(color = colorResource(R.color.button_normal))
                         }
 
                         error?.let {

@@ -48,10 +48,10 @@ fun BottomNavigationBar(navController: NavController) {
 
 
         NavigationBarItem(
-            icon = { Icon(Icons.Default.Add, contentDescription = "Neues Gym") },
-            label = { Text("Neues Gym") },
-            selected = currentDestination?.startsWith("addGym") == true,
-            onClick = { navController.navigate("addGym") },
+            icon = { Icon(Icons.Default.Add, contentDescription = "Neuer Boulder") },
+            label = { Text("Neuer Boulder") },
+            selected = false,
+            onClick = { navController.navigate("pickBoulderTarget") },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = Color.White,
                 selectedTextColor = Color.White,

@@ -118,7 +118,7 @@ fun ProfileScreen(navController: NavController) {
                                 modifier = Modifier.fillMaxWidth(),
                                 contentAlignment = Alignment.Center
                             ) {
-                                CircularProgressIndicator()
+                                CircularProgressIndicator(color = colorResource(R.color.button_normal))
                             }
                         }
 

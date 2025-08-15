@@ -8,6 +8,7 @@ import androidx.navigation.navArgument
 import com.example.sprayconnectapp.ui.screens.BoulderList.BoulderListScreen
 import com.example.sprayconnectapp.ui.screens.BoulderView.BoulderScreenMode
 import com.example.sprayconnectapp.ui.screens.BoulderView.CreateBoulderScreen
+import com.example.sprayconnectapp.ui.screens.BoulderView.PickBoulderTargetScreen
 import com.example.sprayconnectapp.ui.screens.spraywall.AddSpraywallScreen
 import com.example.sprayconnectapp.ui.screens.GymDetail.GymDetailScreen
 import com.example.sprayconnectapp.ui.screens.Profile.EditProfileScreen
@@ -68,18 +69,21 @@ fun NavGraph (navController: NavHostController){
 
         // NavGraph.kt
         composable(
-            "create_boulder/{spraywallId}?imageUri={imageUri}&mode={mode}&boulderId={boulderId}",
+            "create_boulder/{spraywallId}?imageUri={imageUri}&mode={mode}&boulderId={boulderId}&fromPicker={fromPicker}",
             arguments = listOf(
                 navArgument("spraywallId") { type = NavType.StringType },
                 navArgument("imageUri") { type = NavType.StringType; defaultValue = "" },
                 navArgument("mode") { type = NavType.StringType; defaultValue = "create" },
-                navArgument("boulderId") { type = NavType.StringType; defaultValue = "" }
+                navArgument("boulderId") { type = NavType.StringType; defaultValue = "" },
+                navArgument("fromPicker") { type = NavType.BoolType; defaultValue = false }
+
             )
         ) { backStackEntry ->
             val spraywallId = backStackEntry.arguments?.getString("spraywallId") ?: ""
             val imageUri = backStackEntry.arguments?.getString("imageUri") ?: ""
             val mode = backStackEntry.arguments?.getString("mode") ?: "create"
             val boulderId = backStackEntry.arguments?.getString("boulderId") ?: ""
+            val fromPicker = backStackEntry.arguments?.getBoolean("fromPicker") ?: false
 
             val screenMode = if (mode == "edit") {
                 BoulderScreenMode.Edit(boulderId)
@@ -91,6 +95,7 @@ fun NavGraph (navController: NavHostController){
                 spraywallId = spraywallId,
                 imageUri = imageUri,
                 mode = screenMode,
+                fromPicker = fromPicker,
                 onBack = { navController.popBackStack() }
             )
         }
@@ -151,6 +156,13 @@ fun NavGraph (navController: NavHostController){
                 onBack = { navController.popBackStack() }
             )
         }
+
+        composable("pickBoulderTarget") {
+            PickBoulderTargetScreen(
+                navController = navController
+            )
+        }
+
 
 
 

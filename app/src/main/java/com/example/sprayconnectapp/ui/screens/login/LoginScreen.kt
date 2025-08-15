@@ -1,5 +1,6 @@
 package com.example.sprayconnectapp.ui.screens.login
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -26,7 +27,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -50,6 +50,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.VisualTransformation
@@ -64,6 +65,9 @@ fun LoginScreen(
 
     val headerHeight = 240.dp
     val cardOverlap  = 40.dp
+
+    val canSubmit = viewModel.username.isNotBlank() && viewModel.password.isNotBlank() && !viewModel.isLoading
+
 
 
     val headerShape = RoundedCornerShape(bottomStart = 36.dp, bottomEnd = 36.dp)
@@ -237,7 +241,7 @@ fun LoginScreen(
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier
-                            .align(Alignment.Start)
+                            .align(Alignment.CenterHorizontally)
                             .padding(top = 4.dp)
                     )
                 }
@@ -247,6 +251,7 @@ fun LoginScreen(
                 // Login Button
                 Button(
                     onClick = { viewModel.loginUser(context) },
+                    enabled = canSubmit,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp)
@@ -257,19 +262,23 @@ fun LoginScreen(
                     ),
                     shape = RoundedCornerShape(16.dp)
                 ) {
-                    Text("LOGIN")
+                    if (viewModel.isLoading) {
+                        androidx.compose.material3.CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp), color = colorResource(R.color.button_normal)
+                        )
+                    } else {
+                        Text("LOGIN")
+                    }
                 }
 
                 Spacer(Modifier.height(8.dp))
 
                 // Status / Message
                 if (viewModel.message.isNotBlank()) {
-                    Text(
-                        text = viewModel.message,
-                        color = colorResource(id = R.color.button_normal),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
+                    LaunchedEffect(viewModel.message) {
+                        Toast.makeText(context, viewModel.message, Toast.LENGTH_LONG).show()
+                        viewModel.clearMessage()
+                    }
                 }
 
                 Spacer(Modifier.height(8.dp))

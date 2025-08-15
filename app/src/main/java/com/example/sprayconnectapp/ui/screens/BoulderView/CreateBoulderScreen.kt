@@ -79,13 +79,20 @@ sealed interface BoulderScreenMode {
 @Composable
 fun CreateBoulderScreen(
     spraywallId: String,
-    imageUri: String,
+    imageUri: String?,
     mode: BoulderScreenMode = BoulderScreenMode.Create,
     viewModel: CreateBoulderViewModel = viewModel(),
     onSave: () -> Unit = {},
     onBack: () -> Unit = {},
+    fromPicker: Boolean = false
 
 ) {
+
+    // lokaler State für das Bild
+    var resolvedImageUri by remember { mutableStateOf(imageUri ?: "") }
+    var loadingImage by remember { mutableStateOf(false) }
+    var imageError by remember { mutableStateOf<String?>(null) }
+
     val uiState by viewModel.uiState
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
@@ -119,8 +126,8 @@ fun CreateBoulderScreen(
     var isPointerDownOnHold by remember { mutableStateOf(false) }
 
     // Bildgröße lesen, um die Aspect Ratio korrekt zu setzen
-    var imgW by remember(imageUri) { mutableStateOf(1) }
-    var imgH by remember(imageUri) { mutableStateOf(1) }
+    var imgW by remember(resolvedImageUri) { mutableStateOf(1) }
+    var imgH by remember(resolvedImageUri) { mutableStateOf(1) }
 
     // Prefill des Dialogs, sobald Daten da sind
     LaunchedEffect(uiState.boulder) {
@@ -135,12 +142,41 @@ fun CreateBoulderScreen(
         }
     }
 
+    // Wenn kein imageUri mitkommt: von der Spraywall holen
+    LaunchedEffect(spraywallId, imageUri) {
+        if (resolvedImageUri.isBlank()) {
+            try {
+                loadingImage = true
+                val api = com.example.sprayconnectapp.network.RetrofitInstance.getSpraywallApi(context)
+                val res = api.getSpraywallById(java.util.UUID.fromString(spraywallId))
+                if (res.isSuccessful) {
+                    resolvedImageUri = res.body()?.photoUrl.orEmpty()
+                } else {
+                    imageError = "Konnte Spraywall nicht laden (${res.code()})"
+                }
+            } catch (t: Throwable) {
+                imageError = t.localizedMessage
+            } finally {
+                loadingImage = false
+            }
+        }
+    }
+
 
     // Bildmaße lesen
     // Bildmaße lesen (EXIF-beachtet)
-    LaunchedEffect(imageUri) {
-        if (imageUri.isBlank()) return@LaunchedEffect
-        val (w, h) = readImageSizeRespectingExif(context, imageUri.toUri())
+    LaunchedEffect(resolvedImageUri) {
+        if (resolvedImageUri.isBlank()) return@LaunchedEffect
+        val u = resolvedImageUri.lowercase()
+        val isRemote = u.startsWith("http://") || u.startsWith("https://")
+
+        // Remote: keine EXIF-Lesung über ContentResolver
+        if(isRemote){
+            imgW = 1
+            imgH = 1
+            return@LaunchedEffect
+        }
+        val (w, h) = readImageSizeRespectingExif(context, resolvedImageUri.toUri())
         imgW = w
         imgH = h
     }
@@ -259,15 +295,22 @@ fun CreateBoulderScreen(
                             .fillMaxHeight()
                             .onGloballyPositioned { laidOut = it.size }
                     ) {
-                        if (imageUri.isNotBlank()) {
+                        if (resolvedImageUri.isNotBlank()) {
                             AsyncImage(
                                 model = ImageRequest.Builder(context)
-                                    .data(imageUri.toUri())
+                                    .data(resolvedImageUri)
                                     .size(Size.ORIGINAL)
                                     .build(),
                                 contentDescription = "Spraywall",
                                 modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Fit
+                                contentScale = ContentScale.Fit,
+                                onSuccess = { s ->
+                                    if (resolvedImageUri.startsWith("http", ignoreCase = true)) {
+                                        val d = s.result.drawable
+                                        imgW = d.intrinsicWidth.coerceAtLeast(1)
+                                        imgH = d.intrinsicHeight.coerceAtLeast(1)
+                                    }
+                                }
                             )
                         } else {
                             Text(
@@ -450,6 +493,9 @@ fun CreateBoulderScreen(
                         showDialog = false
                         onSave()
                         onBack() // Einen Screen zurück
+                        if (fromPicker) { // Nur wenn wir vom Picker kommen
+                            onBack()
+                        }
                     }) {
                         Text(if (mode is BoulderScreenMode.Edit) "Speichern" else "Anlegen")
                     }

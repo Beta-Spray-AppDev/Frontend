@@ -30,15 +30,49 @@ class RegisterViewModel : ViewModel() {
     var emailError by mutableStateOf<String?>(null)
         private set
 
+    var isLoading by mutableStateOf(false); private set
+
+    var passwordError by mutableStateOf<String?>(null); private set
 
 
+    private var emailTouched by mutableStateOf(false)
+
+
+    private fun isEmailValid(e: String): Boolean {
+        val regex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$".toRegex()
+        return e.matches(regex)
+    }
+
+
+    fun canSubmit(): Boolean =
+        username.isNotBlank() && email.isNotBlank() && emailError == null &&  isEmailValid(email) && password.isNotBlank() && !isLoading
 
 
     fun onEmailChange(new: String) {
         email = new
-        emailError = null // Fehlermeldung zurücksetzen
         message = ""
+        // Wenn User Feld schon berührt hat - live validieren
+        if (emailTouched) {
+            emailError = when {
+                email.isBlank() -> "Bitte E-Mail eingeben."
+                !isEmailValid(email) -> "Bitte gültige E-Mail eingeben."
+                else -> null
+            }
+        } else {
+            emailError = null
+        }
+
+
     }
+
+    fun onEmailBlur() {
+        emailError = if (email.isNotBlank() && !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            "Bitte gültige E-Mail eingeben."
+        } else {
+            null
+        }
+    }
+
 
     fun onPasswordChange(new: String) {
         password = new
@@ -51,6 +85,17 @@ class RegisterViewModel : ViewModel() {
     }
 
     fun registerUser(context: Context, onLoginSuccess: () -> Unit) {
+
+        // Clientseitig validieren
+        onEmailBlur()
+        var ok = true
+        if (username.isBlank()) { usernameError = "Bitte Benutzernamen eingeben."; ok = false }
+        if (email.isBlank()) { emailError = "Bitte E-Mail eingeben."; ok = false }
+        else if (!isEmailValid(email)) { emailError = "Bitte gültige E-Mail eingeben."; ok = false }
+        if (password.isBlank()) { passwordError = "Bitte Passwort eingeben."; ok = false }
+        if (!ok) return
+
+
         viewModelScope.launch {
             try {
                 val request = RegisterRequest(
@@ -72,6 +117,8 @@ class RegisterViewModel : ViewModel() {
 
 
                     if (loginResponse.isSuccessful) {
+
+                        //Auto-Login
                         val token = loginResponse.body()
 
                         if (!token.isNullOrBlank()) {
@@ -92,9 +139,13 @@ class RegisterViewModel : ViewModel() {
 
                 } else {
                     val errorBody = response.errorBody()?.string()?.trim().orEmpty()
-                    when (errorBody) {
-                        "username_taken" -> usernameError = "Benutzername ist bereits vergeben."
-                        "email_taken" -> emailError = "E-Mail ist bereits vergeben."
+                    when{
+                        errorBody.contains("username_taken", true) -> usernameError = "Benutzername ist bereits vergeben."
+                        errorBody.contains("email_taken", true) -> emailError = "E-Mail ist bereits vergeben."
+
+                        response.code() == 400 -> {
+                            message = "Eingaben ungültig (400)."
+                        }
                         else -> message = "Registrierung fehlgeschlagen: ${response.code()}"
                     }                }
             } catch (e: Exception) {
