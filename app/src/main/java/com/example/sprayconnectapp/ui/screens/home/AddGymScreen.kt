@@ -5,6 +5,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -29,14 +31,18 @@ import androidx.navigation.NavController
 import com.example.sprayconnectapp.data.dto.CreateGymDTO
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Switch
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import com.example.sprayconnectapp.ui.screens.BottomNavigationBar
 import com.example.sprayconnectapp.util.getTokenFromPrefs
 import com.example.sprayconnectapp.util.getUserIdFromToken
+import java.lang.reflect.Modifier.isPublic
 import java.util.UUID
 
 
@@ -52,6 +58,7 @@ fun AddGymScreen(
     var name by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
+    var isPublic by remember { mutableStateOf(true) }
 
     Scaffold(
         topBar = {
@@ -112,6 +119,12 @@ fun AddGymScreen(
                 )
             )
 
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Switch(checked = isPublic, onCheckedChange = { isPublic = it })
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Öffentlich sichtbar")
+            }
+
             Button(
                 onClick = {
                     val token = getTokenFromPrefs(context)
@@ -122,7 +135,8 @@ fun AddGymScreen(
                             name = name,
                             location = location,
                             description = description,
-                            createdBy = UUID.fromString(userId)
+                            createdBy = UUID.fromString(userId),
+                            isPublic = isPublic
                         )
 
                         viewModel.createGym(

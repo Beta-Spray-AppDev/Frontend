@@ -38,7 +38,8 @@ import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.util.*
 import androidx.compose.ui.text.input.ImeAction
-
+import okio.BufferedSink
+import okio.source
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,7 +59,7 @@ fun AddSpraywallScreen(
 
     var name by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var isPublic by remember { mutableStateOf(false) }
+    var isPublic by remember { mutableStateOf(true) }
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
@@ -206,32 +207,18 @@ fun uploadToNextcloudViaWebDAV(
     val appPassword = "eS6Ai-Bi8Lj-zA66p-SWPMC-qm8RL"
     val targetFolder = "uploads/images"
 
-    val sharedToken = "ciKasyEBMQWANj7" // <- das ist der öffentliche Link-Token zur cloud!!!!
-
-    val contentResolver = context.contentResolver
-    val inputStream = contentResolver.openInputStream(uri) ?: run {
-        onError("Datei konnte nicht geöffnet werden.")
-        return
-    }
-
-    val mimeType = contentResolver.getType(uri) ?: "image/jpeg"
-    val extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType) ?: "jpg"
+    val mimeType = context.contentResolver.getType(uri) ?: "application/octet-stream"
+    val extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType) ?: "bin"
     val fileName = "${UUID.randomUUID()}.$extension"
 
-    val bitmap = BitmapFactory.decodeStream(inputStream)
-    val outputStream = ByteArrayOutputStream()
-    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
-    val imageBytes = outputStream.toByteArray()
+    val requestBody = requestBodyFromUri(context, uri, mimeType)
 
-    val requestBody = imageBytes.toRequestBody("image/jpeg".toMediaTypeOrNull())
     val uploadUrl = "https://leitln.at/maltacloud/remote.php/dav/files/$username/$targetFolder/$fileName"
-    val previewUrl = "https://leitln.at/maltacloud/index.php/s/$sharedToken/preview?file=/$fileName"
-
     val credential = Credentials.basic(username, appPassword)
 
     val request = Request.Builder()
         .url(uploadUrl)
-        .put(requestBody)
+        .put(requestBody)                 // jetzt mit  Originaldatei, kein Bitmap/EXIF-Verlust
         .header("Authorization", credential)
         .build()
 
@@ -242,22 +229,19 @@ fun uploadToNextcloudViaWebDAV(
 
         override fun onResponse(call: Call, response: Response) {
             if (response.isSuccessful) {
+
                 createPublicShareLink(
                     fileName = fileName,
-                    onSuccess = { publicPreviewUrl ->
-                        onSuccess(publicPreviewUrl)
-                    },
-                    onError = { error ->
-                        onError("Upload war erfolgreich, aber Teilen fehlgeschlagen: $error")
-                    }
+                    onSuccess = { publicPreviewUrl -> onSuccess(publicPreviewUrl) },
+                    onError = { error -> onError("Upload war erfolgreich, aber Teilen fehlgeschlagen: $error") }
                 )
-
             } else {
                 onError("Fehler: ${response.code} - ${response.message}")
             }
         }
     })
 }
+
 
 fun createPublicShareLink(
     fileName: String,
@@ -303,5 +287,15 @@ fun createPublicShareLink(
         }
     })
 }
+
+private fun requestBodyFromUri(context: Context, uri: Uri, mime: String): RequestBody =
+    object : RequestBody() {
+        override fun contentType() = mime.toMediaTypeOrNull()
+        override fun writeTo(sink: BufferedSink) {
+            context.contentResolver.openInputStream(uri)!!.use { input ->
+                sink.writeAll(input.source())
+            }
+        }
+    }
 
 
