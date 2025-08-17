@@ -105,7 +105,7 @@ fun CreateBoulderScreen(
 
     var showDialog by remember { mutableStateOf(false) }
     var boulderName by remember { mutableStateOf("") }
-    var boulderDifficulty by remember { mutableStateOf("") }
+    var boulderDifficulty by remember { mutableStateOf("3") }
     var showTrash by remember { mutableStateOf(false) }
     var trashBounds by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
     var overTrash by remember { mutableStateOf(false) }
@@ -132,7 +132,7 @@ fun CreateBoulderScreen(
     // Prefill des Dialogs, sobald Daten da sind
     LaunchedEffect(uiState.boulder) {
         boulderName = uiState.boulder?.name.orEmpty()
-        boulderDifficulty = uiState.boulder?.difficulty.orEmpty()
+        boulderDifficulty = uiState.boulder?.difficulty.orEmpty().ifEmpty { "3" }
     }
 
     // Falls im Edit-Modus dann Boulder-Daten laden
@@ -520,11 +520,13 @@ fun CreateBoulderScreen(
 
                         // Schwierigkeitsauswahl als Stepper
                         val fbGrades = listOf(
-                            "3", "4", "5A", "5b", "5c",
+                            "3", "4", "5A", "5B", "5C",
                             "6A", "6A+", "6B", "6B+", "6C", "6C+",
                             "7A", "7A+", "7B", "7B+", "7C", "7C+",
-                            "8A", "8A+", "8B", "8B+", "8C", "8C+", "9a"
+                            "8A", "8A+", "8B", "8B+", "8C", "8C+", "9A"
                         )
+
+
                         DifficultyStepper(
                             options = fbGrades,
                             value = boulderDifficulty.ifEmpty { fbGrades.first() },

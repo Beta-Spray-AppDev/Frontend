@@ -18,11 +18,14 @@ import androidx.navigation.NavController
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import com.example.sprayconnectapp.R
 import com.example.sprayconnectapp.ui.screens.BottomNavigationBar
+import com.example.sprayconnectapp.ui.screens.Profile.ProfileViewModel
 import com.example.sprayconnectapp.util.getTokenFromPrefs
 import com.example.sprayconnectapp.util.getUsernameFromToken
 
@@ -34,8 +37,13 @@ fun HomeScreen(navController: NavController) {
     val context = LocalContext.current
     val viewModel: HomeViewModel = viewModel()
 
+    val profileViewModel: ProfileViewModel = viewModel()
+
     val token = getTokenFromPrefs(context)
     val username = token?.let { getUsernameFromToken(it) }
+
+    val profile by profileViewModel.profile.collectAsState()
+
 
     Log.d("Auth", "Angemeldet als: $username")
 
@@ -44,8 +52,13 @@ fun HomeScreen(navController: NavController) {
     LaunchedEffect(Unit) {
         viewModel.initRepository(context)
         viewModel.loadGyms(context)
+        profileViewModel.loadProfile(context)
         Log.d("HomeViewModel", "Lade Gyms...")
     }
+
+    val fallback = token?.let { getUsernameFromToken(it) } ?: ""
+    val displayName = profile?.username ?: fallback
+
 
 
     //Farbverlauf
@@ -86,7 +99,7 @@ fun HomeScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(32.dp))
 
                 Text(
-                    text = "Hallo ${username}!",
+                    text = "Hallo ${displayName}!",
                     style = MaterialTheme.typography.headlineMedium,
                     color = Color.White
                 )

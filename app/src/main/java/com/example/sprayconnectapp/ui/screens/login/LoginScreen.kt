@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -52,7 +54,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 
@@ -62,6 +67,9 @@ fun LoginScreen(
     viewModel: LoginViewModel = viewModel()
 ) {
     val context = LocalContext.current
+
+    val focusManager = LocalFocusManager.current
+
 
     val headerHeight = 240.dp
     val cardOverlap  = 40.dp
@@ -192,7 +200,12 @@ fun LoginScreen(
                         focusedLabelColor = Color(0xFF00796B),
                         unfocusedContainerColor = Color.White,
                         focusedContainerColor = Color.White
+                    ),
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Down) }
                     )
+
                 )
                 if (viewModel.usernameError != null) {
                     Text(
@@ -233,8 +246,16 @@ fun LoginScreen(
                         focusedLabelColor = Color(0xFF00796B),
                         unfocusedContainerColor = Color.White,
                         focusedContainerColor = Color.White
+                    ),
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            focusManager.clearFocus()
+                            viewModel.loginUser(context)
+                        }
                     )
-                )
+
+                    )
                 if (viewModel.passwordError != null) {
                     Text(
                         text = viewModel.passwordError ?: "",
