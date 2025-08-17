@@ -45,6 +45,12 @@ interface BoulderApi {
     suspend fun deleteBoulder(@Path("boulderId") boulderId: String): Response<Unit>
 
 
+    // alle ticks von einem User
+    @GET("boulders/ticks/mine")
+    suspend fun getMyTickedBoulders(): Response<List<BoulderDTO>>
+
+
+
 
 
 }

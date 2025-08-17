@@ -26,9 +26,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.unit.Dp
 import com.example.sprayconnectapp.R
 import com.example.sprayconnectapp.util.getPrivateImageFileByName
 import com.example.sprayconnectapp.util.localOutputNameFromPreview
+
+import androidx.compose.foundation.lazy.items
+
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -41,10 +45,13 @@ fun ProfileScreen(navController: NavController) {
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
     val boulders by viewModel.myBoulders.collectAsState()
+    val ticked by viewModel.myTicks.collectAsState()
+
 
     LaunchedEffect(Unit) {
         viewModel.loadProfile(context)
         viewModel.loadMyBoulders(context)
+        viewModel.loadMyTicks(context)
     }
 
     val BarColor = colorResource(id = R.color.hold_type_bar)
@@ -130,7 +137,11 @@ fun ProfileScreen(navController: NavController) {
                             ProfileCard(profile = profile!!, navController = navController)
                             Spacer(modifier = Modifier.height(17.dp))
 
-                            BoulderListCard(boulders = boulders, navController = navController)
+                            BoulderListCard(title = "Meine Boulder", boulders = boulders, navController = navController, source = "mine")
+
+                            Spacer(Modifier.height(17.dp))
+
+                            BoulderListCard(title = "Getickte Boulder", boulders = ticked, navController = navController, source = "ticked")
 
                         }
 
@@ -228,7 +239,7 @@ fun BoulderCard(boulder: BoulderDTO, onClick: (() -> Unit)? = null) {
 
 
 @Composable
-fun BoulderListCard(boulders: List<BoulderDTO>, navController: NavController) {
+fun BoulderListCard( title: String, boulders: List<BoulderDTO>, source: String, navController: NavController, maxHeight: Dp = 240.dp) {
     val context = LocalContext.current
 
     Card(
@@ -236,28 +247,35 @@ fun BoulderListCard(boulders: List<BoulderDTO>, navController: NavController) {
         elevation = CardDefaults.cardElevation(6.dp)
     ) {
         Column(
-            modifier = Modifier.padding(24.dp).fillMaxWidth(),
+            modifier = Modifier.padding(24.dp).fillMaxWidth()
+                .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Meine Boulder", style = MaterialTheme.typography.headlineSmall)
+            Text(title, style = MaterialTheme.typography.headlineSmall)
             Divider()
 
             if (boulders.isEmpty()) {
-                Text("Keine Boulder erstellt.")
+                Text("Keine Einträge gefunden.")
             } else {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    boulders.forEach { boulder ->
+                LazyColumn(modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = maxHeight),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(bottom = 4.dp)) {
+                    items(boulders,  key = { it.id ?: "fallback-${it.spraywallId}-${it.createdAt}" } ) { boulder ->
                         BoulderCard(boulder) {
                             // 1) Preview-URL -> lokalen Dateinamen bestimmen
                             val preview = (boulder.spraywallImageUrl ?: "").trim()
                             val token = Regex("/s/([^/]+)/").find(preview)?.groupValues?.get(1)
 
+                            // Basis-Route mit leerem imageUri-Segment am Ende
+                            val base = "view_boulder/${boulder.id}/${boulder.spraywallId}/"
+
                             // Wenn wir keine valide Preview haben, brech ab (kein Download hier!)
                             if (preview.isEmpty() || token.isNullOrEmpty()) {
 
                                 Toast.makeText(context, "Kein lokales Bild gefunden", Toast.LENGTH_SHORT).show()
-                                val route = "view_boulder/${boulder.id}/${boulder.spraywallId}/"
-                                navController.navigate(route)
+                                navController.navigate("$base?src=$source")
                                 return@BoulderCard
                             }
 
@@ -273,9 +291,9 @@ fun BoulderListCard(boulders: List<BoulderDTO>, navController: NavController) {
                             }
 
                             val route = if (encodedImage.isNotEmpty()) {
-                                "view_boulder/${boulder.id}/${boulder.spraywallId}/$encodedImage"
+                                "$base$encodedImage?src=$source"
                             } else {
-                                "view_boulder/${boulder.id}/${boulder.spraywallId}/"
+                                "$base?src=$source"
                             }
                             navController.navigate(route)
                         }

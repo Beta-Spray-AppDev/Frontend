@@ -29,6 +29,9 @@ class ProfileViewModel : ViewModel() {
     val myBoulders: StateFlow<List<BoulderDTO>> = _myBoulders
 
 
+    private val _myTicks = MutableStateFlow<List<BoulderDTO>>(emptyList())
+    val myTicks: StateFlow<List<BoulderDTO>> = _myTicks
+
 
 
     fun loadProfile(context: Context) {
@@ -109,6 +112,18 @@ class ProfileViewModel : ViewModel() {
             }
         }
     }
+
+
+    fun loadMyTicks(context: Context) {
+        viewModelScope.launch {
+            try {
+                val res = RetrofitInstance.getBoulderApi(context).getMyTickedBoulders()
+                if (res.isSuccessful) _myTicks.value = res.body() ?: emptyList()
+            } catch (_: Exception) { }
+        }
+    }
+
+
 
     fun logout(context: Context) {
         clearTokenFromPrefs(context)

@@ -92,6 +92,7 @@ fun ViewBoulderScreen(
     boulderId: String,
     spraywallId: String,
     imageUri: String,
+    source: String,
     onBack: () -> Unit,
     viewModel: CreateBoulderViewModel = viewModel()
 ) {
@@ -108,13 +109,18 @@ fun ViewBoulderScreen(
     //Falls man vom Profil kommt
     val profileVm: ProfileViewModel? = prevEntry?.let { viewModel(it) }
 
-    val myListState = if (profileVm != null) profileVm.myBoulders.collectAsState() else null
-    val myList = myListState?.value ?: emptyList()
+    // eigene Boulder
+    val myList = profileVm?.myBoulders?.collectAsState()?.value ?: emptyList()
+    // getickte Boulder
+    val tickedList = profileVm?.myTicks?.collectAsState()?.value ?: emptyList()
 
 
-
-    val list = myList.ifEmpty { gymList }
-
+    // Wählt Liste nach Quelle
+    val list = when (source) {
+        "ticked" -> tickedList
+        "mine"   -> myList
+        else     -> emptyList()
+    }
 
     //Ui-State holen
     val context = LocalContext.current
@@ -256,7 +262,7 @@ fun ViewBoulderScreen(
 
                     //Prev Button
                     IconButton(enabled = prevId != null, onClick = {
-                        prevId?.let { navController.navigate("view_boulder/$it/$spraywallId/${Uri.encode(imageUri)}"){
+                        prevId?.let { navController.navigate("view_boulder/$it/$spraywallId/${Uri.encode(imageUri)}?src=$source"){
                             launchSingleTop = true
                         } }
                     }) {
@@ -281,7 +287,7 @@ fun ViewBoulderScreen(
 
                     // Next Button
                     IconButton(enabled = nextId != null, onClick = {
-                        nextId?.let { navController.navigate("view_boulder/$it/$spraywallId/${Uri.encode(imageUri)}"){
+                        nextId?.let { navController.navigate("view_boulder/$it/$spraywallId/${Uri.encode(imageUri)}?src=$source"){
                             launchSingleTop = true
                         } }
                     }) {

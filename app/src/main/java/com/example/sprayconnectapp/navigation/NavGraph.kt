@@ -138,22 +138,26 @@ fun NavGraph (navController: NavHostController){
         }
 
         composable(
-            "view_boulder/{boulderId}/{spraywallId}/{imageUri}",
+            "view_boulder/{boulderId}/{spraywallId}/{imageUri}?src={src}",
             arguments = listOf(
                 navArgument("boulderId") { type = NavType.StringType },
                 navArgument("spraywallId") { type = NavType.StringType },
-                navArgument("imageUri") { type = NavType.StringType }
+                navArgument("imageUri") { type = NavType.StringType; defaultValue = "" },
+                navArgument("src"){ defaultValue = "mine" }
             )
         ) { backStackEntry ->
             val boulderId = backStackEntry.arguments?.getString("boulderId") ?: ""
             val spraywallId = backStackEntry.arguments?.getString("spraywallId") ?: ""
             val imageUri = backStackEntry.arguments?.getString("imageUri") ?: ""
+            val source      = backStackEntry.arguments?.getString("src") ?: "mine"
+
             ViewBoulderScreen(
                 navController = navController,
                 boulderId = boulderId,
                 spraywallId = spraywallId,
                 imageUri = imageUri,
-                onBack = { navController.popBackStack() }
+                source = source,
+                onBack = { navController.popBackStack() },
             )
         }
 
