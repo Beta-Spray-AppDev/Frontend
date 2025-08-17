@@ -14,15 +14,14 @@ import com.example.sprayconnectapp.network.RetrofitInstance
 import kotlinx.coroutines.launch
 import java.util.UUID
 
-class SpraywallViewModel : ViewModel() {
+class SpraywallViewModel(context: Context) : ViewModel() {
 
-    private lateinit var repo: SpraywallRepository
+    private val repo: SpraywallRepository
 
-    fun initRepository(context: Context) {
-        val db = AppDatabase.getInstance(context)
+    init {
+        val db = AppDatabase.getInstance(context.applicationContext)
         repo = SpraywallRepository(db.spraywallDao(), db.boulderDao())
     }
-
 
     var spraywalls = mutableStateOf<List<SpraywallDTO>>(emptyList())
         private set
@@ -42,7 +41,6 @@ class SpraywallViewModel : ViewModel() {
 
                     if (response.isSuccessful) {
                         val remoteList = response.body().orEmpty()
-                        // Server -> Room (prune+replace oder wie in deinem Repo implementiert)
                         repo.syncFromBackend(gymId, remoteList)
                     } else {
                         errorMessage.value = "Fehler: ${response.code()}"
@@ -51,13 +49,11 @@ class SpraywallViewModel : ViewModel() {
                     errorMessage.value = "Netzwerkfehler: ${e.localizedMessage}"
                 }
             } else {
-                // offline ist okay – wir lesen unten einfach aus Room
                 if (spraywalls.value.isEmpty()) {
                     errorMessage.value = "Offline – zeige lokale Daten"
                 }
             }
 
-            // immer lokal anzeigen (online nach Sync, offline sowieso)
             val locals = repo.getByGym(gymId)
             spraywalls.value = locals.map { it.toDto() }
 
@@ -65,7 +61,6 @@ class SpraywallViewModel : ViewModel() {
         }
     }
 
-    // Erstellen bleibt NUR online; danach direkt syncen & lokal cachen
     fun createSpraywall(
         context: Context,
         dto: SpraywallDTO,
@@ -82,7 +77,6 @@ class SpraywallViewModel : ViewModel() {
             try {
                 val response = RetrofitInstance.getSpraywallApi(context).createSpraywall(dto)
                 if (response.isSuccessful) {
-                    // nach Create direkt neu ziehen und lokal speichern
                     val gymId = dto.gymId?.toString() ?: return@launch run {
                         onSuccess(); isLoading.value = false
                     }
@@ -110,7 +104,6 @@ class SpraywallViewModel : ViewModel() {
         return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 
-    // Mapper: Entity -> DTO (passt zu deinem bestehenden DTO)
     private fun SpraywallEntity.toDto(): SpraywallDTO =
         SpraywallDTO(
             id = UUID.fromString(id),
@@ -122,3 +115,4 @@ class SpraywallViewModel : ViewModel() {
             createdBy = createdBy?.let { UUID.fromString(it) }
         )
 }
+
