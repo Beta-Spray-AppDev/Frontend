@@ -1,7 +1,5 @@
 package com.example.sprayconnectapp.ui.screens.BoulderView
 
-import androidx.compose.runtime.Composable
-
 import android.graphics.BitmapFactory
 import android.media.ExifInterface
 import android.net.Uri
@@ -24,6 +22,10 @@ import androidx.compose.material.icons.filled.NavigateNext
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Place
 
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -32,11 +34,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -45,17 +49,21 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import coil.size.Size
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import coil.size.Size
+import com.example.sprayconnectapp.R
 import com.example.sprayconnectapp.data.dto.HoldType
-import com.example.sprayconnectapp.ui.screens.BoulderList.BoulderListViewmodel
+import com.example.sprayconnectapp.ui.screens.BoulderList.BoulderListViewModel
+import com.example.sprayconnectapp.ui.screens.Profile.ProfileViewModel
 import com.example.sprayconnectapp.util.getTokenFromPrefs
 import com.example.sprayconnectapp.util.getUserIdFromToken
 
@@ -75,18 +83,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import java.text.DateFormat
 import java.util.Date
-
-
-import com.example.sprayconnectapp.ui.screens.Profile.ProfileViewModel
-import com.example.sprayconnectapp.R
-
-
-
-
-
 import kotlin.math.roundToInt
-
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -99,13 +96,11 @@ fun ViewBoulderScreen(
     onBack: () -> Unit,
     viewModel: CreateBoulderViewModel = viewModel()
 ) {
-
-    // previous entry - BoulderList ODER Profile
+    // voriger BackStack-Eintrag (BoulderList oder Profile)
     val prevEntry = navController.previousBackStackEntry
 
-
-    //Falls man vom BoulderListScreen kommt
-    val listVm: BoulderListViewmodel? = prevEntry?.let { viewModel(it) }
+    // aus BoulderList
+    val listVm = prevEntry?.let { viewModel<BoulderListViewModel>(it) }
     val gymList = listVm?.boulders?.value ?: emptyList()
 
 
@@ -117,6 +112,8 @@ fun ViewBoulderScreen(
     // getickte Boulder
     val tickedList = profileVm?.myTicks?.collectAsState()?.value ?: emptyList()
 
+    // Quelle wählen (Profile bevorzugt)
+    val list = if (myList.isNotEmpty()) myList else gymList
 
     // Wählt Liste nach Quelle
     val fromProfile = source == "mine" || source == "ticked"
@@ -134,51 +131,39 @@ fun ViewBoulderScreen(
     val markerSizeDp = 32.dp
     val markerRadiusPx = with(density) { (markerSizeDp / 2).toPx() }
 
-
-    //Prev & Next berechnen
+    // Prev & Next
     val currentId = boulder?.id
     val idx = list.indexOfFirst { it.id == currentId }
     val prevId = if (idx > 0) list[idx - 1].id else null
     val nextId = if (idx >= 0 && idx + 1 < list.size) list[idx + 1].id else null
 
-
-    // Sate für Dialoge
+    // Dialogzustände
     var showTickDialog by remember { mutableStateOf(false) }
     var showInfo by remember { mutableStateOf(false) }
 
-
-
-
-
-
-    // Boulder laden
-    LaunchedEffect(boulderId) {
-        viewModel.loadBoulder(context, boulderId)
-    }
-
-    // Bildgröße ermitteln für korrekte Aspect Ratio
+    // Bildgröße für Aspect Ratio
     var imgW by remember { mutableStateOf(1) }
     var imgH by remember { mutableStateOf(1) }
     var laidOut by remember { mutableStateOf(IntSize.Zero) }
 
+    // Repository init + Boulder laden (einmalig, konfliktfrei)
+    LaunchedEffect(boulderId) {
+        viewModel.initRepository(context)
+        viewModel.loadBoulder(context, boulderId)
+    }
 
-
+    // Bildmaße (inkl. EXIF) bestimmen
     LaunchedEffect(imageUri) {
         if (imageUri.isBlank()) return@LaunchedEffect
-
         val (w, h) = readImageSizeRespectingExif(context, imageUri.toUri())
         imgW = w
         imgH = h
-
     }
-
 
     val aspect = remember(imgW, imgH) { imgW.toFloat() / imgH.toFloat() }
 
+    // Farben/Background wie im BoulderListScreen
     val BarColor = colorResource(id = R.color.hold_type_bar)
-
-
-    // Farbverlauf
     val screenBg = Brush.verticalGradient(
         colors = listOf(
             Color(0xFF53535B),
@@ -187,15 +172,11 @@ fun ViewBoulderScreen(
         )
     )
 
-
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(screenBg)
-    ){
-
-
-
+    ) {
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
@@ -206,7 +187,6 @@ fun ViewBoulderScreen(
                         titleContentColor = Color.White,
                         navigationIconContentColor = Color.White,
                         actionIconContentColor = Color.White
-
                     ),
                     title = {Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
@@ -234,7 +214,6 @@ fun ViewBoulderScreen(
                             Icon(Icons.Default.ArrowBack, contentDescription = "Zurück", modifier = Modifier.size(28.dp))
                         }
                     },
-                    // Info Button
                     actions = {
                         IconButton(onClick = { showInfo = true }, modifier = Modifier.padding(end = 8.dp)) {
                             Icon(Icons.Default.Info, contentDescription = "Info", modifier = Modifier.size(28.dp))
@@ -242,12 +221,11 @@ fun ViewBoulderScreen(
                     }
                 )
             },
-            // FAB nur anzeigen, wenn aktueller User der Setter ist
             floatingActionButton = {
+                // FAB nur für den Setter
                 val token = getTokenFromPrefs(context)
                 val currentUserId = token?.let { getUserIdFromToken(it) }
-
-                if ( boulder?.createdBy == currentUserId) {
+                if (boulder?.createdBy == currentUserId) {
                     FloatingActionButton(
                         containerColor = Color(0xFF7FBABF),
                         onClick = {
@@ -262,13 +240,12 @@ fun ViewBoulderScreen(
                 }
             },
             bottomBar = {
-
                 BottomAppBar(
                     containerColor = BarColor,
                     contentColor = Color.White,
                     tonalElevation = 0.dp,
-                    contentPadding = PaddingValues(horizontal = 12.dp)   ) {
-
+                    contentPadding = PaddingValues(horizontal = 12.dp)
+                ) {
                     val iconSize = 35.dp
 
                     //Prev Button
@@ -282,16 +259,13 @@ fun ViewBoulderScreen(
 
                     Spacer(Modifier.weight(1f))
 
-
-                    //Boulder eintragen Button
+                    // Tick
                     IconButton(
                         enabled = boulder?.id != null,
                         onClick = { showTickDialog = true }
                     ) {
                         Icon(Icons.Default.Done, contentDescription = "Eintragen", modifier = Modifier.size(iconSize))
                     }
-
-
 
                     Spacer(Modifier.weight(1f))
 
@@ -309,9 +283,6 @@ fun ViewBoulderScreen(
                         )                }
                 }
             }
-
-
-
         ) { padding ->
             val scale = remember { mutableStateOf(1f) }
             val pan = remember { mutableStateOf(Offset.Zero) }
@@ -354,13 +325,10 @@ fun ViewBoulderScreen(
                                 contentScale = ContentScale.Fit
                             )
                         } else {
-                            Text(
-                                "Kein Bild verfügbar",
-                                modifier = Modifier.align(Alignment.Center)
-                            )
+                            Text("Kein Bild verfügbar", modifier = Modifier.align(Alignment.Center))
                         }
 
-                        // Holds aus ViewModel zeichnen
+                        // Holds zeichnen
                         uiState.boulder?.holds?.forEach { hold ->
                             val color = HoldType.valueOf(hold.type).color
                             val posX = hold.x * laidOut.width
@@ -380,28 +348,18 @@ fun ViewBoulderScreen(
                                         drawCircle(color = color, style = Stroke(3.dp.toPx()))
                                     }
                             )
-
-
                         }
                     }
                 }
             }
         }
-
-
-
-
     }
-
-
 
     // Info-Dialog
     if (showInfo) {
         val created = formatDate(uiState.boulder?.createdAt)
         val updated = formatDate(uiState.boulder?.lastUpdated)
-        val difficulty   = uiState.boulder?.difficulty ?: "-"
-
-
+        val difficulty = uiState.boulder?.difficulty ?: "-"
 
         AlertDialog(
             onDismissRequest = { showInfo = false },
@@ -415,7 +373,6 @@ fun ViewBoulderScreen(
                     InfoLine("Gym", boulder?.gymName ?: "-", Icons.Filled.Place)
                     InfoLine("Spraywall", boulder?.spraywallName ?: "-", Icons.Default.GridOn)
 
-
                     Spacer(Modifier.height(4.dp))
                     Divider()
                     InfoLine("Erstellt am", created)
@@ -425,15 +382,14 @@ fun ViewBoulderScreen(
         )
     }
 
-
-    // Tick-Bestätigungsdialog
+    // Tick-Dialog
     if (showTickDialog) {
         val title = "Boulder eintragen?"
         val name = boulder?.name ?: "diesen Boulder"
         AlertDialog(
             onDismissRequest = { showTickDialog = false },
             title = { Text(title) },
-            text  = { Text("Möchtest du „$name“ wirklich eintragen?") },
+            text = { Text("Möchtest du „$name“ wirklich eintragen?") },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -442,21 +398,10 @@ fun ViewBoulderScreen(
                     }
                 ) { Text("Ja, eintragen",color = colorResource(R.color.button_normal)) }
             },
-            dismissButton = {
-                TextButton(onClick = { showTickDialog = false }) { Text("Abbrechen") }
-            }
+            dismissButton = { TextButton(onClick = { showTickDialog = false }) { Text("Abbrechen") } }
         )
     }
-
-
-
-
-
-
-
-
 }
-
 
 @Composable
 private fun InfoLine(label: String, value: String, icon: ImageVector? = null) {
@@ -501,29 +446,12 @@ private fun InfoLine(label: String, value: String, icon: ImageVector? = null) {
 
 }
 
-
-
-
-// Hilfsfunktion für Datum
+// Datumshilfe
 private fun formatDate(ms: Long?): String {
     if (ms == null) return "-"
     val df = DateFormat.getDateInstance()
     return df.format(Date(ms))
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 private fun readImageSizeRespectingExif(
     context: android.content.Context,
@@ -551,6 +479,3 @@ private fun readImageSizeRespectingExif(
 
     return w to h
 }
-
-
-

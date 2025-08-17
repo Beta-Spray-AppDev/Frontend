@@ -2,14 +2,15 @@ package com.example.sprayconnectapp.data.dto
 
 import java.util.UUID
 
+
 data class BoulderDTO(
     val id: String? = null,
     val name: String = "",
     val difficulty: String = "",
-    val spraywallId: String = "",
+    val spraywallId: String? = null,
     val holds: List<Hold> = emptyList(),
-    val createdBy: String? = null,
 
+    val createdBy: String? = null,
     val createdAt: Long? = null,
     val lastUpdated: Long? = null,
     val createdByUsername: String? = null,

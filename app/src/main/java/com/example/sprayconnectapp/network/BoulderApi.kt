@@ -15,25 +15,18 @@ import java.util.UUID
 
 interface BoulderApi {
     @POST("boulders")
-    suspend fun createBoulder(@Body request: CreateBoulderRequest): Response<Unit>
+     suspend fun createBoulder(@Body request: CreateBoulderRequest): Response<BoulderDTO>
 
     @GET("boulders/spraywall/{spraywallId}")
     suspend fun getBouldersBySpraywall(@Path("spraywallId") spraywallId: UUID): Response<List<BoulderDTO>>
 
-    @GET("boulders/mine")
-    suspend fun getMyBoulders(): Response<List<BoulderDTO>>
-
+    @GET("boulders/mine") suspend fun getMyBoulders(): Response<List<BoulderDTO>>
 
     @GET("boulders/{boulderId}")
-    suspend fun getBoulderById(
-        @Path("boulderId") boulderId: UUID
-    ): Response<BoulderDTO>
+    suspend fun getBoulderById(@Path("boulderId") boulderId: UUID?): Response<BoulderDTO>
 
     @PUT("boulders/{boulderId}")
-    suspend fun updateBoulder(
-        @Path("boulderId") boulderId: String,
-        @Body request: BoulderDTO
-    ): Response<BoulderDTO>
+    suspend fun updateBoulder(@Path("boulderId") boulderId: String, @Body request: BoulderDTO): Response<BoulderDTO>
 
 
 

@@ -7,15 +7,24 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sprayconnectapp.data.dto.SpraywallDTO
+import com.example.sprayconnectapp.data.local.AppDatabase
+import com.example.sprayconnectapp.data.model.SpraywallEntity
+import com.example.sprayconnectapp.data.repository.SpraywallRepository
 import com.example.sprayconnectapp.network.RetrofitInstance
 import kotlinx.coroutines.launch
 import java.util.UUID
 
-class SpraywallViewModel : ViewModel() {
+class SpraywallViewModel(context: Context) : ViewModel() {
+
+    private val repo: SpraywallRepository
+
+    init {
+        val db = AppDatabase.getInstance(context.applicationContext)
+        repo = SpraywallRepository(db.spraywallDao(), db.boulderDao())
+    }
 
     var spraywalls = mutableStateOf<List<SpraywallDTO>>(emptyList())
         private set
-
     var isLoading = mutableStateOf(false)
     var errorMessage = mutableStateOf<String?>(null)
 
@@ -24,56 +33,86 @@ class SpraywallViewModel : ViewModel() {
             isLoading.value = true
             errorMessage.value = null
 
-            fun isOnline(ctx: Context): Boolean {
-                val cm = ctx.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-                val network = cm.activeNetwork ?: return false
-                val capabilities = cm.getNetworkCapabilities(network) ?: return false
-                return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-            }
-
-            if (isOnline(context)) {
+            val online = isOnline(context)
+            if (online) {
                 try {
-                    val uuid = UUID.fromString(gymId)
-                    val response = RetrofitInstance.getSpraywallApi(context).getSpraywallsByGym(uuid)
+                    val response = RetrofitInstance.getSpraywallApi(context)
+                        .getSpraywallsByGym(UUID.fromString(gymId))
 
                     if (response.isSuccessful) {
-                        spraywalls.value = response.body() ?: emptyList()
+                        val remoteList = response.body().orEmpty()
+                        repo.syncFromBackend(gymId, remoteList)
                     } else {
                         errorMessage.value = "Fehler: ${response.code()}"
-                        spraywalls.value = emptyList()
                     }
-
                 } catch (e: Exception) {
                     errorMessage.value = "Netzwerkfehler: ${e.localizedMessage}"
-                    spraywalls.value = emptyList()
                 }
             } else {
-                errorMessage.value = "Keine Internetverbindung"
-                spraywalls.value = emptyList()
+                if (spraywalls.value.isEmpty()) {
+                    errorMessage.value = "Offline – zeige lokale Daten"
+                }
             }
+
+            val locals = repo.getByGym(gymId)
+            spraywalls.value = locals.map { it.toDto() }
 
             isLoading.value = false
         }
     }
 
-    fun createSpraywall(context: Context, dto: SpraywallDTO, onSuccess: () -> Unit, onError: (String) -> Unit) {
+    fun createSpraywall(
+        context: Context,
+        dto: SpraywallDTO,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
         viewModelScope.launch {
+            if (!isOnline(context)) {
+                onError("Du bist offline – Erstellen nur mit Internet möglich.")
+                return@launch
+            }
             isLoading.value = true
             errorMessage.value = null
-
             try {
                 val response = RetrofitInstance.getSpraywallApi(context).createSpraywall(dto)
                 if (response.isSuccessful) {
+                    val gymId = dto.gymId?.toString() ?: return@launch run {
+                        onSuccess(); isLoading.value = false
+                    }
+                    val listResp = RetrofitInstance.getSpraywallApi(context)
+                        .getSpraywallsByGym(UUID.fromString(gymId))
+                    if (listResp.isSuccessful) {
+                        repo.syncFromBackend(gymId, listResp.body().orEmpty())
+                    }
                     onSuccess()
                 } else {
                     onError("Fehler: ${response.code()}")
                 }
             } catch (e: Exception) {
                 onError("Fehler: ${e.localizedMessage}")
+            } finally {
+                isLoading.value = false
             }
-
-            isLoading.value = false
         }
     }
 
+    private fun isOnline(ctx: Context): Boolean {
+        val cm = ctx.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val net = cm.activeNetwork ?: return false
+        val caps = cm.getNetworkCapabilities(net) ?: return false
+        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
+    private fun SpraywallEntity.toDto(): SpraywallDTO =
+        SpraywallDTO(
+            id = UUID.fromString(id),
+            name = name,
+            description = description,
+            photoUrl = photoUrl,
+            isPublic = isPublic,
+            gymId = UUID.fromString(gymId),
+            createdBy = createdBy?.let { UUID.fromString(it) }
+        )
 }
+
