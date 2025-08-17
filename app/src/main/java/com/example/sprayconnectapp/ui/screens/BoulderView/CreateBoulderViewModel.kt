@@ -55,6 +55,13 @@ class CreateBoulderViewModel : ViewModel() {
 
 
     fun saveBoulder(context: Context, name: String, difficulty: String, spraywallId: String) {
+
+        if (name.isBlank()) {
+            _errorMessage.value = "Name darf nicht leer sein."
+            Log.e("Boulder", "saveBoulder abgebrochen: leerer Name")
+            return
+        }
+
         viewModelScope.launch {
             try {
                 val request = CreateBoulderRequest(
@@ -181,6 +188,13 @@ class CreateBoulderViewModel : ViewModel() {
         spraywallId: String,
         boulderIdOverride: String? = null
     ) {
+        if (name.isBlank()) {
+            _errorMessage.value = "Name darf nicht leer sein."
+            Log.e("BoulderUpdate", "abgebrochen: leerer Name")
+            return
+        }
+
+
         val effectiveId = boulderIdOverride ?: _uiState.value.boulder?.id
         if (effectiveId.isNullOrBlank()) {
             _errorMessage.value = "Kein Boulder zum Aktualisieren geladen (fehlende ID)."

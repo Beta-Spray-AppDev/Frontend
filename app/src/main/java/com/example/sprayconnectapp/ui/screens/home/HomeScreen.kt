@@ -18,8 +18,11 @@ import androidx.navigation.NavController
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
@@ -80,8 +83,42 @@ fun HomeScreen(navController: NavController) {
 
 
 
+        val BarColor = colorResource(id = R.color.hold_type_bar)
+
+
         Scaffold(
             containerColor = Color.Transparent,
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = { Text("SprayConnect") },
+                    actions = {
+                        IconButton(onClick = { navController.navigate("addGym") },
+                            modifier = Modifier.focusProperties { canFocus = false }
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = "Neues Gym anlegen")
+                        }
+                    },
+                    navigationIcon = {
+                        IconButton(modifier = Modifier.focusProperties { canFocus = false }, onClick = {
+                            viewModel.logout(context)
+                            navController.navigate("login") {
+                                popUpTo("home") { inclusive = true }
+                            }
+                        }) {
+                            Icon(Icons.Default.ExitToApp, contentDescription = "Logout", modifier = Modifier.size(28.dp) )
+                        }
+
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = BarColor,
+                        scrolledContainerColor = BarColor,
+                        titleContentColor = Color.White,
+                        navigationIconContentColor = Color.White,
+                        actionIconContentColor = Color.White
+
+                    ),
+                )
+            },
             bottomBar = {
                 BottomNavigationBar(navController)
             }

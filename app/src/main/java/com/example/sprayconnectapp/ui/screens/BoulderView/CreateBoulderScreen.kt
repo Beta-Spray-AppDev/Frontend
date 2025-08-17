@@ -61,7 +61,6 @@ import coil.request.ImageRequest
 import coil.size.Size
 import com.example.sprayconnectapp.data.dto.HoldType
 import kotlin.math.roundToInt
-// oben bei den Imports
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -110,6 +109,8 @@ fun CreateBoulderScreen(
     var trashBounds by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
     var overTrash by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var triedSave by remember { mutableStateOf(false) }
+    val isNameValid = boulderName.trim().isNotEmpty()
 
 
 
@@ -461,11 +462,17 @@ fun CreateBoulderScreen(
             AlertDialog(
                 onDismissRequest = { showDialog = false },
                 confirmButton = {
-                    TextButton(onClick = {
+                    TextButton( onClick = {
                         Log.d(
                             "BoulderUpdate",
                             "Confirm clicked. mode=$mode  name=$boulderName  diff=$boulderDifficulty"
                         )
+
+                        // falls User keinen Namen eingegeben hat
+                        if (boulderName.isBlank()) {
+                            triedSave = true              // Fehler anzeigen
+                            return@TextButton
+                        }
 
                         if (mode is BoulderScreenMode.Edit) {
                             viewModel.updateBoulder(
@@ -514,7 +521,11 @@ fun CreateBoulderScreen(
                         OutlinedTextField(
                             value = boulderName,
                             onValueChange = { boulderName = it },
-                            label = { Text("Name") }
+                            label = { Text("Name") },
+                            isError = triedSave && !isNameValid,
+                            supportingText = {
+                                if (triedSave && !isNameValid) Text("Bitte einen Namen eingeben")
+                            }
                         )
                         Spacer(Modifier.height(8.dp))
 
