@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.media.ExifInterface
 import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
@@ -70,6 +71,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import java.text.DateFormat
 import java.util.Date
 
@@ -116,10 +119,11 @@ fun ViewBoulderScreen(
 
 
     // Wählt Liste nach Quelle
-    val list = when (source) {
-        "ticked" -> tickedList
-        "mine"   -> myList
-        else     -> emptyList()
+    val fromProfile = source == "mine" || source == "ticked"
+    val list = if (fromProfile) {
+        if (source == "mine") myList else tickedList
+    } else {
+        gymList
     }
 
     //Ui-State holen
@@ -206,14 +210,21 @@ fun ViewBoulderScreen(
                     ),
                     title = {Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "Boulder: ${boulder?.name ?: "/"}",
+                            text = boulder?.name ?: "/",
                             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.onPrimary
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.fillMaxWidth().basicMarquee(),
+                            textAlign = TextAlign.Center
+
                         )
                         Text(
                             text = "Grad: ${boulder?.difficulty ?: "Unbekannt"}",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }},
 

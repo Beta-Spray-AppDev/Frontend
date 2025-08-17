@@ -38,6 +38,8 @@ fun BoulderListScreen(
 
 
 
+
+
     val boulders by viewModel.boulders
     val isLoading by viewModel.isLoading
     val errorMessage by viewModel.errorMessage
@@ -130,7 +132,7 @@ fun BoulderListScreen(
                                     onClick = {
                                         val id = boulder.id ?: return@Card
                                         val encoded = Uri.encode(imageUri ?: "")
-                                        navController.navigate("view_boulder/$id/$spraywallId/$encoded")
+                                        navController.navigate("view_boulder/$id/$spraywallId/$encoded?src=list")
                                     },
 
                                     modifier = Modifier

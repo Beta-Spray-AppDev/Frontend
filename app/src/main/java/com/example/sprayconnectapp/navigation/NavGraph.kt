@@ -143,7 +143,7 @@ fun NavGraph (navController: NavHostController){
                 navArgument("boulderId") { type = NavType.StringType },
                 navArgument("spraywallId") { type = NavType.StringType },
                 navArgument("imageUri") { type = NavType.StringType; defaultValue = "" },
-                navArgument("src"){ defaultValue = "mine" }
+                navArgument("src"){ type = NavType.StringType; defaultValue = "" }
             )
         ) { backStackEntry ->
             val boulderId = backStackEntry.arguments?.getString("boulderId") ?: ""

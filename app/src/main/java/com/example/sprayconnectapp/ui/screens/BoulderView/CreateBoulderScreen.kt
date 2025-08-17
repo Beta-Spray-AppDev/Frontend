@@ -65,6 +65,9 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextOverflow
+
+
 
 
 
@@ -111,6 +114,9 @@ fun CreateBoulderScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var triedSave by remember { mutableStateOf(false) }
     val isNameValid = boulderName.trim().isNotEmpty()
+
+
+
 
 
 
