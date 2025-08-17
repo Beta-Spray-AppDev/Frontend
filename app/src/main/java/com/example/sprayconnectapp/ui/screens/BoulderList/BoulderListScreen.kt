@@ -79,7 +79,7 @@ fun BoulderListScreen(
                             Icon(Icons.Default.ArrowBack, contentDescription = "Zurück")
                         }
                     }
-                    // Keine Actions hier, da wir einen FAB unten nutzen
+
                 )
             },
             floatingActionButton = {

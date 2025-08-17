@@ -22,6 +22,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
@@ -40,15 +42,20 @@ fun SpraywallDetailScreen(
     navController: NavController,
     gymId: String,
     gymName: String,
-    viewModel: SpraywallViewModel = viewModel()
+    viewModel: SpraywallViewModel = rememberSpraywallViewModel()
 ) {
     val spraywalls by viewModel.spraywalls
     val isLoading by viewModel.isLoading
     val errorMessage by viewModel.errorMessage
 
-    val context = LocalContext.current
+
     val scope = rememberCoroutineScope()
     val DL_TAG = "SprayDL"
+    val context = LocalContext.current
+
+    LaunchedEffect(gymId) {
+        viewModel.loadSpraywalls(context, gymId)
+    }
 
     fun startDownloadAndOpen(s: SpraywallDTO) {
         val preview = s.photoUrl.trim()
@@ -91,10 +98,6 @@ fun SpraywallDetailScreen(
         }
     }
 
-    LaunchedEffect(gymId) {
-        viewModel.initRepository(context)
-        viewModel.loadSpraywalls(context, gymId)
-    }
 
     val encodedGymName = Uri.encode(gymName)
     val BarColor = colorResource(id = R.color.hold_type_bar)
@@ -213,4 +216,15 @@ private fun SpraywallCard(
             )
         }
     }
+}
+
+@Composable
+fun rememberSpraywallViewModel(): SpraywallViewModel {
+    val context = LocalContext.current
+    return viewModel(factory = object : ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            @Suppress("UNCHECKED_CAST")
+            return SpraywallViewModel(context.applicationContext) as T
+        }
+    })
 }

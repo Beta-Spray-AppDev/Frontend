@@ -48,7 +48,7 @@ fun AddSpraywallScreen(
     navController: NavController,
     gymId: String,
     gymName: String,
-    viewModel: SpraywallViewModel = viewModel()
+    viewModel: SpraywallViewModel = rememberSpraywallViewModel()
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
