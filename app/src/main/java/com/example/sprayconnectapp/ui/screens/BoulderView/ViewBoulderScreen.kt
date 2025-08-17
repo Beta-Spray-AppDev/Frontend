@@ -67,18 +67,10 @@ import com.example.sprayconnectapp.ui.screens.Profile.ProfileViewModel
 import com.example.sprayconnectapp.util.getTokenFromPrefs
 import com.example.sprayconnectapp.util.getUserIdFromToken
 
-import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.Divider
 
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import java.text.DateFormat
@@ -112,8 +104,6 @@ fun ViewBoulderScreen(
     // getickte Boulder
     val tickedList = profileVm?.myTicks?.collectAsState()?.value ?: emptyList()
 
-    // Quelle wählen (Profile bevorzugt)
-    val list = if (myList.isNotEmpty()) myList else gymList
 
     // Wählt Liste nach Quelle
     val fromProfile = source == "mine" || source == "ticked"

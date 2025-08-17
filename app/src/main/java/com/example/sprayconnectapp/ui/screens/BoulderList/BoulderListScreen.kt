@@ -80,7 +80,7 @@ fun BoulderListScreen(
                         IconButton(onClick = { navController.popBackStack() }) {
                             Icon(Icons.Default.ArrowBack, contentDescription = "Zurück")
                         }
-                    }
+                    },
 
                     //Plus-Button zum Erstellen eines neuen Boulders
                     actions = {
@@ -88,28 +88,10 @@ fun BoulderListScreen(
                             onClick = { val encodedUri = Uri.encode(imageUri)
                                 navController.navigate("create_boulder/$spraywallId?imageUri=$encodedUri&mode=create&fromPicker=false")}
                         ) {
-                            Icon(Icons.Default.Add, contentDescription = "Spraywall hinzufügen")
+                            Icon(Icons.Default.Add, contentDescription = "Boulder hinzufügen")
                         }
                     }
                 )
-            },
-            floatingActionButton = {
-                FloatingActionButton(
-                    onClick = {
-                        val encodedUri = Uri.encode(imageUri)
-                        navController.navigate(
-                            "create_boulder/$spraywallId?imageUri=$encodedUri&mode=create"
-                        )
-                    },
-                    containerColor = Color(0xFF26C6DA),
-                    contentColor = Color.White,
-                    elevation = FloatingActionButtonDefaults.elevation(
-                        defaultElevation = 8.dp,
-                        pressedElevation = 12.dp
-                    )
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Neuen Boulder hinzufügen")
-                }
             },
             bottomBar = { BottomNavigationBar(navController) }
         ) { innerPadding ->
