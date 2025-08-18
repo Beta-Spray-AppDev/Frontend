@@ -123,7 +123,7 @@ fun BoulderListScreen(
                                     onClick = {
                                         val id = boulder.id ?: return@Card
                                         val encoded = Uri.encode(imageUri ?: "")
-                                        navController.navigate("view_boulder/$id/$spraywallId/$encoded?src=list")
+                                        navController.navigate("view_boulder/$id/$spraywallId?src=list&imageUri=$encoded")
                                     },
                                     modifier = Modifier
                                         .fillMaxWidth()

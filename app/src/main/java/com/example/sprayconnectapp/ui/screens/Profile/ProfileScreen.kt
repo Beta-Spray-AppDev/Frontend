@@ -269,7 +269,7 @@ fun BoulderListCard( title: String, boulders: List<BoulderDTO>, source: String, 
                             val token = Regex("/s/([^/]+)/").find(preview)?.groupValues?.get(1)
 
                             // Basis-Route mit leerem imageUri-Segment am Ende
-                            val base = "view_boulder/${boulder.id}/${boulder.spraywallId}/"
+                            val base = "view_boulder/${boulder.id}/${boulder.spraywallId}"
 
                             // Wenn wir keine valide Preview haben, brech ab (kein Download hier!)
                             if (preview.isEmpty() || token.isNullOrEmpty()) {
@@ -283,18 +283,17 @@ fun BoulderListCard( title: String, boulders: List<BoulderDTO>, source: String, 
                             val outName = localOutputNameFromPreview(preview, token)
                             val file = getPrivateImageFileByName(context, outName)
 
-                            val encodedImage = if (file.exists()) {
-                                Uri.encode(Uri.fromFile(file).toString())
-                            } else {
-                                // Kein Download im Profil: ohne Bild weiter
-                                ""
+                            val encodedImage = if (!preview.isNullOrEmpty() && !token.isNullOrEmpty()){
+                                val outName = localOutputNameFromPreview(preview, token)
+                                val file = getPrivateImageFileByName(context, outName)
+                                if (file.exists()) Uri.encode(Uri.fromFile(file).toString()) else ""
+                            }  else ""
+
+                            val route = buildString {
+                                append("$base?src=$source")
+                                if (encodedImage.isNotEmpty()) append("&imageUri=$encodedImage")
                             }
 
-                            val route = if (encodedImage.isNotEmpty()) {
-                                "$base$encodedImage?src=$source"
-                            } else {
-                                "$base?src=$source"
-                            }
                             navController.navigate(route)
                         }
                     }

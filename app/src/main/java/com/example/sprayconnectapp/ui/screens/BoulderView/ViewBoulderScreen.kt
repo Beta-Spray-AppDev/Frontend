@@ -240,7 +240,8 @@ fun ViewBoulderScreen(
 
                     //Prev Button
                     IconButton(enabled = prevId != null, onClick = {
-                        prevId?.let { navController.navigate("view_boulder/$it/$spraywallId/${Uri.encode(imageUri)}?src=$source"){
+                        val enc = Uri.encode(imageUri)
+                        prevId?.let { navController.navigate("view_boulder/$it/$spraywallId?src=$source&imageUri=$enc"){
                             launchSingleTop = true
                         } }
                     }) {
@@ -262,7 +263,8 @@ fun ViewBoulderScreen(
 
                     // Next Button
                     IconButton(enabled = nextId != null, onClick = {
-                        nextId?.let { navController.navigate("view_boulder/$it/$spraywallId/${Uri.encode(imageUri)}?src=$source"){
+                        val enc = Uri.encode(imageUri)
+                        nextId?.let { navController.navigate("view_boulder/$it/$spraywallId?src=$source&imageUri=$enc"){
                             launchSingleTop = true
                         } }
                     }) {

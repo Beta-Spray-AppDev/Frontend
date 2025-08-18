@@ -138,7 +138,7 @@ fun NavGraph (navController: NavHostController){
         }
 
         composable(
-            "view_boulder/{boulderId}/{spraywallId}/{imageUri}?src={src}",
+            "view_boulder/{boulderId}/{spraywallId}?src={src}&imageUri={imageUri}",
             arguments = listOf(
                 navArgument("boulderId") { type = NavType.StringType },
                 navArgument("spraywallId") { type = NavType.StringType },
