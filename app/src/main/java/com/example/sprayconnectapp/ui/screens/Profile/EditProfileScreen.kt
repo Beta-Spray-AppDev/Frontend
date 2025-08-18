@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
@@ -22,12 +23,15 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.ImeAction
 import com.example.sprayconnectapp.R
+
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -53,6 +57,10 @@ fun EditProfileScreen(navController: NavController) {
 
 
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
+
+    val focusManager = LocalFocusManager.current
+
+
 
     LaunchedEffect(Unit) {
         viewModel.loadProfile(context)
@@ -140,6 +148,26 @@ fun EditProfileScreen(navController: NavController) {
                             unfocusedTextColor = Color.Black
                         )
 
+
+                        fun saveProfile (){
+                            if (isLoading) return // doppelte Klicks vermeiden
+
+                            viewModel.updateProfile(
+                                context = context,
+                                username = username.trim(),
+                                email = email.trim(),
+                                // leeres Passwort bedeutet "nicht ändern"
+                                password = password.takeIf { it.isNotBlank() } ?: "",
+                                onSuccess = {
+                                    password = ""
+                                    navController.popBackStack()
+                                    Toast.makeText(context, "Profil gespeichert", Toast.LENGTH_LONG).show()
+                                },
+                                onError = { errorMessage = it }
+                            )
+                        }
+
+
                         // Username Eingabe
                         OutlinedTextField(
                             value = username,
@@ -147,7 +175,12 @@ fun EditProfileScreen(navController: NavController) {
                             label = { Text("Benutzername") },
                             colors = tfColors,
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                            keyboardActions = KeyboardActions(
+                                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                            )
                         )
 
                         // Email Eingabe
@@ -157,7 +190,15 @@ fun EditProfileScreen(navController: NavController) {
                             onValueChange = { email = it },
                             label = { Text("E-Mail") },
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Email,
+                                imeAction = ImeAction.Next
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                            )
                         )
 
 
@@ -188,6 +229,12 @@ fun EditProfileScreen(navController: NavController) {
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Password,
                                 imeAction = ImeAction.Done
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onDone = {
+                                    focusManager.clearFocus()
+                                    saveProfile()
+                                }
                             )
                         )
 
@@ -198,29 +245,10 @@ fun EditProfileScreen(navController: NavController) {
                                 contentColor = Color.White
                             ),
                             onClick = {
-                                viewModel.updateProfile(
-                                    context,
-                                    username,
-                                    email,
-                                    password,
-                                    onSuccess = {
-
-                                        // Zurücknavigieren + Toast anzeigen
-                                        navController.popBackStack()
-                                        Toast.makeText(
-                                            context,
-                                            "Profil gespeichert ",
-                                            Toast.LENGTH_LONG
-                                        ).show()
-
-                                    },
-                                    onError = {
-                                        errorMessage = it
-
-                                    }
-                                )
+                                saveProfile()
                             },
-                            modifier = Modifier.fillMaxWidth()
+                            enabled = !isLoading,
+                            modifier = Modifier
                                 .wrapContentWidth()
                         ) {
                             Text("Speichern")
