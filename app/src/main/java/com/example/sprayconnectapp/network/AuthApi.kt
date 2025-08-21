@@ -20,7 +20,7 @@ interface AuthApi {
     @POST("/auth/login")
     suspend fun login(
         @Body request: LoginRequest
-    ): Response<String> // Antwort vom Server
+    ): Response<String> // Antwort vom Server -> Token
 
 
     @GET("auth/profile")

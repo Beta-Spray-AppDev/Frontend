@@ -48,9 +48,6 @@ fun HomeScreen(navController: NavController) {
     val profile by profileViewModel.profile.collectAsState()
 
 
-    Log.d("Auth", "Angemeldet als: $username")
-
-
 
     LaunchedEffect(Unit) {
         viewModel.initRepository(context)

@@ -84,8 +84,8 @@ fun ViewBoulderScreen(
     boulderId: String,
     spraywallId: String,
     imageUri: String,
-    source: String,
-    onBack: () -> Unit,
+    source: String, // Quelle des Aufrufs
+    onBack: () -> Unit, // Callback für zurück - navigation
     viewModel: CreateBoulderViewModel = viewModel()
 ) {
     // voriger BackStack-Eintrag (BoulderList oder Profile)

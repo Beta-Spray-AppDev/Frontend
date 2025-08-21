@@ -248,6 +248,7 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
                         unfocusedContainerColor = Color.White,
                         focusedContainerColor = Color.White
                     ),
+                    // unter dem Feld
                     supportingText = {
                         if (viewModel.emailError != null) {
                             Text(viewModel.emailError!!)
@@ -336,15 +337,19 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
                 Spacer(Modifier.height(8.dp))
 
 
-                // Status / Message
-                if (viewModel.message.isNotBlank()) {
-                    Text(
-                        text = viewModel.message,
-                        color = colorResource(id = R.color.button_normal),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                }
+                // Status / Messageh
+                /**
+                 * if (viewModel.message.isNotBlank()) {
+                 *                     Text(
+                 *                         text = viewModel.message,
+                 *                         color = colorResource(id = R.color.button_normal),
+                 *                         style = MaterialTheme.typography.bodyMedium,
+                 *                         modifier = Modifier.padding(top = 4.dp)
+                 *                     )
+                 *                 }
+                 *
+                  */
+
 
                 Spacer(Modifier.height(8.dp))
 

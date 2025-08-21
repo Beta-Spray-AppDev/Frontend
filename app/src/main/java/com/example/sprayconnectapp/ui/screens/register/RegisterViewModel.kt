@@ -25,6 +25,8 @@ class RegisterViewModel : ViewModel() {
     var message by mutableStateOf("") // Rückmeldung in UI
 
 
+
+    // Feldbezogene Fehlermeldungen
     var usernameError by mutableStateOf<String?>(null)
         private set
     var emailError by mutableStateOf<String?>(null)
@@ -35,6 +37,8 @@ class RegisterViewModel : ViewModel() {
     var passwordError by mutableStateOf<String?>(null); private set
 
 
+
+    // wurde email Feld schon angeklickt
     private var emailTouched by mutableStateOf(false)
 
 
@@ -44,10 +48,13 @@ class RegisterViewModel : ViewModel() {
     }
 
 
+
     fun canSubmit(): Boolean =
         username.isNotBlank() && email.isNotBlank() && emailError == null &&  isEmailValid(email) && password.isNotBlank() && !isLoading
 
 
+
+    // validierung während eingabe
     fun onEmailChange(new: String) {
         email = new
         message = ""
@@ -65,6 +72,8 @@ class RegisterViewModel : ViewModel() {
 
     }
 
+
+    // wird aufgerufen wenn Email Fokus verliert
     fun onEmailBlur() {
         emailError = if (email.isNotBlank() && !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             "Bitte gültige E-Mail eingeben."
