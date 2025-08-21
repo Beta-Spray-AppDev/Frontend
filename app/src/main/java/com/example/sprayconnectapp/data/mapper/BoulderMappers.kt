@@ -17,7 +17,7 @@ fun BoulderEntity.toDtoBase() = BoulderDTO(
     lastUpdated = lastUpdated
 )
 
-// Entity -> DTO (Holds injizieren)
+// Entity -> DTO
 fun BoulderEntity.toDtoWith(holds: List<Hold>) = BoulderDTO(
     id = id,
     spraywallId = spraywallId,
@@ -35,7 +35,7 @@ fun BoulderDTO.toEntity() = BoulderEntity(
     spraywallId = requireNotNull(spraywallId),
     name = name,
     difficulty = difficulty,
-    holdsJson = "[]",           // nicht mehr genutzt
+    holdsJson = "[]",
     createdBy = createdBy,
     createdAt = createdAt,
     lastUpdated = lastUpdated

@@ -12,13 +12,13 @@ class GymRepository(
 
     @Transaction
     suspend fun syncGymsFromBackend(gymDtos: List<Gym>, keepPinned: Boolean = true) {
-        // 1) Upserts
+        //  Upserts
         val remoteIds = gymDtos.map { it.id.toString() }.toSet()
         for (gymDto in gymDtos) {
             saveGymFromBackend(gymDto)
         }
 
-        // 2) Pruning: alles löschen, was nicht mehr im Backend ist (außer ggf. pinned)
+        //  Pruning: alles löschen, was nicht mehr im Backend ist (außer ggf. pinned)
         val locals = gymDao.getAll()
         for (local in locals) {
             val notInBackend = local.id !in remoteIds

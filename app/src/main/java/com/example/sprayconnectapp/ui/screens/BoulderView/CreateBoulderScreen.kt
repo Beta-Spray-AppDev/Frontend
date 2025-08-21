@@ -72,7 +72,7 @@ import androidx.compose.ui.text.style.TextOverflow
 
 
 
-// --- Modus: Erstellen vs. Bearbeiten ---
+// Modus: Erstellen und Bearbeiten
 sealed interface BoulderScreenMode {
     data object Create : BoulderScreenMode
     data class Edit(val boulderId: String) : BoulderScreenMode
@@ -377,7 +377,7 @@ fun CreateBoulderScreen(
                                             isPointerDownOnHold = true
                                             down.consume()
 
-                                            // <<< neu: letzte Fingerposition in Window-Koordinaten merken
+
                                             var lastFingerWindow: Offset? = holdCoords?.localToWindow(down.position)
 
                                             try {
@@ -626,7 +626,6 @@ private fun readImageSizeRespectingExif(
 
 
 
-// --- kleine Extension für null-sichere Strings ---
 private fun String?.orElseEmpty() = this ?: ""
 
 
