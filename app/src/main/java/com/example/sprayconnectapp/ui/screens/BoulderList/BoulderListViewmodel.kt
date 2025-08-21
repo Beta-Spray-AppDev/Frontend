@@ -21,7 +21,7 @@ class BoulderListViewModel : ViewModel() {
 
     fun initRepository(context: Context) {
         val db = AppDatabase.getInstance(context)
-        repo = BoulderRepository(db.boulderDao(), db.holdDao())  // 👈 HoldDao rein
+        repo = BoulderRepository(db.boulderDao(), db.holdDao())
         Log.d(TAG_VM, "Repository initialized")
     }
 

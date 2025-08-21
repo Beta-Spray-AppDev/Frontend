@@ -44,7 +44,7 @@ class BoulderRepository(
         val locals = boulderDao.getBySpraywall(spraywallId)
         val localById = locals.associateBy { it.id }
 
-        // 1) purge: Boulder, die es am Server nicht mehr gibt
+        //  purge: Boulder, die es am Server nicht mehr gibt
         for (l in locals) {
             if (l.id !in remoteIds) {
                 boulderDao.deleteById(l.id)
@@ -52,7 +52,7 @@ class BoulderRepository(
             }
         }
 
-        // 2) upsert: erst die PARENTS speichern
+        //  upsert: erst die PARENTS speichern
         val toUpsert = mutableListOf<BoulderEntity>()
         for ((id, dto) in remoteById) {
             val rLU = dto.lastUpdated ?: Long.MIN_VALUE
@@ -65,7 +65,7 @@ class BoulderRepository(
             boulderDao.insertAll(toUpsert)
         }
 
-        // 3) Holds SPIEGELN
+
         var totalHolds = 0
         for ((id, dto) in remoteById) {
             holdDao.deleteByBoulder(id)

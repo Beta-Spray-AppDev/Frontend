@@ -168,23 +168,12 @@ fun NavGraph (navController: NavHostController){
         }
 
 
-
-
-
-
-
         composable("profile") {
             ProfileScreen(navController)
         }
         composable("editProfile") {
             EditProfileScreen(navController)
         }
-
-
-
-
-
-
 
 
 

@@ -1,5 +1,8 @@
 package com.example.sprayconnectapp.ui.screens.login
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -60,13 +63,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import com.example.sprayconnectapp.ui.screens.isOnline
 
 @Composable
 fun LoginScreen(
     navController: NavController,
     viewModel: LoginViewModel = viewModel()
 ) {
-    val context = LocalContext.current // für Toast + Retrofit
+    val context = LocalContext.current
+    val online = isOnline(context)
 
     val focusManager = LocalFocusManager.current // für Tastatur Enter
 
@@ -283,7 +288,7 @@ fun LoginScreen(
                 // Login Button
                 Button(
                     onClick = { viewModel.loginUser(context) },
-                    enabled = canSubmit, // verhindert leere Eingaben
+                    enabled = canSubmit && online,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp)
@@ -322,8 +327,31 @@ fun LoginScreen(
                     Text(
                         text = "Sign Up",
                         color = colorResource(id = R.color.button_normal),
-                        modifier = Modifier.clickable { navController.navigate("register") }
+                        modifier = Modifier.clickable(
+                            enabled = online, // deaktiviert, wenn offline
+                            onClick = { navController.navigate("register") }
+                        )
+
                     )
+                }
+
+                if (!online) {
+                    Text(
+                        text = "Du bist offline. Login & Registrierung nicht möglich.",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Button(
+                        onClick = {
+                            navController.navigate("home")
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Offline fortfahren")
+                    }
                 }
             }
         }
@@ -338,5 +366,12 @@ fun LoginScreen(
                 .padding(bottom = 12.dp)
         )
 
+    }
+
+    fun isOnline(context: Context): Boolean {
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = cm.activeNetwork ?: return false
+        val capabilities = cm.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 }

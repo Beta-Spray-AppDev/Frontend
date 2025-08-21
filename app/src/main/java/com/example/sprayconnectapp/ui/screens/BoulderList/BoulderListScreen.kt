@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -21,6 +22,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.sprayconnectapp.R
 import com.example.sprayconnectapp.ui.screens.BottomNavigationBar
+import androidx.compose.ui.text.style.TextOverflow
+import com.example.sprayconnectapp.ui.screens.isOnline
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,10 +42,10 @@ fun BoulderListScreen(
     val isLoading by viewModel.isLoading
     val errorMessage by viewModel.errorMessage
 
-    // Farbe aus main
+
     val BarColor = colorResource(id = R.color.hold_type_bar)
 
-    // Daten laden (Variante aus buttonForPriv/PubGyms)
+    // Daten laden
     LaunchedEffect(spraywallId) {
         viewModel.initRepository(context)
         viewModel.load(context, spraywallId)
@@ -68,7 +71,14 @@ fun BoulderListScreen(
             containerColor = Color.Transparent,
             topBar = {
                 CenterAlignedTopAppBar(
-                    title = { Text(spraywallName) },
+                    title = {
+                        Text(
+                            text = spraywallName,
+                            color = Color.White,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                         containerColor = BarColor,
                         scrolledContainerColor = BarColor,
@@ -84,9 +94,17 @@ fun BoulderListScreen(
 
                     //Plus-Button zum Erstellen eines neuen Boulders
                     actions = {
+                        val online = isOnline(context)
+
                         IconButton(
-                            onClick = { val encodedUri = Uri.encode(imageUri)
-                                navController.navigate("create_boulder/$spraywallId?imageUri=$encodedUri&mode=create&fromPicker=false")}
+                            onClick = {
+                                val encodedUri = Uri.encode(imageUri ?: "")
+                                navController.navigate(
+                                    "create_boulder/$spraywallId?imageUri=$encodedUri&mode=create&fromPicker=false"
+                                )
+                            },
+                            enabled = online,
+                            modifier = Modifier.alpha(if (online) 1f else 0.4f)
                         ) {
                             Icon(Icons.Default.Add, contentDescription = "Boulder hinzufügen")
                         }
@@ -100,48 +118,37 @@ fun BoulderListScreen(
                     .padding(innerPadding)
                     .padding(16.dp)
             ) {
-                when {
-                    isLoading -> {
-                        CircularProgressIndicator(color = colorResource(R.color.button_normal)) // Ladeanzeige
-                    }
-                    errorMessage != null -> {
-                        Text(
-                            text = "Hinweis: $errorMessage",
-                            color = MaterialTheme.colorScheme.error
-                        )
-                        Spacer(Modifier.height(8.dp))
-                    }
-                    boulders.isEmpty() -> {
-                        Text("Keine Boulder gefunden.")
-                    }
-                    else -> {
-                        LazyColumn(
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            items(boulders) { boulder ->
-                                Card(
-                                    onClick = {
-                                        val id = boulder.id ?: return@Card
-                                        val encoded = Uri.encode(imageUri ?: "")
-                                        navController.navigate("view_boulder/$id/$spraywallId?src=list&imageUri=$encoded")
-                                    },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 4.dp),
-                                    shape = RoundedCornerShape(12.dp),
-                                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                                ) {
-                                    Column(modifier = Modifier.padding(16.dp)) {
-                                        Text(
-                                            text = boulder.name,
-                                            style = MaterialTheme.typography.titleMedium
-                                        )
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        Text(
-                                            text = "Schwierigkeit: ${boulder.difficulty}",
-                                            style = MaterialTheme.typography.bodyMedium
-                                        )
-                                    }
+                if (isLoading) {
+                    CircularProgressIndicator(color = colorResource(R.color.button_normal))
+                    Spacer(Modifier.height(12.dp))
+                }
+
+                errorMessage?.let {
+                    Text("Hinweis: $it", color = MaterialTheme.colorScheme.error)
+                    Spacer(Modifier.height(8.dp))
+                }
+
+                if (boulders.isEmpty() && !isLoading) {
+                    Text("Keine Boulder gefunden.")
+                } else {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        items(boulders) { boulder ->
+                            Card(
+                                onClick = {
+                                    val id = boulder.id ?: return@Card
+                                    val encoded = Uri.encode(imageUri ?: "")
+                                    navController.navigate("view_boulder/$id/$spraywallId?src=list&imageUri=$encoded")
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                            ) {
+                                Column(Modifier.padding(16.dp)) {
+                                    Text(boulder.name, style = MaterialTheme.typography.titleMedium)
+                                    Spacer(Modifier.height(4.dp))
+                                    Text("Schwierigkeit: ${boulder.difficulty}", style = MaterialTheme.typography.bodyMedium)
                                 }
                             }
                         }

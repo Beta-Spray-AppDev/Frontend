@@ -49,6 +49,7 @@ fun SpraywallDetailScreen(
     val errorMessage by viewModel.errorMessage
 
 
+
     val scope = rememberCoroutineScope()
     val DL_TAG = "SprayDL"
     val context = LocalContext.current
@@ -149,33 +150,30 @@ fun SpraywallDetailScreen(
                     .padding(16.dp)
                     .fillMaxSize()
             ) {
-                when {
-                    isLoading -> CircularProgressIndicator(color = colorResource(R.color.button_normal))
 
-                
-                    errorMessage != null -> Text(
-                        text = errorMessage ?: "Unbekannter Fehler",
-                        color = MaterialTheme.colorScheme.error
-                    )
+                if (isLoading) {
+                    CircularProgressIndicator(color = colorResource(R.color.button_normal))
+                }
 
+                errorMessage?.let {
 
-                    spraywalls.isEmpty() -> Text("Keine Spraywalls gefunden.")
+                    Text(it, color = MaterialTheme.colorScheme.error)
+                    Spacer(Modifier.height(8.dp))
+                }
 
-
-
-                    else -> {
-                        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            items(spraywalls) { spraywall ->
-                                SpraywallCard(
-                                    spraywall = spraywall,
-                                    onClick = { startDownloadAndOpen(spraywall) }
-                                )
-                            }
+                if (spraywalls.isEmpty() && !isLoading) {
+                    Text("Keine Spraywalls gefunden.")
+                } else {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        items(spraywalls) { spraywall ->
+                            SpraywallCard(
+                                spraywall = spraywall,
+                                onClick = { startDownloadAndOpen(spraywall) }
+                            )
                         }
                     }
-
-                   
                 }
+
             }
         }
     }

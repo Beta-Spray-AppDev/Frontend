@@ -1,4 +1,4 @@
-// app/src/main/java/com/example/sprayconnectapp/util/DownloadHelpers.kt
+
 package com.example.sprayconnectapp.util
 
 import android.content.Context
@@ -23,7 +23,7 @@ fun sprayFileName(token: String): String = "spray_${token}.jpg"
 fun buildDownloadUrlFromPreview(previewUrl: String): String? {
     val token = Regex("/s/([^/]+)/").find(previewUrl)?.groupValues?.get(1) ?: return null
     val uri = Uri.parse(previewUrl)
-    val fileParam = uri.getQueryParameter("file") // z. B. "/001.jpg" oder "/sub/abc.jpg"
+    val fileParam = uri.getQueryParameter("file")
 
     return if (!fileParam.isNullOrBlank()) {
         val lastSlash = fileParam.lastIndexOf('/')
@@ -112,9 +112,9 @@ suspend fun downloadDirectToPrivate(
                     ?: throw IllegalStateException("Redirect ohne Location")
 
                 currentUrl = when {
-                    // http -> https hochstufen (vermeidet Cleartext-Blocker)
+
                     loc.startsWith("http://") -> loc.replaceFirst("http://", "https://")
-                    // relative Location -> gegen aktuelle URL auflösen
+
                     loc.startsWith("/") -> {
                         val base = currentUrl.toHttpUrl()
                         base.resolve(loc)?.toString()

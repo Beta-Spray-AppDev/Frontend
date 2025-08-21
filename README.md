@@ -11,13 +11,13 @@ User können auf einem Bild der Kletterwand Griffe markieren (umkreisen), um eig
 - Anzeige eines zentralen Wandbilds  
 - Griff-Markierung per Touch (Kreis auf Bild)  
 - Routen erstellen, speichern, ansehen  
-- Login/Registrierung (geplant)
+- Login/Registrierung 
 
 ## Tech-Stack
 
 - Kotlin / Jetpack Compose (Android)  
 - REST-API-Anbindung an SprayConnect_Server  
-- Lokale und serverseitige Routenverwaltung
+- Lokale (RoomDB)  und serverseitige (PostgreSQL) Routenverwaltung
 
 
 

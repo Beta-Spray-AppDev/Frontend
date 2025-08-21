@@ -218,7 +218,7 @@ fun uploadToNextcloudViaWebDAV(
 
     val request = Request.Builder()
         .url(uploadUrl)
-        .put(requestBody)                 // jetzt mit  Originaldatei, kein Bitmap/EXIF-Verlust
+        .put(requestBody)
         .header("Authorization", credential)
         .build()
 
