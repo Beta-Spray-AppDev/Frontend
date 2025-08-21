@@ -184,7 +184,6 @@ fun ViewBoulderScreen(
                             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            color = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.fillMaxWidth().basicMarquee(),
                             textAlign = TextAlign.Center
 
@@ -192,7 +191,6 @@ fun ViewBoulderScreen(
                         Text(
                             text = "Grad: ${boulder?.difficulty ?: "Unbekannt"}",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
