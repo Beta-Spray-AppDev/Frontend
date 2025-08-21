@@ -17,7 +17,7 @@ User können auf einem Bild der Kletterwand Griffe markieren (umkreisen), um eig
 
 - Kotlin / Jetpack Compose (Android)  
 - REST-API-Anbindung an SprayConnect_Server  
-- Lokale und serverseitige Routenverwaltung
+- Lokale (RoomDB)  und serverseitige (PostgreSQL) Routenverwaltung
 
 
 
