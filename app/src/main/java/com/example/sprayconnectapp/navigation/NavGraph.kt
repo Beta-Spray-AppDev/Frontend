@@ -71,7 +71,10 @@ fun NavGraph (navController: NavHostController){
         composable(
             "create_boulder/{spraywallId}?imageUri={imageUri}&mode={mode}&boulderId={boulderId}&fromPicker={fromPicker}",
             arguments = listOf(
+                // Pflicht-Argument
                 navArgument("spraywallId") { type = NavType.StringType },
+
+                //Optionale Query-Argumente mit default-Werten
                 navArgument("imageUri") { type = NavType.StringType; defaultValue = "" },
                 navArgument("mode") { type = NavType.StringType; defaultValue = "create" },
                 navArgument("boulderId") { type = NavType.StringType; defaultValue = "" },
@@ -79,6 +82,8 @@ fun NavGraph (navController: NavHostController){
 
             )
         ) { backStackEntry ->
+
+            // Werte aus den Argumenten lesen
             val spraywallId = backStackEntry.arguments?.getString("spraywallId") ?: ""
             val imageUri = backStackEntry.arguments?.getString("imageUri") ?: ""
             val mode = backStackEntry.arguments?.getString("mode") ?: "create"

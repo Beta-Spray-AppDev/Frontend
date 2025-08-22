@@ -52,8 +52,7 @@ fun PickBoulderTargetScreen(
 
     val BarColor = colorResource(id = R.color.hold_type_bar)
 
-
-
+    // Gyms laden
     LaunchedEffect(Unit) {
         isLoading = true
         try {
@@ -88,11 +87,14 @@ fun PickBoulderTargetScreen(
                         navigationIconContentColor = Color.White,
                         actionIconContentColor = Color.White
                     ),
+
+                    // Schließen Button
                     navigationIcon = {
                         IconButton(onClick = { navController.popBackStack() }) {
                             Icon(Icons.Default.Close, contentDescription = "Abbrechen")
                         }
                     },
+                    //Titel plus Hinweis
                     title = {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
@@ -113,6 +115,7 @@ fun PickBoulderTargetScreen(
             },
             ) { padding ->
 
+            // unterhalb AppBar
             Box(
                 Modifier
                     .fillMaxSize()
@@ -122,6 +125,8 @@ fun PickBoulderTargetScreen(
             when {
                 isLoading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
                 error != null -> Text(error ?: "", Modifier.align(Alignment.Center))
+
+                // Gym Liste anzeigen, solange kein Gym gewählt ist
                 selectedGym == null -> {
                     LazyColumn(
                         contentPadding = PaddingValues(16.dp),
@@ -132,7 +137,9 @@ fun PickBoulderTargetScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable {
+                                        // nachdem gym ausgewählt  zugehörige Spraywalls laden
                                         selectedGym = gym
+
                                         scope.launch {
                                             isLoading = true
                                             try {
@@ -168,6 +175,7 @@ fun PickBoulderTargetScreen(
                     }
                 }
 
+                // Spraywalls anzeigen
                 else -> {
                     LazyColumn(
                         contentPadding = PaddingValues(16.dp),

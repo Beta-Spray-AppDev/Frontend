@@ -91,7 +91,7 @@ fun ViewBoulderScreen(
     // voriger BackStack-Eintrag (BoulderList oder Profile)
     val prevEntry = navController.previousBackStackEntry
 
-    // aus BoulderList
+    // wenn man von BoulderList kommt - liste aus diesem Viewmodel
     val listVm = prevEntry?.let { viewModel<BoulderListViewModel>(it) }
     val gymList = listVm?.boulders?.value ?: emptyList()
 
@@ -173,18 +173,20 @@ fun ViewBoulderScreen(
                 CenterAlignedTopAppBar(
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                         containerColor = BarColor,
-                        scrolledContainerColor = BarColor,
-                        titleContentColor = Color.White,
+                        scrolledContainerColor = BarColor, // gleich bei Scroll
+                        titleContentColor = Color.White, // Titelfarbe
                         navigationIconContentColor = Color.White,
                         actionIconContentColor = Color.White
                     ),
+
+                    // Boulder und Grad Titel
                     title = {Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             text = boulder?.name ?: "/",
                             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.fillMaxWidth().basicMarquee(),
+                            overflow = TextOverflow.Ellipsis, // Ellipsen bei Überlänge ...
+                            modifier = Modifier.fillMaxWidth().basicMarquee(), // Lauftext wenn zu lang
                             textAlign = TextAlign.Center
 
                         )
@@ -202,6 +204,7 @@ fun ViewBoulderScreen(
                             Icon(Icons.Default.ArrowBack, contentDescription = "Zurück", modifier = Modifier.size(28.dp))
                         }
                     },
+                    // Info Button
                     actions = {
                         IconButton(onClick = { showInfo = true }, modifier = Modifier.padding(end = 8.dp)) {
                             Icon(Icons.Default.Info, contentDescription = "Info", modifier = Modifier.size(28.dp))
@@ -209,6 +212,7 @@ fun ViewBoulderScreen(
                     }
                 )
             },
+            // Bearbeiten Button
             floatingActionButton = {
                 // FAB nur für den Setter
                 val token = getTokenFromPrefs(context)
@@ -248,7 +252,7 @@ fun ViewBoulderScreen(
 
                     Spacer(Modifier.weight(1f))
 
-                    // Tick
+                    // Tick Button
                     IconButton(
                         enabled = boulder?.id != null,
                         onClick = { showTickDialog = true }

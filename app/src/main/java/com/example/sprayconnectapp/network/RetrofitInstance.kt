@@ -33,8 +33,12 @@ object RetrofitInstance {
 
         val client = OkHttpClient.Builder()
             .addInterceptor(logger)
+
+            // Eigener Interceptor für Auth:
+            // entscheidet, ob ein Authorization-Header angehängt wird
+            // liest den Token pro Request FRISCH aus SharedPreferences
             .addInterceptor { chain ->
-                val original = chain.request()
+                val original = chain.request() // holt aktuelle Anfrage
                 val requestBuilder = original.newBuilder()
 
                 //Token nicht mitschicken bei auth endpoint
@@ -43,7 +47,7 @@ object RetrofitInstance {
 
                 if(!isPublic){
 
-                    val freshToken = getTokenFromPrefs(context)
+                    val freshToken = getTokenFromPrefs(context) // Token wird pro request frisch gelesen - nicht im Client cachen
                     // Wenn Token vorhanden: Authorization-Header hinzufügen
                     freshToken?.let {
                         requestBuilder.addHeader("Authorization", "Bearer $it")
