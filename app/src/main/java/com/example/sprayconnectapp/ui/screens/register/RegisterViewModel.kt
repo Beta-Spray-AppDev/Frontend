@@ -12,6 +12,15 @@ import com.example.sprayconnectapp.data.dto.RegisterRequest
 import com.example.sprayconnectapp.network.RetrofitInstance
 import kotlinx.coroutines.launch
 
+
+/**
+ * ViewModel für Registrierung:
+ * - Hält Eingaben & Feldfehler (username/email/password)
+ * - Live-/Blur-Validierung für E-Mail
+ * - Führt Registrierung durch, danach Auto-Login
+ * - Übergibt Erfolg via Callback (damit Screen navigiert/toastet)
+ */
+
 class RegisterViewModel : ViewModel() {
     var email by mutableStateOf("")
         private set
@@ -42,6 +51,7 @@ class RegisterViewModel : ViewModel() {
     private var emailTouched by mutableStateOf(false)
 
 
+    /** Einfache E-Mail-Pattern-Validierung */
     private fun isEmailValid(e: String): Boolean {
         val regex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$".toRegex()
         return e.matches(regex)
@@ -49,6 +59,7 @@ class RegisterViewModel : ViewModel() {
 
 
 
+    /** Steuert Button-Aktivierung. */
     fun canSubmit(): Boolean =
         username.isNotBlank() && email.isNotBlank() && emailError == null &&  isEmailValid(email) && password.isNotBlank() && !isLoading
 
@@ -92,6 +103,12 @@ class RegisterViewModel : ViewModel() {
         usernameError = null // Fehlermeldung zurücksetzen
         message = ""
     }
+
+    /**
+     * Registriert den User und führt anschließend Auto-Login aus.
+     * @param onLoginSuccess wird bei erfolgreichem Login ausgelöst (Screen navigiert dann weiter).
+     */
+
 
     fun registerUser(context: Context, onLoginSuccess: () -> Unit) {
 

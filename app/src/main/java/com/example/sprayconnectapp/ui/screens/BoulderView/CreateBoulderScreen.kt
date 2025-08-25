@@ -102,12 +102,13 @@ fun CreateBoulderScreen(
     var hasBuzzedOverTrash by remember { mutableStateOf(false) }
 
 
+    // Markergröße/-radius für die Hold-Zeichnung
     val density = LocalDensity.current
     val markerSizeDp = 32.dp
     val markerRadiusPx = with(density) { (markerSizeDp / 2).toPx() }
 
 
-
+    // Dialog-/Form-State
     var showDialog by remember { mutableStateOf(false) }
     var boulderName by remember { mutableStateOf("") }
     var boulderDifficulty by remember { mutableStateOf("3") }
@@ -172,6 +173,7 @@ fun CreateBoulderScreen(
         }
     }
 
+    // Haptik für Trash-Zone: einmaliges Buzz beim Reindrücken, reset beim Rausgehen
     LaunchedEffect(showTrash, overTrash) {
         if (!showTrash) {
             // Drag zu Ende -> zurücksetzen
@@ -212,6 +214,7 @@ fun CreateBoulderScreen(
     val BarColor = colorResource(id = R.color.hold_type_bar)
 
 
+    // AppBar + Aktionen (Speichern/Löschen)
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -232,7 +235,7 @@ fun CreateBoulderScreen(
                     }
                 },
                 actions = {
-                    //Lösch Button nur im Edit Modus
+                    //Löschen Button nur im Edit Modus
                     if (mode is BoulderScreenMode.Edit) {
                         IconButton(onClick = { showDeleteDialog = true }) {
                             Icon(Icons.Default.Delete, contentDescription = "Boulder löschen")
@@ -251,6 +254,7 @@ fun CreateBoulderScreen(
 
     ) { padding ->
 
+        // Zoom/Pan State (transformable)
         var laidOut by remember { mutableStateOf(IntSize.Zero) }
         val scale = remember { mutableStateOf(1f) }
         val pan = remember { mutableStateOf(Offset.Zero) }
@@ -319,6 +323,8 @@ fun CreateBoulderScreen(
                             .fillMaxHeight()
                             .onGloballyPositioned { laidOut = it.size }
                     ) {
+
+                        // Bild laden
                         if (resolvedImageUri.isNotBlank()) {
                             AsyncImage(
                                 model = ImageRequest.Builder(context)
@@ -363,6 +369,10 @@ fun CreateBoulderScreen(
                                     }
                                     .size(markerSizeDp)
                                     .onGloballyPositioned { coords -> holdCoords = coords }
+
+                                    // Drag-Loop: solange Finger unten, Position updaten;
+                                    // beim Loslassen ggf. über Trash → entfernen
+
                                     .pointerInput(hold.id, laidOut, scale.value) {
                                         awaitEachGesture {
                                             val down = awaitFirstDown(requireUnconsumed = false)
@@ -511,7 +521,7 @@ fun CreateBoulderScreen(
                         showDialog = false
                         onSave()
                         onBack() // Einen Screen zurück
-                        if (fromPicker) { // Nur wenn wir vom Picker kommen
+                        if (fromPicker) { // Nur wenn wir vom Picker kommen noch einen Schritt zurück
                             onBack()
                         }
                     }) {
@@ -559,6 +569,7 @@ fun CreateBoulderScreen(
             )
         }
 
+        // Löschen-Dialog (nur im Edit)
         if (showDeleteDialog && mode is BoulderScreenMode.Edit) {
             AlertDialog(
                 onDismissRequest = { showDeleteDialog = false },
@@ -591,6 +602,11 @@ fun CreateBoulderScreen(
 
 
 }
+
+/**
+ * Liest Breite/Höhe eines lokalen Bildes und berücksichtigt die EXIF-Orientierung.
+ * Bei 90°/270° werden w/h getauscht.
+ */
 
 private fun readImageSizeRespectingExif(
     context: android.content.Context,

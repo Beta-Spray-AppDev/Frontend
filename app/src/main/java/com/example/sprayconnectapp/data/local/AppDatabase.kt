@@ -8,6 +8,12 @@ import com.example.sprayconnectapp.data.model.GymEntity
 import com.example.sprayconnectapp.data.model.HoldEntity
 import com.example.sprayconnectapp.data.model.SpraywallEntity
 
+
+/**
+ * Room-Database für die App.
+ * Enthält alle Entities (Gym, Spraywall, Boulder, Hold).
+ */
+
 @Database(
     entities = [
         GymEntity::class,

@@ -42,6 +42,15 @@ import okio.BufferedSink
 import okio.source
 
 
+/**
+ * Screen zum Anlegen einer Spraywall:
+ * - Nutzer wählt ein Bild (Gallery-Picker) und gibt Metadaten ein
+ * - Bild wird per WebDAV nach Nextcloud hochgeladen
+ * - Nach erfolgreichem Upload wird ein öffentlicher Share-Link erzeugt
+ * - Dieser Link wird als photoUrl in das SpraywallDTO geschrieben und an das Backend gesendet
+ */
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddSpraywallScreen(
@@ -197,6 +206,13 @@ fun AddSpraywallScreen(
 }
 
 
+/**
+ * Lädt eine lokale Datei via WebDAV nach Nextcloud hoch.
+ * - Bei Erfolg wird direkt ein öffentlicher Share-Link für die hochgeladene Datei erzeugt
+ * - Rückgabe über onSuccess als Preview-URL (wird später für Bild-Download/Anzeige benutzt)
+ */
+
+
 fun uploadToNextcloudViaWebDAV(
     context: Context,
     uri: Uri,
@@ -243,6 +259,11 @@ fun uploadToNextcloudViaWebDAV(
 }
 
 
+/**
+ * Erzeugt über die Nextcloud-OCS-API einen öffentlichen Share-Link.
+ * Gibt eine **Preview-URL** zurück (wird später zum Anzeigen/Herunterladen verwendet).
+ */
+
 fun createPublicShareLink(
     fileName: String,
     onSuccess: (String) -> Unit,
@@ -287,6 +308,9 @@ fun createPublicShareLink(
         }
     })
 }
+
+/** RequestBody, der den Content der Content-URI in den HTTP-Body streamt. */
+
 
 private fun requestBodyFromUri(context: Context, uri: Uri, mime: String): RequestBody =
     object : RequestBody() {

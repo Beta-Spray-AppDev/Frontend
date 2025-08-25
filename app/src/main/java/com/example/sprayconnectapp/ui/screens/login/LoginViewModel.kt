@@ -15,6 +15,14 @@ import kotlinx.coroutines.launch
 import com.example.sprayconnectapp.util.saveTokenToPrefs
 
 
+/**
+ * ViewModel für den Login-Prozess.
+ * Verantwortlichkeiten:
+ * - Hält UI-States (Inputs, Loading, Fehler, Message)
+ * - Clientseitige Validierung
+ * - API-Call /auth/login
+ * - Token speichern + Erfolgsmeldung (triggert Navigation)
+ */
 
 class LoginViewModel : ViewModel() {
 
@@ -58,6 +66,14 @@ class LoginViewModel : ViewModel() {
     var isLoading by mutableStateOf(false)
         private set
 
+
+    /**
+     * Führt den Login aus:
+     * - Validiert Inputs
+     * - Baut Request und ruft Retrofit-API
+     * - Bei Erfolg: Token speichern + Message setzen
+     * - Bei Fehler: differenzierte Fehlermeldungen
+     */
 
     fun loginUser(context: Context) {
 

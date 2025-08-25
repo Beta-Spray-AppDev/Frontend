@@ -33,6 +33,8 @@ class CreateBoulderViewModel : ViewModel() {
 
     private lateinit var repo: BoulderRepository
 
+
+    /** Lazy-Initialisierung des Repositories (DAOs aus Room holen) */
     fun initRepository(context: Context) {
         if (::repo.isInitialized) return
         val db = AppDatabase.getInstance(context)
@@ -40,10 +42,14 @@ class CreateBoulderViewModel : ViewModel() {
     }
     private fun ensureRepo(context: Context) { if (!::repo.isInitialized) initRepository(context) }
 
+    /** Aktiven Hold-Typ (Farbe) wechseln */
+
     fun selectHoldType(type: HoldType) {
         _uiState.value = _uiState.value.copy(selectedType = type)
     }
 
+
+    /** Hold an normierter Position [0..1] hinzufügen */
     fun addHoldNorm(nx: Float, ny: Float) {
         val newHold = Hold(
             id = UUID.randomUUID().toString(),
@@ -53,6 +59,7 @@ class CreateBoulderViewModel : ViewModel() {
         _uiState.value = _uiState.value.copy(holds = _uiState.value.holds + newHold)
     }
 
+    /** Boulder neu anlegen (Server) und State/DB aktualisieren */
     fun saveBoulder(context: Context, name: String, difficulty: String, spraywallId: String) {
 
         if (name.isBlank()) {
@@ -93,12 +100,15 @@ class CreateBoulderViewModel : ViewModel() {
         }
     }
 
+    /** Position eines Holds im State aktualisieren */
     fun updateHoldPosition(id: String, newX: Float, newY: Float) {
         _uiState.value = _uiState.value.copy(
             holds = _uiState.value.holds.map { if (it.id == id) it.copy(x = newX, y = newY) else it }
         )
     }
 
+
+    /** Hold selektieren (UI-Markierung) */
     fun selectHold(id: String) {
         _uiState.value = _uiState.value.copy(selectedHoldId = id)
     }
@@ -110,6 +120,12 @@ class CreateBoulderViewModel : ViewModel() {
         )
     }
 
+
+    /**
+     * Boulder inkl. Holds laden:
+     * - online bevorzugt → DB spiegeln
+     * - offline Fallback aus Room
+     */
     fun loadBoulder(context: Context, boulderId: String) {
         viewModelScope.launch {
             ensureRepo(context)
@@ -131,6 +147,7 @@ class CreateBoulderViewModel : ViewModel() {
                     }
                 }
 
+                // Offline/Fehler: lokaler Fallback
                 val local = repo.getLocalBoulderWithHolds(boulderId)
                 if (local != null) {
                     _uiState.value = _uiState.value.copy(
@@ -160,6 +177,8 @@ class CreateBoulderViewModel : ViewModel() {
         }
     }
 
+
+    /** Boulder löschen (Server) und UI zurücksetzen */
     fun deleteBoulder(context: Context, boulderId: String, onDone: () -> Unit = {}) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -181,6 +200,8 @@ class CreateBoulderViewModel : ViewModel() {
         }
     }
 
+
+    /** Boulder als "getickt" am Server markieren (toaster Feedback) */
     fun tickBoulder(context: Context, boulderId: String) {
         viewModelScope.launch {
             try {
@@ -196,6 +217,8 @@ class CreateBoulderViewModel : ViewModel() {
         }
     }
 
+
+    /** Boulder aktualisieren (Server) und State/DB spiegeln */
     fun updateBoulder(
         context: Context,
         name: String,

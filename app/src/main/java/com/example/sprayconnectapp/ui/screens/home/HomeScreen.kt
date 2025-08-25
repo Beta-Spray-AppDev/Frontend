@@ -33,6 +33,14 @@ import com.example.sprayconnectapp.util.getTokenFromPrefs
 import com.example.sprayconnectapp.util.getUsernameFromToken
 
 
+/**
+ * Home Screen:
+ * - lädt Gyms (online → sync to Room; offline → Room)
+ * - zeigt Begrüßung (vom Profil oder Token-Fallback)
+ * - Navigation: Gym anlegen, Logout, Gym-Detail
+ */
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController) {
@@ -49,6 +57,7 @@ fun HomeScreen(navController: NavController) {
 
 
 
+    // Initiales Laden von Gyms & Profil
     LaunchedEffect(Unit) {
         viewModel.initRepository(context)
         viewModel.loadGyms(context)
@@ -89,12 +98,14 @@ fun HomeScreen(navController: NavController) {
                 CenterAlignedTopAppBar(
                     title = { Text("SprayConnect") },
                     actions = {
+                        // Neues Gym anlegen
                         IconButton(onClick = { navController.navigate("addGym") },
                             modifier = Modifier.focusProperties { canFocus = false }
                         ) {
                             Icon(Icons.Default.Add, contentDescription = "Neues Gym anlegen")
                         }
                     },
+                    // Logout
                     navigationIcon = {
                         IconButton(modifier = Modifier.focusProperties { canFocus = false }, onClick = {
                             viewModel.logout(context)

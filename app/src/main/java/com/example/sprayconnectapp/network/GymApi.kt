@@ -7,6 +7,9 @@ import com.example.sprayconnectapp.data.dto.Gym
 import retrofit2.http.Body
 import retrofit2.http.POST
 
+/**
+ * Endpunkte für Gyms (listen/anlegen).
+ */
 
 interface GymApi {
 

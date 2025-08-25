@@ -11,16 +11,28 @@ import com.example.sprayconnectapp.util.getTokenFromPrefs
 import retrofit2.http.GET
 
 
+/**
+ * Zentrale Stelle zum Erzeugen/Zurückgeben von Retrofit-Instanzen und API-Interfaces.
+ * - Fügt Logging hinzu
+ * - Hängt bei privaten Endpunkten automatisch den Bearer-Token an
+ */
+
+
 object RetrofitInstance {
+
 
     private var retrofit: Retrofit? = null
 
+    /** Setzt die gecachte Retrofit-Instanz zurück (nach Logout) */
     fun resetRetrofit() {
         retrofit = null
     }
 
 
-    // Übergabe des Contexts für Zugriff auf SharedPreferences, bau der Retrofit Instanz
+    /**
+     * Baut eine Retrofit-Instanz mit Auth-/Logging-Interceptors.
+     * Token wird pro Request frisch aus SharedPreferences gelesen.
+     */
     fun getRetrofit(context: Context): Retrofit {
 
 
@@ -66,6 +78,9 @@ object RetrofitInstance {
             .client(client)
             .build()
     }
+
+
+    // Factory-Methoden für die API-Interfaces
 
     fun getApi(context: Context): AuthApi {
         return getRetrofit(context).create(AuthApi::class.java)

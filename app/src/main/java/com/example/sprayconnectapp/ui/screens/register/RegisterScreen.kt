@@ -61,6 +61,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.sprayconnectapp.R
 
+
+/**
+ * Registrierungs-Screen:
+ * - Username, E-Mail (mit Blur-Validierung), Passwort (mit Sichtbarkeits-Toggle)
+ * - Button ist nur aktiv, wenn ViewModel-Validierung dies erlaubt
+ * - Bei Erfolg: Auto-Login + Navigation nach Home
+ */
 @Composable
 fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = viewModel()) {
 
@@ -102,7 +109,7 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
         .background(screenBg)
     ){
 
-        // Header
+        // Oberer Header (Logo + App-Name)
         Surface(
             tonalElevation = 0.dp,
             shadowElevation = 0.dp,
@@ -159,7 +166,7 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
 
         }
 
-        // Card mit Formular
+        // Card mit Formular (überlappt den Header leicht)
         Card(
             shape = RoundedCornerShape(24.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
@@ -354,7 +361,7 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
                 Spacer(Modifier.height(8.dp))
 
 
-
+                // Link zum Login
                 Row {
                     Text("Schon registriert? ")
                     Text(
@@ -372,6 +379,8 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
 
         }
 
+
+        // Footer
         Text(
             text = "Powered by MaltaCloud",
             color = Color.White.copy(alpha = 0.6f),

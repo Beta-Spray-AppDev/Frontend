@@ -16,10 +16,20 @@ import com.example.sprayconnectapp.data.repository.GymRepository
 import com.example.sprayconnectapp.data.local.AppDatabase
 import java.util.UUID
 
+
+/**
+ * Home-VM:
+ * - lädt/synchronisiert die Gym-Liste (online/offline)
+ * - erstellt neue Gyms
+ * - verwaltet Logout
+ */
+
 class HomeViewModel : ViewModel() {
 
     private lateinit var gymRepository: GymRepository
 
+
+    /** DAOs/Repository initialisieren */
 
     fun initRepository(context: Context) {
         val db = AppDatabase.getInstance(context)
@@ -34,6 +44,12 @@ class HomeViewModel : ViewModel() {
     var isLoading = mutableStateOf(false)
     var errorMessage = mutableStateOf<String?>(null)
 
+
+    /**
+     * Lädt Gyms:
+     * - Online: holt Serverliste, synchronisiert Room (upsert + prune), liest dann frisch aus Room
+     * - Offline/Fehler: direkt aus Room lesen
+     */
 
     fun loadGyms(context: Context) {
         viewModelScope.launch {
@@ -124,6 +140,7 @@ class HomeViewModel : ViewModel() {
         }
     }
 
+    /** POST zum Erstellen eines Gyms */
     fun createGym(
         context: Context,
         dto: CreateGymDTO,
@@ -146,7 +163,7 @@ class HomeViewModel : ViewModel() {
 
 
 
-
+    /** Logout: Token killen und Retrofit-Client resetten */
     fun logout(context: Context) {
         clearTokenFromPrefs(context)
         RetrofitInstance.resetRetrofit()

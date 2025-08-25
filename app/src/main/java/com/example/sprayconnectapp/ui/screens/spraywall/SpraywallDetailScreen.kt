@@ -36,6 +36,13 @@ import com.example.sprayconnectapp.util.getPrivateImageFileByName
 import com.example.sprayconnectapp.util.localOutputNameFromPreview
 import kotlinx.coroutines.launch
 
+
+/**
+ * Listet die Spraywalls eines Gyms auf:
+ * - Klick auf Card: Bild lokal (privater Speicher) downloaden (falls nicht vorhanden)
+ * - danach zur Boulder-Liste navigieren (imageUri als optionales Argument)
+ */
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SpraywallDetailScreen(
@@ -57,6 +64,8 @@ fun SpraywallDetailScreen(
     LaunchedEffect(gymId) {
         viewModel.loadSpraywalls(context, gymId)
     }
+
+    // Download + Navigation in die Boulderliste
 
     fun startDownloadAndOpen(s: SpraywallDTO) {
         val preview = s.photoUrl.trim()
@@ -103,6 +112,7 @@ fun SpraywallDetailScreen(
     val encodedGymName = Uri.encode(gymName)
     val BarColor = colorResource(id = R.color.hold_type_bar)
 
+    // Farbverlauf Hintergrund
     val screenBg = Brush.verticalGradient(
         colors = listOf(
             Color(0xFF53535B),
@@ -179,6 +189,8 @@ fun SpraywallDetailScreen(
     }
 }
 
+
+/** Einfache Card für Spraywall-Daten (Name, Beschreibung, Bild-Preview). */
 @Composable
 private fun SpraywallCard(
     spraywall: SpraywallDTO,
@@ -211,6 +223,12 @@ private fun SpraywallCard(
         }
     }
 }
+
+
+/**
+ * Factory-Helfer: stellt sicher, dass SpraywallViewModel mit Application-Context gebaut wird.
+ * Verhindert Leaks und hält Repo/DB stabil.
+ */
 
 @Composable
 fun rememberSpraywallViewModel(): SpraywallViewModel {

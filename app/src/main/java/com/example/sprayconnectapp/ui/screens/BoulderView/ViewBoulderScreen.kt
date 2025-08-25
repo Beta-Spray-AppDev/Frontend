@@ -77,6 +77,16 @@ import java.text.DateFormat
 import java.util.Date
 import kotlin.math.roundToInt
 
+
+/**
+ * Viewer für einen Boulder:
+ * - Zeigt Hintergrundbild + Holds
+ * - Ermöglicht Zoomen/Schwenken
+ * - Navigation zu vorherigem/nächsten Boulder aus der Liste, aus der man kam
+ * - FAB "Bearbeiten" nur für den Setter
+ */
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ViewBoulderScreen(
@@ -212,7 +222,7 @@ fun ViewBoulderScreen(
                     }
                 )
             },
-            // Bearbeiten Button
+            // Bearbeiten Button nur für den Ersteller
             floatingActionButton = {
                 // FAB nur für den Setter
                 val token = getTokenFromPrefs(context)
@@ -231,6 +241,7 @@ fun ViewBoulderScreen(
                     }
                 }
             },
+            // Untere Leiste: Prev / Tick / Next
             bottomBar = {
                 BottomAppBar(
                     containerColor = BarColor,
@@ -291,6 +302,7 @@ fun ViewBoulderScreen(
                     .padding(padding)
                     .transformable(tfState)
             ) {
+                // Transformierter Inhalt (Bild + Holds)
                 Box(
                     modifier = Modifier
                         .graphicsLayer {
@@ -397,6 +409,8 @@ fun ViewBoulderScreen(
     }
 }
 
+
+/** Einfache Info-Zeile im Dialog: Icon + Label + Value */
 @Composable
 private fun InfoLine(label: String, value: String, icon: ImageVector? = null) {
 
@@ -446,6 +460,12 @@ private fun formatDate(ms: Long?): String {
     val df = DateFormat.getDateInstance()
     return df.format(Date(ms))
 }
+
+/**
+ * Liest Bildbreite/-höhe inkl. EXIF-Orientierung.
+ * Bei 90°/270° werden Width/Height getauscht.
+ */
+
 
 private fun readImageSizeRespectingExif(
     context: android.content.Context,

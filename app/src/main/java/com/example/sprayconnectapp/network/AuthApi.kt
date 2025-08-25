@@ -10,6 +10,12 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
 
+/**
+ * Authentifizierungsendpunkte:
+ * - Registrierung/Anmeldung
+ * - Profil lesen/aktualisieren
+ */
+
 interface AuthApi {
 
     @POST("/auth/register")

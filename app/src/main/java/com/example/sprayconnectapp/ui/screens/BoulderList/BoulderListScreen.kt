@@ -37,7 +37,7 @@ fun BoulderListScreen(
     val viewModel: BoulderListViewModel = viewModel()
 
 
-
+    // UI-State aus dem ViewModel
     val boulders by viewModel.boulders
     val isLoading by viewModel.isLoading
     val errorMessage by viewModel.errorMessage
@@ -86,6 +86,7 @@ fun BoulderListScreen(
                         navigationIconContentColor = Color.White,
                         actionIconContentColor = Color.White
                     ),
+                    // Zurück zur vorherigen Route
                     navigationIcon = {
                         IconButton(onClick = { navController.popBackStack() }) {
                             Icon(Icons.Default.ArrowBack, contentDescription = "Zurück")
@@ -111,6 +112,7 @@ fun BoulderListScreen(
                     }
                 )
             },
+            // App-weite Bottom-Navigation
             bottomBar = { BottomNavigationBar(navController) }
         ) { innerPadding ->
             Column(
@@ -123,6 +125,7 @@ fun BoulderListScreen(
                     Spacer(Modifier.height(12.dp))
                 }
 
+                // Hinweis-/Fehlermeldungen aus dem ViewModel
                 errorMessage?.let {
                     Text("Hinweis: $it", color = MaterialTheme.colorScheme.error)
                     Spacer(Modifier.height(8.dp))
@@ -134,6 +137,7 @@ fun BoulderListScreen(
                     LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         items(boulders) { boulder ->
                             Card(
+                                // Detailansicht öffnen
                                 onClick = {
                                     val id = boulder.id ?: return@Card
                                     val encoded = Uri.encode(imageUri ?: "")

@@ -45,6 +45,14 @@ import com.example.sprayconnectapp.util.getUserIdFromToken
 import java.lang.reflect.Modifier.isPublic
 import java.util.UUID
 
+/**
+ * Formular zum Erstellen eines neuen Gyms.
+ * - Validiert Basiseingaben
+ * - Fügt createdBy aus dem Token hinzu
+ */
+
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,6 +85,7 @@ fun AddGymScreen(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
+                // Tap auf freien Raum schließt Tastatur
                 .clickable(
                     indication = null,
                     interactionSource = remember { MutableInteractionSource() }
@@ -86,6 +95,8 @@ fun AddGymScreen(
                 .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+
+            // Name (max 20 Zeichen)
             OutlinedTextField(
                 value = name,
                 onValueChange = { if (it.length <= 20) name = it },
@@ -97,6 +108,7 @@ fun AddGymScreen(
                 )
             )
 
+            // Ort (max 20 Zeichen)
             OutlinedTextField(
                 value = location,
                 onValueChange = { if (it.length <= 20) location = it },
@@ -108,6 +120,7 @@ fun AddGymScreen(
                 )
             )
 
+            // Beschreibung (max 100 Zeichen)
             OutlinedTextField(
                 value = description,
                 onValueChange = { if (it.length <= 100) description = it },
@@ -125,6 +138,7 @@ fun AddGymScreen(
                 Text("Öffentlich sichtbar")
             }
 
+            // Speichern
             Button(
                 onClick = {
                     val token = getTokenFromPrefs(context)

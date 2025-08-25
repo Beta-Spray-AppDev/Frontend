@@ -34,6 +34,13 @@ import com.example.sprayconnectapp.util.localOutputNameFromPreview
 import androidx.compose.foundation.lazy.items
 
 
+/**
+ * Profilübersicht:
+ * - lädt Profil, eigene Boulder, eigene Ticks
+ * - Logout, Profil bearbeiten
+ * - Navigiert zu Boulder-Details (mit optionaler lokaler Bild-URI)
+ */
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -172,6 +179,7 @@ fun ProfileScreen(navController: NavController) {
 }
 
 
+/** Zweispaltige Infozeile (Label links, Wert rechts). */
 @Composable
 fun ProfileInfoRow(label: String, value: String) {
 
@@ -254,6 +262,12 @@ fun BoulderCard(boulder: BoulderDTO, onClick: (() -> Unit)? = null) {
     }
 }
 
+
+/**
+ * Karte mit einer Liste von Bouldern (scrollbar, begrenzte Höhe).
+ * - Erzeugt bei Klick die Route zur Detailansicht
+ * - Wenn lokales Bild gefunden wird, wird dessen URI als Query-Arg mitgegeben
+ */
 
 
 @Composable

@@ -65,6 +65,15 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import com.example.sprayconnectapp.ui.screens.isOnline
 
+
+/**
+ * Login-Screen:
+ * - UI für Username/Passwort mit Validierung
+ * - Triggert Login im ViewModel
+ * - Navigiert nach erfolgreichem Login zur Home-Route
+ * - Offline-Hinweis + Möglichkeit „Offline fortfahren“
+ */
+
 @Composable
 fun LoginScreen(
     navController: NavController,
@@ -196,7 +205,7 @@ fun LoginScreen(
 
                 Spacer(Modifier.height(16.dp))
 
-                // Username
+                // Username-Feld + Fehlermeldung
                 OutlinedTextField(
                     value = viewModel.username,
                     onValueChange = viewModel::onUsernameChange,
@@ -263,6 +272,7 @@ fun LoginScreen(
                     ),
                     keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(
+                        // Enter/Done löst sofort Login aus
                         onDone = {
                             focusManager.clearFocus()
                             viewModel.loginUser(context)
@@ -285,7 +295,7 @@ fun LoginScreen(
 
                 Spacer(Modifier.height(20.dp))
 
-                // Login Button
+                // Login Button (zeigt Spinner, wenn Request läuft)
                 Button(
                     onClick = { viewModel.loginUser(context) },
                     enabled = canSubmit && online,
@@ -335,6 +345,7 @@ fun LoginScreen(
                     )
                 }
 
+                // Offline-Hinweis + „Offline fortfahren“
                 if (!online) {
                     Text(
                         text = "Du bist offline. Login & Registrierung nicht möglich.",

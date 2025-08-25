@@ -4,6 +4,7 @@ import com.example.sprayconnectapp.data.dto.BoulderDTO
 import com.example.sprayconnectapp.data.dto.Hold
 import com.example.sprayconnectapp.data.dto.HoldType
 
+/** UI-Zustand für den Create/Edit-Screen eines Boulders. */
 data class CreateBoulderUiState(
     val selectedType: HoldType = HoldType.GRIFF,
     val holds: List<Hold> = emptyList(),
