@@ -280,20 +280,35 @@ fun CreateBoulderScreen(
                             onLongPress = { tapRoot ->
                                 if (laidOut == IntSize.Zero) return@detectTapGestures
 
+                                // Größe der Eltern-Box (Bildschirmbereich)
                                 val parentW = size.width.toFloat()
                                 val parentH = size.height.toFloat()
+
+                                // Ursprüngliche (unskalierte) Größe des Inhalts
                                 val unscaledW = laidOut.width.toFloat()
                                 val unscaledH = laidOut.height.toFloat()
+
+                                // Aktuelle (skalierte) Größe des Inhalts nach Zoom
                                 val scaledW = unscaledW * scale.value
                                 val scaledH = unscaledH * scale.value
 
+                                // Mittelpunkt des Inhalts in der Eltern-Box,
+                                // verschoben um pan (Translation)
                                 val center = Offset(parentW / 2f, parentH / 2f) + pan.value
+
+                                // Berechne die linke obere Ecke des Inhalts
                                 val topLeft = center - Offset(scaledW / 2f, scaledH / 2f)
+
+                                // Tap-Koordinate relativ zur linken oberen Ecke des Inhalts
                                 val rel = (tapRoot - topLeft)
 
+                                // Wenn der Tap außerhalb des Inhalts liegt → abbrechen
                                 if (rel.x !in 0f..scaledW || rel.y !in 0f..scaledH) return@detectTapGestures
 
+                                // Zurückrechnen auf die unskalierte Größe
                                 val unscaled = rel / scale.value
+
+                                // Normierte Koordinaten (0..1) innerhalb des Inhalts
                                 val nx = unscaled.x / unscaledW
                                 val ny = unscaled.y / unscaledH
 
