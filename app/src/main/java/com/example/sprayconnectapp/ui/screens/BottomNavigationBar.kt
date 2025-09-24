@@ -1,5 +1,6 @@
 package com.example.sprayconnectapp.ui.screens
 
+import android.net.Uri
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
@@ -62,7 +63,33 @@ fun BottomNavigationBar(navController: NavController) {
             icon = { Icon(Icons.Default.Add, contentDescription = "Neuer Boulder") },
             label = { Text("Neuer Boulder") },
             selected = false,
-            onClick = { navController.navigate("pickBoulderTarget") },
+            onClick = {
+
+                val onBoulderList =
+                    currentDestination?.startsWith("boulders/") == true
+
+                if(onBoulderList){
+                    val args = currentBackStackEntry.value?.arguments
+                    val spraywallId = args?.getString("spraywallId")
+                    val imageUriArg = args?.getString("imageUri")
+
+                    if(!spraywallId.isNullOrBlank()){
+                        val encodedUri = Uri.encode(imageUriArg ?: "")
+                        navController.navigate(
+                            "create_boulder/$spraywallId?imageUri=$encodedUri&mode=create&fromPicker=false"
+                        )
+                    }
+                    else {
+                        navController.navigate("pickBoulderTarget")
+                    }
+                }
+
+                else {
+                    navController.navigate("pickBoulderTarget")
+                }
+
+
+                },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = Color.White,
                 selectedTextColor = Color.White,
