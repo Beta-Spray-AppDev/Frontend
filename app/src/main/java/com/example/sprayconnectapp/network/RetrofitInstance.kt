@@ -76,6 +76,11 @@ object RetrofitInstance {
         return getRetrofit(context).create(BoulderApi::class.java)
     }
 
+    fun getFeedbackApi(context: Context): FeedbackApi =
+        getRetrofit(context).create(FeedbackApi::class.java)
+
+
+
 
 
 

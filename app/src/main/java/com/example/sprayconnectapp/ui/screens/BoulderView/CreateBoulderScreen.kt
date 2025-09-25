@@ -1,5 +1,7 @@
 package com.example.sprayconnectapp.ui.screens.BoulderView
 
+import android.annotation.SuppressLint
+import android.content.Context
 import android.graphics.BitmapFactory
 import androidx.exifinterface.media.ExifInterface
 import android.util.Log
@@ -67,9 +69,8 @@ import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
-
-
-
+import androidx.compose.ui.unit.sp
+import androidx.core.content.edit
 
 
 // Modus: Erstellen und Bearbeiten
@@ -78,6 +79,7 @@ sealed interface BoulderScreenMode {
     data class Edit(val boulderId: String) : BoulderScreenMode
 }
 
+@SuppressLint("UseKtx")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateBoulderScreen(
@@ -117,6 +119,15 @@ fun CreateBoulderScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var triedSave by remember { mutableStateOf(false) }
     val isNameValid = boulderName.trim().isNotEmpty()
+
+    val conDtext = LocalContext.current
+    var showOnboarding by remember {
+        mutableStateOf(
+            context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+                .getBoolean("showOnboarding", true)
+        )
+    }
+
 
 
 
@@ -586,6 +597,56 @@ fun CreateBoulderScreen(
                 }
             )
         }
+
+        if (showOnboarding) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xAA000000)) // halbtransparentes Overlay
+                    .padding(32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        "Willkommen bei SprayConnect ",
+                        color = Color.White,
+                        style = androidx.compose.material3.MaterialTheme.typography.headlineMedium
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        "📍 Tipp: Drücke lange auf das Bild, um einen Hold hinzuzufügen.\n\n" +
+                                "✋ Ziehe einen Hold, um ihn zu verschieben.\n\n" +
+                                "🗑️ Ziehe ihn in die obere Ecke, um ihn zu löschen.\n\n" +
+                                "💾 Speichere deinen Boulder über das Häkchen oben rechts.",
+                        color = Color.White,
+                        style = androidx.compose.material3.MaterialTheme.typography.bodyLarge,
+                        lineHeight = 22.sp
+                    )
+                    Spacer(Modifier.height(24.dp))
+                    TextButton(
+                        onClick = {
+                            showOnboarding = false
+
+                            context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+                                .edit().putBoolean("showOnboarding", false).apply()
+                        },
+                        modifier = Modifier
+                            .background(Color.White, shape = CircleShape)
+                            .padding(horizontal = 24.dp, vertical = 8.dp)
+                    ) {
+                        Text(
+                            text = "Loslegen ",
+                            color = Color.Black,
+                            style = androidx.compose.material3.MaterialTheme.typography.titleMedium
+                        )
+                    }
+                }
+            }
+        }
+
 
     }
 
