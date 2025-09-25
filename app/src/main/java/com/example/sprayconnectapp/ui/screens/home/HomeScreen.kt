@@ -152,7 +152,7 @@ fun HomeScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(32.dp))
 
                 if (viewModel.isLoading.value) {
-                    CircularProgressIndicator(color = colorResource(R.color.button_normal))
+                    CircularProgressIndicator(color = colorResource(R.color.button_normal), modifier = Modifier.align(Alignment.CenterHorizontally))
                 } else if (viewModel.errorMessage.value != null) {
                     Text("Fehler: ${viewModel.errorMessage.value}", color = MaterialTheme.colorScheme.error)
                 } else {

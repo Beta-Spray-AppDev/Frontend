@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CheckCircleOutline
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.*
@@ -31,6 +32,10 @@ import com.example.sprayconnectapp.ui.screens.BottomNavigationBar
 import androidx.compose.ui.text.style.TextOverflow
 import com.example.sprayconnectapp.ui.screens.isOnline
 import kotlin.math.roundToInt
+
+import androidx.compose.material.icons.outlined.ImageSearch
+import androidx.compose.ui.text.style.TextAlign
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -173,7 +178,14 @@ fun BoulderListScreen(
                     .padding(16.dp)
             ) {
                 if (isLoading) {
-                    CircularProgressIndicator(color = colorResource(R.color.button_normal))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = colorResource(R.color.button_normal))
+                    }
                     Spacer(Modifier.height(12.dp))
                 }
 
@@ -187,7 +199,7 @@ fun BoulderListScreen(
                 }
 
                 if (listToShow.isEmpty() && !isLoading) {
-                    Text("Keine Boulder gefunden.")
+                    EmptyBouldersState()
                 } else {
                     LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         items(listToShow) { boulder ->
@@ -230,10 +242,10 @@ fun BoulderListScreen(
                                         if (isTicked) {
                                             Spacer(Modifier.width(12.dp))
                                             Icon(
-                                                imageVector = Icons.Default.Check,
+                                                imageVector = Icons.Default.CheckCircle,
                                                 contentDescription = "Getickt",
-                                                tint = Color.Black, //colorResource(R.color.button_normal),
-                                                modifier = Modifier.size(42.dp)
+                                                tint = colorResource(R.color.button_normal),
+                                                modifier = Modifier.size(38.dp)
                                             )
                                         }
                                     }
@@ -338,3 +350,39 @@ fun BoulderListScreen(
         }
     }
 }
+
+
+
+@Composable
+private fun EmptyBouldersState() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.ImageSearch,
+                contentDescription = null,
+                tint = colorResource(R.color.button_normal_dark),
+                modifier = Modifier.size(72.dp)
+            )
+            Text(
+                "Keine Boulder gefunden",
+                style = MaterialTheme.typography.titleLarge,
+                color = Color.White
+            )
+            Text(
+                "Passe die Filter-Optionen an erstelle einen neuen Boulder.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White.copy(alpha = 0.85f),
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+

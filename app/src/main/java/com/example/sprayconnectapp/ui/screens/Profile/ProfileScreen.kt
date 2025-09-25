@@ -32,6 +32,8 @@ import com.example.sprayconnectapp.util.getPrivateImageFileByName
 import com.example.sprayconnectapp.util.localOutputNameFromPreview
 
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
 
 
 /**
@@ -53,6 +55,9 @@ fun ProfileScreen(navController: NavController) {
     val error by viewModel.error.collectAsState()
     val boulders by viewModel.myBoulders.collectAsState()
     val ticked by viewModel.myTicks.collectAsState()
+
+    val tickedIds = remember(ticked) { ticked.mapNotNull { it.id }.toSet() }
+
 
 
     // Beim ersten Compose Daten laden
@@ -154,11 +159,11 @@ fun ProfileScreen(navController: NavController) {
                             ProfileCard(profile = profile!!, navController = navController)
                             Spacer(modifier = Modifier.height(17.dp))
 
-                            BoulderListCard(title = "Meine Boulder", boulders = boulders, navController = navController, source = "mine")
+                            BoulderListCard(title = "Meine Boulder", boulders = boulders, navController = navController, source = "mine", tickedIds = tickedIds)
 
                             Spacer(Modifier.height(17.dp))
 
-                            BoulderListCard(title = "Getickte Boulder", boulders = ticked, navController = navController, source = "ticked")
+                            BoulderListCard(title = "Getickte Boulder", boulders = ticked, navController = navController, source = "ticked", tickedIds = tickedIds)
 
                         }
 
@@ -244,23 +249,49 @@ fun ProfileCard(profile: UserProfile, navController: NavController) {
 // Karte für einzelnen Boulder
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BoulderCard(boulder: BoulderDTO, onClick: (() -> Unit)? = null) {
+fun BoulderCard(
+    boulder: BoulderDTO,
+    isTicked: Boolean = false,
+    onClick: (() -> Unit)? = null
+) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
+        modifier = Modifier
+            .fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(4.dp),
-        onClick = {
-             onClick?.invoke()
-        }
+        onClick = { onClick?.invoke() }
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(boulder.name, style = MaterialTheme.typography.titleMedium)
-            Text("Schwierigkeit: ${boulder.difficulty}", style = MaterialTheme.typography.bodyMedium)
+        Column(Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(boulder.name, style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.height(3.dp))
+                    Text(
+                        "Schwierigkeit: ${boulder.difficulty}",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+
+                if (isTicked) {
+                    Spacer(Modifier.width(12.dp))
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = "Getickt",
+                        tint = colorResource(R.color.button_normal),
+                        modifier = Modifier.size(34.dp)
+                    )
+                }
+            }
         }
     }
 }
+
 
 
 /**
@@ -271,7 +302,7 @@ fun BoulderCard(boulder: BoulderDTO, onClick: (() -> Unit)? = null) {
 
 
 @Composable
-fun BoulderListCard( title: String, boulders: List<BoulderDTO>, source: String, navController: NavController, maxHeight: Dp = 240.dp) {
+fun BoulderListCard( title: String, boulders: List<BoulderDTO>, source: String,  navController: NavController, maxHeight: Dp = 240.dp, tickedIds: Set<String> = emptySet()) {
     val context = LocalContext.current
 
     Card(
@@ -299,7 +330,10 @@ fun BoulderListCard( title: String, boulders: List<BoulderDTO>, source: String, 
 
                     // key für feste identität statt nur position - kann sich sonst verändern bei Änderungen
                     items(boulders,  key = { it.id ?: "fallback-${it.spraywallId}-${it.createdAt}" } ) { boulder ->
-                        BoulderCard(boulder) {
+
+                        val isTicked = boulder.id?.let { tickedIds.contains(it) } == true
+
+                        BoulderCard(boulder = boulder, isTicked = isTicked) {
 
                             // OnClick eines Boulder-Items -> zur Detailansicht navigieren
 

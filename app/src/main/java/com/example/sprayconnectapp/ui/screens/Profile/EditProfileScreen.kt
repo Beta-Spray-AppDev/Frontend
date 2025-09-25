@@ -305,7 +305,7 @@ fun EditProfileScreen(navController: NavController) {
                         }
 
                         if (isLoading) {
-                            CircularProgressIndicator(color = colorResource(R.color.button_normal))
+                            CircularProgressIndicator(color = colorResource(R.color.button_normal), modifier = Modifier.align(Alignment.CenterHorizontally))
                         }
 
                         error?.let {
