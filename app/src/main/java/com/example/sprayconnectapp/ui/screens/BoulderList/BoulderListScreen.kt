@@ -9,6 +9,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CheckCircleOutline
@@ -81,9 +83,12 @@ fun BoulderListScreen(
 
     var excludeTicked by rememberSaveable { mutableStateOf(false) }
 
+    var sortAscending by rememberSaveable { mutableStateOf(true) }
 
-    val filteredBoulders = remember(boulders, startIndex, endIndex,tickedBoulderIds, excludeTicked) {
-        boulders.filter { b ->
+
+
+    val filteredBoulders = remember(boulders, startIndex, endIndex,tickedBoulderIds, excludeTicked, sortAscending) {
+        val filtered = boulders.filter { b ->
             val idx = gradeToIndex[b.difficulty]
             val inRange = idx != null && idx in startIndex..endIndex
             if (!inRange) return@filter false
@@ -94,7 +99,11 @@ fun BoulderListScreen(
             val id = b.id
             id == null || !tickedBoulderIds.contains(id)
         }
+        val sorted = filtered.sortedBy { gradeToIndex[it.difficulty] ?: Int.MAX_VALUE }
+        if (sortAscending) sorted else sorted.asReversed()
     }
+
+
 
 
 
@@ -279,18 +288,62 @@ fun BoulderListScreen(
                             sliderRange = 0f..fbGrades.lastIndex.toFloat() // Reset
                             excludeTicked = false
                             showFilter = false
+                            sortAscending = true
                         }) {
                             Text(
                                 "Zurücksetzen",
-                                color = colorResource(R.color.button_normal),
+                                color = Color.Black,
                                 style = MaterialTheme.typography.titleMedium
                             )                        }
                     },
                     title = { Text("Filter-Optionen:") },
                     text = {
                         Column {
+
+                            Spacer(Modifier.height(16.dp))
+                            Text("Sortierung nach Schwierigkeit:", style = MaterialTheme.typography.titleMedium)
+                            Spacer(Modifier.height(8.dp))
+
+
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                FilterChip(
+                                    selected = sortAscending,
+                                    onClick = { sortAscending = true },
+                                    label = { Text("Aufsteigend") },
+                                    leadingIcon = {
+                                        Icon(Icons.Filled.ArrowUpward, contentDescription = null)
+                                    },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = colorResource(R.color.button_normal),
+                                        selectedLabelColor = Color.White,
+                                        selectedLeadingIconColor = Color.White
+                                    )
+                                )
+
+                                FilterChip(
+                                    selected = !sortAscending,
+                                    onClick = { sortAscending = false },
+                                    label = { Text("Absteigend") },
+                                    leadingIcon = {
+                                        Icon(Icons.Filled.ArrowDownward, contentDescription = null)
+                                    },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = colorResource(R.color.button_normal),
+                                        selectedLabelColor = Color.White,
+                                        selectedLeadingIconColor = Color.White
+                                    )
+                                )
+                            }
+
+                            Spacer(Modifier.height(16.dp))
+
+
+
                             Text(
-                                "Von ${fbGrades[startIndex]} bis ${fbGrades[endIndex]}",
+                                " ${fbGrades[startIndex]} - ${fbGrades[endIndex]}",
                                 style = MaterialTheme.typography.titleMedium,
                             )
                             Spacer(Modifier.height(8.dp))
@@ -338,6 +391,8 @@ fun BoulderListScreen(
                             }
 
 
+
+
                         }
                     }
                 )
@@ -377,7 +432,7 @@ private fun EmptyBouldersState() {
                 color = Color.White
             )
             Text(
-                "Passe die Filter-Optionen an erstelle einen neuen Boulder.",
+                "Passe die Filter-Optionen an oder erstelle einen neuen Boulder.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.White.copy(alpha = 0.85f),
                 textAlign = TextAlign.Center

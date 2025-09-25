@@ -43,6 +43,7 @@ import com.example.sprayconnectapp.ui.screens.Profile.ProfileViewModel
 import com.example.sprayconnectapp.util.getTokenFromPrefs
 import com.example.sprayconnectapp.util.getUsernameFromToken
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.text.input.ImeAction
 import com.example.sprayconnectapp.util.AppMeta
 
@@ -284,18 +285,16 @@ fun FeedbackDialog(
             TextButton(
                 onClick = { if (isValid) onSubmit(stars, text.trim()) },
                 enabled = isValid,
-                modifier = Modifier
-                    .background(
-                        if (isValid) Color.White else Color(0xFFE0E0E0),
-                        CircleShape
-                    )
-                    .padding(horizontal = 16.dp, vertical = 6.dp)
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = colorResource(R.color.button_normal),
+                    disabledContentColor = Color.LightGray
+                )
             ) {
-                Text("Senden", color = Color.Black)
+                Text("Senden")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Später") }
+            TextButton(onClick = onDismiss) { Text("Später", color = Color.Black) }
         }
     )
 }

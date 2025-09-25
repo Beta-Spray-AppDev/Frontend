@@ -35,6 +35,7 @@ class BoulderListViewModel : ViewModel() {
 
 
 
+
     fun loadTickedBoulders(context: Context) = viewModelScope.launch {
         try {
             if (!isOnline(context)) {
