@@ -17,8 +17,6 @@ import com.example.sprayconnectapp.data.repository.GymRepository
 import com.example.sprayconnectapp.network.RetrofitInstance
 import com.example.sprayconnectapp.util.clearTokenFromPrefs
 import kotlinx.coroutines.launch
-import com.example.sprayconnectapp.data.repository.GymRepository
-import com.example.sprayconnectapp.data.local.AppDatabase
 import java.util.UUID
 
 
