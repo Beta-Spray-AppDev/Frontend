@@ -31,6 +31,34 @@ class BoulderListViewModel : ViewModel() {
     val isLoading = mutableStateOf(false)
     val errorMessage = mutableStateOf<String?>(null)
 
+    val tickedBoulderIds = mutableStateOf<Set<String>>(emptySet())
+
+
+    fun loadTickedBoulders(context: Context) = viewModelScope.launch {
+        try {
+            if (!isOnline(context)) {
+                // Optional: Offline-Notiz
+                Log.d(TAG_VM, "Offline – lade keine Ticks")
+                tickedBoulderIds.value = emptySet()
+                return@launch
+            }
+
+            val resp = RetrofitInstance.getBoulderApi(context).getMyTickedBoulders()
+            Log.d(TAG_VM, "GET /boulders/ticks/mine code=${resp.code()} ok=${resp.isSuccessful}")
+
+            if (resp.isSuccessful) {
+                val ids = resp.body().orEmpty().mapNotNull { it.id }.toSet()
+                tickedBoulderIds.value = ids
+            } else {
+                Log.w(TAG_VM, "Ticks laden fehlgeschlagen: ${resp.code()}")
+            }
+        } catch (t: Throwable) {
+            Log.e(TAG_VM, "Fehler beim Laden der Ticks: ${t.message}", t)
+        }
+    }
+
+
+
 
     /**
      * Lädt Boulder zu einer Spraywall:
@@ -81,4 +109,10 @@ class BoulderListViewModel : ViewModel() {
         isLoading.value = false
         Log.d(TAG_VM, "load() done")
     }
+
+
+
+
+
+
 }
