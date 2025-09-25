@@ -34,6 +34,7 @@ class BoulderListViewModel : ViewModel() {
     val tickedBoulderIds = mutableStateOf<Set<String>>(emptySet())
 
 
+
     fun loadTickedBoulders(context: Context) = viewModelScope.launch {
         try {
             if (!isOnline(context)) {

@@ -74,10 +74,20 @@ fun BoulderListScreen(
     val endIndex   = sliderRange.endInclusive.roundToInt().coerceIn(0, fbGrades.lastIndex)
 
 
-    val filteredBoulders = remember(boulders, startIndex, endIndex) {
+    var excludeTicked by rememberSaveable { mutableStateOf(false) }
+
+
+    val filteredBoulders = remember(boulders, startIndex, endIndex,tickedBoulderIds, excludeTicked) {
         boulders.filter { b ->
             val idx = gradeToIndex[b.difficulty]
-            idx != null && idx in startIndex..endIndex
+            val inRange = idx != null && idx in startIndex..endIndex
+            if (!inRange) return@filter false
+
+            if (!excludeTicked) return@filter true
+
+            // Wenn "Getickte ausblenden" aktiv ist:
+            val id = b.id
+            id == null || !tickedBoulderIds.contains(id)
         }
     }
 
@@ -155,14 +165,7 @@ fun BoulderListScreen(
                 )
             },
             // App-weite Bottom-Navigation
-            bottomBar = { BottomNavigationBar(navController) },
-            floatingActionButton = {
-                FloatingActionButton(onClick = { showFilter = true },
-                    containerColor = colorResource(R.color.button_normal
-                    )){
-                    Icon(Icons.Default.FilterList, contentDescription = "Filtern")
-                }
-            }
+            bottomBar = { BottomNavigationBar(navController) }
         ) { innerPadding ->
             Column(
                 modifier = Modifier
@@ -252,18 +255,32 @@ fun BoulderListScreen(
                 AlertDialog(
                     onDismissRequest = { showFilter = false },
                     confirmButton = {
-                        TextButton(onClick = { showFilter = false }) { Text("Fertig") }
+                        TextButton(onClick = { showFilter = false }) {
+                            Text(
+                                "Fertig",
+                                color = colorResource(R.color.button_normal),
+                                style = MaterialTheme.typography.titleMedium
+                            )                        }
                     },
                     dismissButton = {
                         TextButton(onClick = {
                             sliderRange = 0f..fbGrades.lastIndex.toFloat() // Reset
+                            excludeTicked = false
                             showFilter = false
-                        }) { Text("Zurücksetzen") }
+                        }) {
+                            Text(
+                                "Zurücksetzen",
+                                color = colorResource(R.color.button_normal),
+                                style = MaterialTheme.typography.titleMedium
+                            )                        }
                     },
-                    title = { Text("Nach Schwierigkeit filtern") },
+                    title = { Text("Filter-Optionen:") },
                     text = {
                         Column {
-                            Text("Von ${fbGrades[startIndex]} bis ${fbGrades[endIndex]}")
+                            Text(
+                                "Von ${fbGrades[startIndex]} bis ${fbGrades[endIndex]}",
+                                style = MaterialTheme.typography.titleMedium,
+                            )
                             Spacer(Modifier.height(8.dp))
                             RangeSlider(
                                 value = sliderRange,
@@ -283,6 +300,32 @@ fun BoulderListScreen(
                                     inactiveTickColor = Color.Gray
                                 )
                             )
+
+
+                            Spacer(Modifier.height(16.dp))
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    "Exclude my repeats:",
+                                    modifier = Modifier.weight(1f),
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Switch(
+                                    checked = excludeTicked,
+                                    onCheckedChange = { excludeTicked = it },
+                                    colors = SwitchDefaults.colors(
+                                        checkedTrackColor = colorResource(R.color.button_normal),
+                                        uncheckedTrackColor = colorResource(R.color.button_normal).copy(alpha = 0.35f),
+                                        uncheckedThumbColor = Color.White,
+                                        checkedBorderColor = Color.Transparent,
+                                        uncheckedBorderColor = Color.Transparent
+                                    )
+                                )
+                            }
+
+
                         }
                     }
                 )
