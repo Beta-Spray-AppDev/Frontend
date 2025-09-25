@@ -1,5 +1,6 @@
 package com.example.sprayconnectapp.ui.screens.Profile
 
+import android.util.Patterns
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -23,6 +24,9 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -67,6 +71,12 @@ fun EditProfileScreen(navController: NavController) {
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
 
     val focusManager = LocalFocusManager.current
+
+    fun isValidEmail(s: String): Boolean =
+        Patterns.EMAIL_ADDRESS.matcher(s).matches()
+
+    var emailError by remember { mutableStateOf<String?>(null) }
+
 
 
 
@@ -150,17 +160,22 @@ fun EditProfileScreen(navController: NavController) {
 
                         // Einheitliche Farben für Textfelder
                         val tfColors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color.White,
+                            focusedBorderColor = Color(0xFF00796B),
+                            cursorColor = Color(0xFF00796B),
+                            focusedLabelColor = Color(0xFF00796B),
                             unfocusedContainerColor = Color.White,
-                            disabledContainerColor = Color.White,
-                            focusedTextColor = Color.Black,
-                            unfocusedTextColor = Color.Black
+                            focusedContainerColor = Color.White
                         )
 
 
                         // lokaler Helper: verhindert Doppel-Klicks und ruft VM-Update
                         fun saveProfile (){
                             if (isLoading) return // doppelte Klicks vermeiden
+
+                            if (email.isNotBlank() && !isValidEmail(email)) {
+                                emailError = "Bitte gib eine gültige E-Mail-Adresse ein."
+                                return
+                            }
 
                             viewModel.updateProfile(
                                 context = context,
@@ -183,9 +198,11 @@ fun EditProfileScreen(navController: NavController) {
                             value = username,
                             onValueChange = { username = it },
                             label = { Text("Benutzername") },
+                            placeholder = { Text("Benutzername") },
+                            leadingIcon = { Icon(Icons.Filled.Person, contentDescription = null) },
                             colors = tfColors,
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(50),
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                             keyboardActions = KeyboardActions(
@@ -196,11 +213,20 @@ fun EditProfileScreen(navController: NavController) {
                         // Email Eingabe
                         OutlinedTextField(
                             value = email,
-                            colors = tfColors,
-                            onValueChange = { email = it },
+                            onValueChange = {
+                                email = it
+                                emailError = if (it.isNotBlank() && !isValidEmail(it)) "Bitte gib eine gültige E-Mail-Adresse ein." else null
+                            },
                             label = { Text("E-Mail") },
+                            placeholder = { Text("E-Mail") },
+                            leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null) },
+                            colors = tfColors,
+                            isError = emailError != null,
+                            supportingText = {
+                                if (emailError != null) Text(emailError!!, color = MaterialTheme.colorScheme.error)
+                            },
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(50),
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Email,
@@ -214,11 +240,13 @@ fun EditProfileScreen(navController: NavController) {
 
                         // Passwort Eingabe
                         OutlinedTextField(
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(50),
                             value = password,
                             colors = tfColors,
                             onValueChange = { password = it },
                             label = { Text("Neues Passwort") },
+                            placeholder = { Text("Neues Passwort") },
+                            leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = null) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                             visualTransformation = if (passwordVisible)
@@ -259,6 +287,7 @@ fun EditProfileScreen(navController: NavController) {
                             },
                             enabled = !isLoading,
                             modifier = Modifier
+                                .align(Alignment.CenterHorizontally)
                                 .wrapContentWidth()
                         ) {
                             Text("Speichern")
