@@ -9,11 +9,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sprayconnectapp.data.dto.CreateGymDTO
 import com.example.sprayconnectapp.data.dto.Gym
+import com.example.sprayconnectapp.data.dto.feedback.CreateFeedbackDto
+import com.example.sprayconnectapp.data.dto.feedback.FeedbackDto
+import com.example.sprayconnectapp.data.local.AppDatabase
+import com.example.sprayconnectapp.data.repository.FeedbackRepository
+import com.example.sprayconnectapp.data.repository.GymRepository
 import com.example.sprayconnectapp.network.RetrofitInstance
 import com.example.sprayconnectapp.util.clearTokenFromPrefs
 import kotlinx.coroutines.launch
-import com.example.sprayconnectapp.data.repository.GymRepository
-import com.example.sprayconnectapp.data.local.AppDatabase
 import java.util.UUID
 
 
@@ -27,13 +30,14 @@ import java.util.UUID
 class HomeViewModel : ViewModel() {
 
     private lateinit var gymRepository: GymRepository
-
+    private lateinit var feedbackRepository: FeedbackRepository
 
     /** DAOs/Repository initialisieren */
 
     fun initRepository(context: Context) {
         val db = AppDatabase.getInstance(context)
         gymRepository = GymRepository(db.gymDao())
+        feedbackRepository = FeedbackRepository(context.applicationContext)
     }
 
 
@@ -44,6 +48,13 @@ class HomeViewModel : ViewModel() {
     var isLoading = mutableStateOf(false)
     var errorMessage = mutableStateOf<String?>(null)
 
+    // ---- Feedback UI-State ----
+    var feedbackSending = mutableStateOf(false)
+        private set
+    var feedbackError = mutableStateOf<String?>(null)
+        private set
+    var feedbackResult = mutableStateOf<FeedbackDto?>(null)
+        private set
 
     /**
      * Lädt Gyms:
@@ -59,88 +70,78 @@ class HomeViewModel : ViewModel() {
             fun isOnline(context: Context): Boolean {
                 val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
                 val network = cm.activeNetwork ?: return false
-                val capabilities = cm.getNetworkCapabilities(network) ?: return false
-                return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                val caps = cm.getNetworkCapabilities(network) ?: return false
+                return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
             }
 
-
             if (isOnline(context)) {
-
                 try {
                     val response = RetrofitInstance.getGymApi(context).getAllGyms()
                     if (response.isSuccessful) {
                         val gymList = response.body() ?: emptyList()
-
-                        // EINZIGER CALL: upsert + prune
                         gymRepository.syncGymsFromBackend(gymList, keepPinned = true)
-
-                        // frisch aus Room lesen
                         val localGyms = gymRepository.getAllGyms()
-                        gyms.value = localGyms.map { entity ->
+                        gyms.value = localGyms.map { e ->
                             Gym(
-                                id = UUID.fromString(entity.id),
-                                name = entity.name,
-                                location = entity.location,
-                                description = entity.description,
-                                createdBy = UUID.fromString(entity.createdBy),
-                                createdAt = entity.createdAt,
-                                lastUpdated = entity.lastUpdated
+                                id = UUID.fromString(e.id),
+                                name = e.name,
+                                location = e.location,
+                                description = e.description,
+                                createdBy = UUID.fromString(e.createdBy),
+                                createdAt = e.createdAt,
+                                lastUpdated = e.lastUpdated
                             )
                         }
                     } else {
                         errorMessage.value = "Fehler: ${response.code()}"
                         val localGyms = gymRepository.getAllGyms()
-                        gyms.value = localGyms.map { entity ->
+                        gyms.value = localGyms.map { e ->
                             Gym(
-                                id = UUID.fromString(entity.id),
-                                name = entity.name,
-                                location = entity.location,
-                                description = entity.description,
-                                createdBy = UUID.fromString(entity.createdBy),
-                                createdAt = entity.createdAt,
-                                lastUpdated = entity.lastUpdated
+                                id = UUID.fromString(e.id),
+                                name = e.name,
+                                location = e.location,
+                                description = e.description,
+                                createdBy = UUID.fromString(e.createdBy),
+                                createdAt = e.createdAt,
+                                lastUpdated = e.lastUpdated
                             )
                         }
-
                     }
                 } catch (e: Exception) {
                     errorMessage.value = "Netzwerkfehler: ${e.localizedMessage}"
                     val localGyms = gymRepository.getAllGyms()
-                    gyms.value = localGyms.map { entity ->
+                    gyms.value = localGyms.map { e ->
                         Gym(
-                            id = UUID.fromString(entity.id),
-                            name = entity.name,
-                            location = entity.location,
-                            description = entity.description,
-                            createdBy = UUID.fromString(entity.createdBy),
-                            createdAt = entity.createdAt,
-                            lastUpdated = entity.lastUpdated
+                            id = UUID.fromString(e.id),
+                            name = e.name,
+                            location = e.location,
+                            description = e.description,
+                            createdBy = UUID.fromString(e.createdBy),
+                            createdAt = e.createdAt,
+                            lastUpdated = e.lastUpdated
                         )
                     }
-
                 }
             } else {
                 Log.d("GymSync", "OFFLINE – lade lokale Gyms")
                 val localGyms = gymRepository.getAllGyms()
-                gyms.value = localGyms.map { entity ->
+                gyms.value = localGyms.map { e ->
                     Gym(
-                        id = UUID.fromString(entity.id),
-                        name = entity.name,
-                        location = entity.location,
-                        description = entity.description,
-                        createdBy = UUID.fromString(entity.createdBy),
-                        createdAt = entity.createdAt,
-                        lastUpdated = entity.lastUpdated
+                        id = UUID.fromString(e.id),
+                        name = e.name,
+                        location = e.location,
+                        description = e.description,
+                        createdBy = UUID.fromString(e.createdBy),
+                        createdAt = e.createdAt,
+                        lastUpdated = e.lastUpdated
                     )
                 }
-
             }
 
             isLoading.value = false
         }
     }
 
-    /** POST zum Erstellen eines Gyms */
     fun createGym(
         context: Context,
         dto: CreateGymDTO,
@@ -150,24 +151,39 @@ class HomeViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val response = RetrofitInstance.getGymApi(context).createGym(dto)
-                if (response.isSuccessful) {
-                    onSuccess()
-                } else {
-                    onError("Fehler: ${response.code()}")
-                }
+                if (response.isSuccessful) onSuccess() else onError("Fehler: ${response.code()}")
             } catch (e: Exception) {
                 onError("Fehler: ${e.localizedMessage}")
             }
         }
     }
 
-
-
-    /** Logout: Token killen und Retrofit-Client resetten */
     fun logout(context: Context) {
         clearTokenFromPrefs(context)
         RetrofitInstance.resetRetrofit()
-
     }
 
+    // FEEDBACK: Senden
+    fun sendFeedback(dto: CreateFeedbackDto) {
+        viewModelScope.launch {
+            feedbackSending.value = true
+            feedbackError.value = null
+            feedbackResult.value = null
+
+            val result = feedbackRepository.sendFeedback(dto)
+            result.onSuccess { fb ->
+                feedbackResult.value = fb
+            }.onFailure { t ->
+                feedbackError.value = t.localizedMessage ?: "Unbekannter Fehler"
+            }
+
+            feedbackSending.value = false
+        }
+    }
+
+    fun resetFeedbackState() {
+        feedbackSending.value = false
+        feedbackError.value = null
+        feedbackResult.value = null
+    }
 }
