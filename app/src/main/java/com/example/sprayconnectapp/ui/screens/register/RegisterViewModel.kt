@@ -12,6 +12,15 @@ import com.example.sprayconnectapp.data.dto.RegisterRequest
 import com.example.sprayconnectapp.network.RetrofitInstance
 import kotlinx.coroutines.launch
 
+
+/**
+ * ViewModel für Registrierung:
+ * - Hält Eingaben & Feldfehler (username/email/password)
+ * - Live-/Blur-Validierung für E-Mail
+ * - Führt Registrierung durch, danach Auto-Login
+ * - Übergibt Erfolg via Callback (damit Screen navigiert/toastet)
+ */
+
 class RegisterViewModel : ViewModel() {
     var email by mutableStateOf("")
         private set
@@ -25,6 +34,8 @@ class RegisterViewModel : ViewModel() {
     var message by mutableStateOf("") // Rückmeldung in UI
 
 
+
+    // Feldbezogene Fehlermeldungen
     var usernameError by mutableStateOf<String?>(null)
         private set
     var emailError by mutableStateOf<String?>(null)
@@ -35,19 +46,26 @@ class RegisterViewModel : ViewModel() {
     var passwordError by mutableStateOf<String?>(null); private set
 
 
+
+    // wurde email Feld schon angeklickt
     private var emailTouched by mutableStateOf(false)
 
 
+    /** Einfache E-Mail-Pattern-Validierung */
     private fun isEmailValid(e: String): Boolean {
         val regex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$".toRegex()
         return e.matches(regex)
     }
 
 
+
+    /** Steuert Button-Aktivierung. */
     fun canSubmit(): Boolean =
         username.isNotBlank() && email.isNotBlank() && emailError == null &&  isEmailValid(email) && password.isNotBlank() && !isLoading
 
 
+
+    // validierung während eingabe
     fun onEmailChange(new: String) {
         email = new
         message = ""
@@ -65,6 +83,8 @@ class RegisterViewModel : ViewModel() {
 
     }
 
+
+    // wird aufgerufen wenn Email Fokus verliert
     fun onEmailBlur() {
         emailError = if (email.isNotBlank() && !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             "Bitte gültige E-Mail eingeben."
@@ -83,6 +103,12 @@ class RegisterViewModel : ViewModel() {
         usernameError = null // Fehlermeldung zurücksetzen
         message = ""
     }
+
+    /**
+     * Registriert den User und führt anschließend Auto-Login aus.
+     * @param onLoginSuccess wird bei erfolgreichem Login ausgelöst (Screen navigiert dann weiter).
+     */
+
 
     fun registerUser(context: Context, onLoginSuccess: () -> Unit) {
 

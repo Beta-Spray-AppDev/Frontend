@@ -14,6 +14,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 
+
+/**
+ * ViewModel für Profil:
+ * - lädt/aktualisiert UserProfile
+ * - lädt eigene Boulder & Ticks
+ * - Logout (Token löschen + Retrofit reset)
+ */
+
 class ProfileViewModel : ViewModel() {
 
     private val _profile = MutableStateFlow<UserProfile?>(null)
@@ -34,6 +42,7 @@ class ProfileViewModel : ViewModel() {
 
 
 
+    /** Holt das Profil des aktuellen Nutzers. */
     fun loadProfile(context: Context) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -55,6 +64,11 @@ class ProfileViewModel : ViewModel() {
 
 
 
+    /**
+     * Aktualisiert Profilfelder.
+     * - Leerstring → wird zu null gemappt (Server: Feld nicht ändern)
+     * - onSuccess/onError für UI-Feedback
+     */
 
     fun updateProfile(
         context: Context,
@@ -98,6 +112,7 @@ class ProfileViewModel : ViewModel() {
 
 
 
+    /** Lädt eigene Boulder. */
     fun loadMyBoulders(context: Context) {
         viewModelScope.launch {
             try {
@@ -114,6 +129,7 @@ class ProfileViewModel : ViewModel() {
     }
 
 
+    /** Lädt getickte Boulder. */
     fun loadMyTicks(context: Context) {
         viewModelScope.launch {
             try {
@@ -125,6 +141,7 @@ class ProfileViewModel : ViewModel() {
 
 
 
+    /** Logout: Token löschen, Retrofit-Instanz verwerfen. */
     fun logout(context: Context) {
         clearTokenFromPrefs(context)
         RetrofitInstance.resetRetrofit()

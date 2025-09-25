@@ -11,14 +11,26 @@ import com.example.sprayconnectapp.network.BoulderApi
 
 private const val TAG_REPO = "BoulderRepo"
 
+/**
+ * Repository für Boulder.
+ *
+ * Kapselt lokale Datenbankzugriffe (Room) und Remote-Operationen (API).
+ * Stellt Methoden zum Lesen, Synchronisieren und Schreiben bereit.
+ */
+
+
 class BoulderRepository(
     private val boulderDao: BoulderDao,
     private val holdDao: HoldDao
 ) {
     //Local reads
+    /** Alle Boulder einer Spraywall lokal abrufen */
+
     suspend fun getLocalBySpraywall(spraywallId: String): List<BoulderEntity> =
         boulderDao.getBySpraywall(spraywallId)
 
+
+    /** Einzelnen Boulder + zugehörige Holds als DTO laden */
     suspend fun getLocalBoulderWithHolds(id: String): BoulderDTO? {
         val be = boulderDao.getById(id) ?: return null
         val holds = holdDao.getByBoulder(id).map { it.toDto() }
@@ -26,6 +38,7 @@ class BoulderRepository(
     }
 
 
+    /** Alle Boulder einer Spraywall inkl. Holds als DTO-Liste laden */
     suspend fun getLocalDtosBySpraywall(spraywallId: String): List<BoulderDTO> {
         val es = boulderDao.getBySpraywall(spraywallId)
         return es.map { e ->
@@ -35,6 +48,14 @@ class BoulderRepository(
     }
 
     // Sync (list)
+
+    /**
+     * Synchronisiert lokale Boulder und Holds mit einer Liste vom Server.
+     * - Löscht lokale Boulder, die es am Server nicht mehr gibt
+     * - Upsert für neue/geänderte Boulder
+     * - Ersetzt Holds komplett durch Serverstand
+     */
+
     suspend fun syncFromBackend(spraywallId: String, remote: List<BoulderDTO>) {
         Log.d(TAG_REPO, "syncFromBackend spraywall=$spraywallId remote=${remote.size}")
 
@@ -58,7 +79,7 @@ class BoulderRepository(
             val rLU = dto.lastUpdated ?: Long.MIN_VALUE
             val lLU = localById[id]?.lastUpdated ?: Long.MIN_VALUE
             if (localById[id] == null || rLU > lLU) {
-                toUpsert += dto.toEntity()       // <- deine Mapper-Funktion
+                toUpsert += dto.toEntity()       // <- Mapper-Funktion
             }
         }
         if (toUpsert.isNotEmpty()) {
@@ -79,6 +100,7 @@ class BoulderRepository(
         Log.d(TAG_REPO, "sync done upsert=${toUpsert.size} holds=$totalHolds")
     }
 
+    /** Fügt einen Boulder aus dem Server in DB ein oder aktualisiert ihn */
     suspend fun upsertFromRemote(dto: BoulderDTO) {
         val id = requireNotNull(dto.id)
         boulderDao.upsert(dto.toEntity())
@@ -87,6 +109,7 @@ class BoulderRepository(
     }
 
 
+    /** Erstellt einen Boulder am Server und speichert ihn lokal */
     suspend fun createOnline(api: BoulderApi, req: CreateBoulderRequest): Result<BoulderDTO> =
         runCatching {
             val resp = api.createBoulder(req)
@@ -96,6 +119,7 @@ class BoulderRepository(
             dto
         }
 
+    /** Aktualisiert einen Boulder am Server und lokal */
     suspend fun updateOnline(api: BoulderApi, id: String, dto: BoulderDTO): Result<BoulderDTO> =
         runCatching {
             val resp = api.updateBoulder(id, dto)

@@ -16,6 +16,16 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.sprayconnectapp.R
 
+
+/**
+ * Untere Navigationsleiste mit 3 Zielen:
+ * - Home
+ * - "Neuer Boulder" (führt zum Zielauswahl-Flow)
+ * - Profil
+ *
+ * Markiert das aktuell aktive Ziel anhand der Route im Backstack.
+ */
+
 @Composable
 fun BottomNavigationBar(navController: NavController) {
 
@@ -47,6 +57,7 @@ fun BottomNavigationBar(navController: NavController) {
         )
 
 
+        // Schnellzugriff: Neuer Boulder (immer unselected – eigener Flow)
         NavigationBarItem(
             icon = { Icon(Icons.Default.Add, contentDescription = "Neuer Boulder") },
             label = { Text("Neuer Boulder") },

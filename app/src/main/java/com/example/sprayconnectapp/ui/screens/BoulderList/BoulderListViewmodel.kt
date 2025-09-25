@@ -19,15 +19,24 @@ private const val TAG_VM = "BoulderListVM"
 class BoulderListViewModel : ViewModel() {
     private lateinit var repo: BoulderRepository
 
+    /** Initialisiert das Repository (DB-DAOs injizieren) */
     fun initRepository(context: Context) {
         val db = AppDatabase.getInstance(context)
         repo = BoulderRepository(db.boulderDao(), db.holdDao())
         Log.d(TAG_VM, "Repository initialized")
     }
 
+    // UI-State
     val boulders = mutableStateOf<List<BoulderDTO>>(emptyList())
     val isLoading = mutableStateOf(false)
     val errorMessage = mutableStateOf<String?>(null)
+
+
+    /**
+     * Lädt Boulder zu einer Spraywall:
+     * - Wenn online: vom Server ziehen und in lokale DB synchronisieren
+     * - Immer: lokale DB lesen und ins UI bringen
+     */
 
     fun load(context: Context, spraywallId: String) = viewModelScope.launch {
         Log.d(TAG_VM, "load(spraywallId=$spraywallId) start")
@@ -46,6 +55,7 @@ class BoulderListViewModel : ViewModel() {
                 if (resp.isSuccessful) {
                     val remote = resp.body().orEmpty()
                     Log.d(TAG_VM, "Remote size=${remote.size}")
+                    // Serverstand → lokale DB (inkl. Holds)
                     repo.syncFromBackend(spraywallId, remote)
                 } else {
                     errorMessage.value = "Fehler: ${resp.code()}"
@@ -55,10 +65,12 @@ class BoulderListViewModel : ViewModel() {
                 errorMessage.value = "Netzwerkfehler: ${t.localizedMessage}"
             }
         } else {
+            // Offline-Fall: Nutzer informieren, dann lokale DB zeigen
             errorMessage.value = "Offline – zeige lokale Daten"
         }
 
 
+        // Lokale Daten immer ins UI übernehmen
         val local = repo.getLocalDtosBySpraywall(spraywallId)
         Log.d(TAG_VM, "Local to UI size=${local.size}")
         local.take(3).forEachIndexed { i, b ->

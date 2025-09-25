@@ -8,6 +8,10 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 import java.util.UUID
 
+/**
+ * Endpunkte für Spraywalls
+ */
+
 interface SpraywallApi {
 
     @GET("api/spraywalls/gym/{gymId}")

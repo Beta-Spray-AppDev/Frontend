@@ -8,12 +8,28 @@ import com.example.sprayconnectapp.data.model.SpraywallEntity
 import com.example.sprayconnectapp.data.dto.SpraywallDTO
 import java.util.UUID
 
+/**
+ * Repository für Spraywalls.
+ * - Verwaltet lokale Datenbankzugriffe
+ * - Synchronisiert Spraywalls mit dem Server
+ */
+
+
 class SpraywallRepository(
     private val spraywallDao: SpraywallDao,
     private val boulderDao: BoulderDao
 ) {
+
+    /** Holt alle Spraywalls eines Gyms lokal */
     suspend fun getByGym(gymId: String): List<SpraywallEntity> =
         spraywallDao.getByGym(gymId)
+
+    /**
+     * Synchronisiert Spraywalls eines Gyms mit Serverdaten.
+     * - Löscht lokale Spraywalls, die es am Server nicht mehr gibt
+     * - Fügt neue oder geänderte hinzu
+     */
+
 
     suspend fun syncFromBackend(gymId: String, remote: List<SpraywallDTO>) {
         val remoteIds = remote.mapNotNull { it.id?.toString() }.toSet()
@@ -36,6 +52,8 @@ class SpraywallRepository(
     }
 }
 
+
+/** Mapper: SpraywallDTO → SpraywallEntity */
 private fun SpraywallDTO.toEntity() = SpraywallEntity(
     id          = requireNotNull(id).toString(),
     gymId       = gymId.toString(),

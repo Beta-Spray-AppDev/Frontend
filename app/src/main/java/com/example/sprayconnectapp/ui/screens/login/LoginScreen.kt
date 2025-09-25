@@ -65,6 +65,15 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import com.example.sprayconnectapp.ui.screens.isOnline
 
+
+/**
+ * Login-Screen:
+ * - UI für Username/Passwort mit Validierung
+ * - Triggert Login im ViewModel
+ * - Navigiert nach erfolgreichem Login zur Home-Route
+ * - Offline-Hinweis + Möglichkeit „Offline fortfahren“
+ */
+
 @Composable
 fun LoginScreen(
     navController: NavController,
@@ -73,12 +82,14 @@ fun LoginScreen(
     val context = LocalContext.current
     val online = isOnline(context)
 
-    val focusManager = LocalFocusManager.current
+    val focusManager = LocalFocusManager.current // für Tastatur Enter
 
 
     val headerHeight = 240.dp
     val cardOverlap  = 40.dp
 
+
+    // Button soll nur aktiv sein wenn Eingaben nicht leer sind und gerade kein Login läuft
     val canSubmit = viewModel.username.isNotBlank() && viewModel.password.isNotBlank() && !viewModel.isLoading
 
 
@@ -89,8 +100,10 @@ fun LoginScreen(
 
     // Home wenn login erfolgreich
     if (viewModel.message == "Login erfolgreich") {
-        LaunchedEffect(viewModel.message) {
-            navController.navigate("home") { popUpTo("login") { inclusive = true } }
+        LaunchedEffect(viewModel.message) { // Nav-Aufruf reagiert auf message
+            navController.navigate("home") {
+                popUpTo("login") { inclusive = true } // Backstack aufräumen damit man nicht mit zurück-Button dorthin kommt
+            }
         }
     }
 
@@ -101,6 +114,7 @@ fun LoginScreen(
             Color(0xFF4D4D4D)
         )
     )
+
 
     Box(
         modifier = Modifier
@@ -151,6 +165,7 @@ fun LoginScreen(
                 )
                 Spacer(Modifier.height(8.dp))
 
+                // Titel
                 Text(
                     text = "SprayConnect",
                     color = Color.Black,
@@ -163,6 +178,7 @@ fun LoginScreen(
         }
 
 
+        // Card mit Formularfeldern
         Card(
             shape = RoundedCornerShape(24.dp),
             modifier = Modifier
@@ -172,7 +188,7 @@ fun LoginScreen(
                 .offset(y  = headerHeight - cardOverlap), // Card schwebt in Header hinein
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color(0xFFE0E0E0) // helles Grau
+                containerColor = Color(0xFFE0E0E0)
             )
         ) {
             Column(
@@ -189,14 +205,14 @@ fun LoginScreen(
 
                 Spacer(Modifier.height(16.dp))
 
-                // Username
+                // Username-Feld + Fehlermeldung
                 OutlinedTextField(
                     value = viewModel.username,
                     onValueChange = viewModel::onUsernameChange,
                     label = { Text("Benutzername") },
                     leadingIcon = { Icon(Icons.Filled.Person, null) },
                     singleLine = true,
-                    isError = viewModel.usernameError != null,
+                    isError = viewModel.usernameError != null, // Fehlerzustand steuert rote Darstellung
                     shape = RoundedCornerShape(50),
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -212,6 +228,8 @@ fun LoginScreen(
                     )
 
                 )
+
+                // // Username-Fehlermeldung
                 if (viewModel.usernameError != null) {
                     Text(
                         text = viewModel.usernameError ?: "",
@@ -225,7 +243,7 @@ fun LoginScreen(
 
                 Spacer(Modifier.height(12.dp))
 
-                // Passwort
+                // Passwort mit show und hide
                 var showPw by remember { mutableStateOf(false) }
                 OutlinedTextField(
                     value = viewModel.password,
@@ -254,6 +272,7 @@ fun LoginScreen(
                     ),
                     keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(
+                        // Enter/Done löst sofort Login aus
                         onDone = {
                             focusManager.clearFocus()
                             viewModel.loginUser(context)
@@ -261,6 +280,8 @@ fun LoginScreen(
                     )
 
                     )
+
+                // Passwort-Fehlermeldung
                 if (viewModel.passwordError != null) {
                     Text(
                         text = viewModel.passwordError ?: "",
@@ -274,7 +295,7 @@ fun LoginScreen(
 
                 Spacer(Modifier.height(20.dp))
 
-                // Login Button
+                // Login Button (zeigt Spinner, wenn Request läuft)
                 Button(
                     onClick = { viewModel.loginUser(context) },
                     enabled = canSubmit && online,
@@ -289,6 +310,7 @@ fun LoginScreen(
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     if (viewModel.isLoading) {
+                        //Spinner während des Requests
                         androidx.compose.material3.CircularProgressIndicator(
                             modifier = Modifier.size(20.dp), color = colorResource(R.color.button_normal)
                         )
@@ -323,6 +345,7 @@ fun LoginScreen(
                     )
                 }
 
+                // Offline-Hinweis + „Offline fortfahren“
                 if (!online) {
                     Text(
                         text = "Du bist offline. Login & Registrierung nicht möglich.",
@@ -343,6 +366,8 @@ fun LoginScreen(
                 }
             }
         }
+
+        // Kleiner Footer
         Text(
             text = "Powered by MaltaCloud",
             color = Color.White.copy(alpha = 0.6f),

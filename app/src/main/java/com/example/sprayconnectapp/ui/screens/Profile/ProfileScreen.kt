@@ -34,6 +34,13 @@ import com.example.sprayconnectapp.util.localOutputNameFromPreview
 import androidx.compose.foundation.lazy.items
 
 
+/**
+ * Profilübersicht:
+ * - lädt Profil, eigene Boulder, eigene Ticks
+ * - Logout, Profil bearbeiten
+ * - Navigiert zu Boulder-Details (mit optionaler lokaler Bild-URI)
+ */
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,6 +55,7 @@ fun ProfileScreen(navController: NavController) {
     val ticked by viewModel.myTicks.collectAsState()
 
 
+    // Beim ersten Compose Daten laden
     LaunchedEffect(Unit) {
         viewModel.loadProfile(context)
         viewModel.loadMyBoulders(context)
@@ -89,12 +97,17 @@ fun ProfileScreen(navController: NavController) {
                         actionIconContentColor = Color.White
 
                     ),
+                    //Titel
                     title = { Text("Mein Profil") },
+
+                    //Back Button
                     navigationIcon = {
                         IconButton(onClick = { navController.popBackStack() }, ) {
                             Icon(Icons.Default.ArrowBack, contentDescription = "Zurück")
                         }
                     },
+
+                    // Logout Button
                     actions = {
                         IconButton(onClick = {
                             viewModel.logout(context)
@@ -121,6 +134,7 @@ fun ProfileScreen(navController: NavController) {
                 item {
                     when {
                         isLoading -> {
+                            // Spinner mittig anzeigen
                             Box(
                                 modifier = Modifier.fillMaxWidth(),
                                 contentAlignment = Alignment.Center
@@ -129,11 +143,14 @@ fun ProfileScreen(navController: NavController) {
                             }
                         }
 
+                        // Fehlermeldung anzeigen
                         error != null -> {
                             Text("Fehler: $error", color = MaterialTheme.colorScheme.error)
                         }
 
+                        //Erfolgszustand: Profil + Listenbereiche anzeigen
                         profile != null -> {
+
                             ProfileCard(profile = profile!!, navController = navController)
                             Spacer(modifier = Modifier.height(17.dp))
 
@@ -145,6 +162,8 @@ fun ProfileScreen(navController: NavController) {
 
                         }
 
+
+                        // Kein Zustand
                         else -> {
                             Text("Keine Profildaten vorhanden.")
                         }
@@ -160,8 +179,11 @@ fun ProfileScreen(navController: NavController) {
 }
 
 
+/** Zweispaltige Infozeile (Label links, Wert rechts). */
 @Composable
 fun ProfileInfoRow(label: String, value: String) {
+
+    //zweispaltige Zeile
     Row(
         modifier = Modifier
             .fillMaxWidth(),
@@ -182,6 +204,8 @@ fun ProfileInfoRow(label: String, value: String) {
 
 
 
+
+// Karte mit den Profildaten + Button
 @Composable
 fun ProfileCard(profile: UserProfile, navController: NavController) {
     Card(
@@ -216,6 +240,8 @@ fun ProfileCard(profile: UserProfile, navController: NavController) {
 }
 
 
+
+// Karte für einzelnen Boulder
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BoulderCard(boulder: BoulderDTO, onClick: (() -> Unit)? = null) {
@@ -237,6 +263,12 @@ fun BoulderCard(boulder: BoulderDTO, onClick: (() -> Unit)? = null) {
 }
 
 
+/**
+ * Karte mit einer Liste von Bouldern (scrollbar, begrenzte Höhe).
+ * - Erzeugt bei Klick die Route zur Detailansicht
+ * - Wenn lokales Bild gefunden wird, wird dessen URI als Query-Arg mitgegeben
+ */
+
 
 @Composable
 fun BoulderListCard( title: String, boulders: List<BoulderDTO>, source: String, navController: NavController, maxHeight: Dp = 240.dp) {
@@ -257,13 +289,20 @@ fun BoulderListCard( title: String, boulders: List<BoulderDTO>, source: String, 
             if (boulders.isEmpty()) {
                 Text("Keine Einträge gefunden.")
             } else {
+
+                // Scrollbare Liste innerhalb der Karte
                 LazyColumn(modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = maxHeight),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(bottom = 4.dp)) {
+
+                    // key für feste identität statt nur position - kann sich sonst verändern bei Änderungen
                     items(boulders,  key = { it.id ?: "fallback-${it.spraywallId}-${it.createdAt}" } ) { boulder ->
                         BoulderCard(boulder) {
+
+                            // OnClick eines Boulder-Items -> zur Detailansicht navigieren
+
                             // 1) Preview-URL -> lokalen Dateinamen bestimmen
                             val preview = (boulder.spraywallImageUrl ?: "").trim()
                             val token = Regex("/s/([^/]+)/").find(preview)?.groupValues?.get(1)
@@ -283,14 +322,20 @@ fun BoulderListCard( title: String, boulders: List<BoulderDTO>, source: String, 
                             val outName = localOutputNameFromPreview(preview, token)
                             val file = getPrivateImageFileByName(context, outName)
 
+
+                            // versucht lokal vorhandene BildUri zu bauen für den ZielScreen
                             val encodedImage = if (!preview.isNullOrEmpty() && !token.isNullOrEmpty()){
-                                val outName = localOutputNameFromPreview(preview, token)
-                                val file = getPrivateImageFileByName(context, outName)
+                                val outName = localOutputNameFromPreview(preview, token) // Dateiname ableiten
+                                val file = getPrivateImageFileByName(context, outName) //Datei Object im App Speicher ermitteln
+                                // falls datei existiert in uri umwandeln
                                 if (file.exists()) Uri.encode(Uri.fromFile(file).toString()) else ""
                             }  else ""
 
+
+                            // Route für Detailansicht
                             val route = buildString {
                                 append("$base?src=$source")
+                                // wenn lokale URi dann mitgeben
                                 if (encodedImage.isNotEmpty()) append("&imageUri=$encodedImage")
                             }
 

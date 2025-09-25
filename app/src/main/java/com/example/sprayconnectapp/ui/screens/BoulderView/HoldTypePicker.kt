@@ -42,6 +42,12 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 
+/**
+ * Picker-Leiste, um den aktiven Hold-Typ (Farbe/Icon) auszuwählen.
+ * - Horizontal scrollbare Chips
+ * - Hebt den selektierten Typ animiert hervor
+ */
+
 
 @Composable
 fun HoldTypePicker(
@@ -76,6 +82,13 @@ fun HoldTypePicker(
 }
 
 
+
+/**
+ * Einzelner Chip für einen HoldType:
+ * - Animierter Auswahlring + Scale
+ * - Haptisches Feedback beim Auswählen
+ */
+
 @Composable
 fun TypeChip(
     type: HoldType,
@@ -93,7 +106,7 @@ fun TypeChip(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .widthIn(min = 64.dp)
-            .clickable { onClick(); pulse() }
+            .clickable { onClick(); pulse() } // Auswahl + kurzer Haptic-Tap
     ) {
         Box(
             modifier = Modifier

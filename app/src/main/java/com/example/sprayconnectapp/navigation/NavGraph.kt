@@ -27,16 +27,22 @@ fun NavGraph (navController: NavHostController){
     navController = navController,
     startDestination = "login"
     ){
+        // Einstiegs-/Auth-/Basisrouten
         composable("start"){ StartScreen(navController) }
         composable("login"){ LoginScreen(navController) }
         composable("register"){ RegisterScreen(navController) }
         composable("home") { HomeScreen(navController) }
+
+        // Gym-Detail mit Path-Parametern
         composable("gymDetail/{gymId}/{gymName}") { backStackEntry ->
             val gymId = backStackEntry.arguments?.getString("gymId") ?: ""
             val gymName = backStackEntry.arguments?.getString("gymName") ?: ""
             GymDetailScreen(navController = navController, gymId = gymId, gymName = gymName)
 
         }
+        /**
+         * Boulder-Liste über eine Spraywall.
+         */
         composable(
             route = "boulders/{spraywallId}/{spraywallName}?imageUri={imageUri}",
             arguments = listOf(
@@ -51,6 +57,7 @@ fun NavGraph (navController: NavHostController){
             BoulderListScreen(navController, spraywallId, spraywallName, imageUri)
         }
 
+        // Spraywall anlegen (Gym-Kontext als Pfadparameter)
         composable(
             route = "addSpraywall/{gymId}/{gymName}",
             arguments = listOf(
@@ -67,11 +74,20 @@ fun NavGraph (navController: NavHostController){
             AddGymScreen(navController = navController)
         }
 
-        // NavGraph.kt
+        /**
+         * Boulder erstellen/bearbeiten:
+         * - Pflicht: spraywallId
+         * - Optional (Query): imageUri, mode ("create"|"edit"), boulderId, fromPicker
+         *   -> wird in BoulderScreenMode übersetzt
+         */
+
         composable(
             "create_boulder/{spraywallId}?imageUri={imageUri}&mode={mode}&boulderId={boulderId}&fromPicker={fromPicker}",
             arguments = listOf(
+                // Pflicht-Argument
                 navArgument("spraywallId") { type = NavType.StringType },
+
+                //Optionale Query-Argumente mit default-Werten
                 navArgument("imageUri") { type = NavType.StringType; defaultValue = "" },
                 navArgument("mode") { type = NavType.StringType; defaultValue = "create" },
                 navArgument("boulderId") { type = NavType.StringType; defaultValue = "" },
@@ -79,6 +95,8 @@ fun NavGraph (navController: NavHostController){
 
             )
         ) { backStackEntry ->
+
+            // Werte aus den Argumenten lesen
             val spraywallId = backStackEntry.arguments?.getString("spraywallId") ?: ""
             val imageUri = backStackEntry.arguments?.getString("imageUri") ?: ""
             val mode = backStackEntry.arguments?.getString("mode") ?: "create"
@@ -125,6 +143,8 @@ fun NavGraph (navController: NavHostController){
             )
         }
 
+
+        // Spraywall-Detail (Gym-Kontext)
         composable(
             "spraywallDetail/{gymId}/{gymName}",
             arguments = listOf(
@@ -136,6 +156,12 @@ fun NavGraph (navController: NavHostController){
             val gymName = backStackEntry.arguments?.getString("gymName").orEmpty()
             SpraywallDetailScreen(navController, gymId, gymName)
         }
+
+        /**
+         * Boulder-Detail/Viewer:
+         * - Pflicht: boulderId, spraywallId
+         * - Optional: src (Quelle der Navigation), imageUri
+         */
 
         composable(
             "view_boulder/{boulderId}/{spraywallId}?src={src}&imageUri={imageUri}",
@@ -161,12 +187,15 @@ fun NavGraph (navController: NavHostController){
             )
         }
 
+        // Auswahlziel für Boulder (wohin speichern)
         composable("pickBoulderTarget") {
             PickBoulderTargetScreen(
                 navController = navController
             )
         }
 
+
+        // Profilrouten
 
         composable("profile") {
             ProfileScreen(navController)

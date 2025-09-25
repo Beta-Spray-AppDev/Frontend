@@ -33,6 +33,14 @@ import androidx.compose.ui.text.input.ImeAction
 import com.example.sprayconnectapp.R
 
 
+/**
+ * Screen zum Bearbeiten von Profildaten.
+ * - Lädt initial das Profil
+ * - Prefill der Felder (Username/E-Mail)
+ * - Optionales Passwort-Update (leer = nicht ändern)
+ * - Speichern triggert Update im ViewModel
+ */
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -140,6 +148,7 @@ fun EditProfileScreen(navController: NavController) {
                         Text("Nutzerdaten bearbeiten", style = MaterialTheme.typography.headlineSmall)
                         Divider()
 
+                        // Einheitliche Farben für Textfelder
                         val tfColors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = Color.White,
                             unfocusedContainerColor = Color.White,
@@ -149,6 +158,7 @@ fun EditProfileScreen(navController: NavController) {
                         )
 
 
+                        // lokaler Helper: verhindert Doppel-Klicks und ruft VM-Update
                         fun saveProfile (){
                             if (isLoading) return // doppelte Klicks vermeiden
 

@@ -17,18 +17,32 @@ import com.example.sprayconnectapp.data.repository.GymRepository
 import com.example.sprayconnectapp.network.RetrofitInstance
 import com.example.sprayconnectapp.util.clearTokenFromPrefs
 import kotlinx.coroutines.launch
+import com.example.sprayconnectapp.data.repository.GymRepository
+import com.example.sprayconnectapp.data.local.AppDatabase
 import java.util.UUID
+
+
+/**
+ * Home-VM:
+ * - lädt/synchronisiert die Gym-Liste (online/offline)
+ * - erstellt neue Gyms
+ * - verwaltet Logout
+ */
 
 class HomeViewModel : ViewModel() {
 
     private lateinit var gymRepository: GymRepository
     private lateinit var feedbackRepository: FeedbackRepository
 
+    /** DAOs/Repository initialisieren */
+
     fun initRepository(context: Context) {
         val db = AppDatabase.getInstance(context)
         gymRepository = GymRepository(db.gymDao())
         feedbackRepository = FeedbackRepository(context.applicationContext)
     }
+
+
 
     var gyms = mutableStateOf<List<Gym>>(emptyList())
         private set
@@ -43,6 +57,12 @@ class HomeViewModel : ViewModel() {
         private set
     var feedbackResult = mutableStateOf<FeedbackDto?>(null)
         private set
+
+    /**
+     * Lädt Gyms:
+     * - Online: holt Serverliste, synchronisiert Room (upsert + prune), liest dann frisch aus Room
+     * - Offline/Fehler: direkt aus Room lesen
+     */
 
     fun loadGyms(context: Context) {
         viewModelScope.launch {

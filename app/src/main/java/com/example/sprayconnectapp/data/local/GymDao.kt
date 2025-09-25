@@ -6,6 +6,10 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.example.sprayconnectapp.data.model.GymEntity
 
+/**
+ * DataAccessObjekt für Gyms.
+ */
+
 @Dao
 interface GymDao {
 

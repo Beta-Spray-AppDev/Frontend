@@ -10,6 +10,12 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
 
+/**
+ * Authentifizierungsendpunkte:
+ * - Registrierung/Anmeldung
+ * - Profil lesen/aktualisieren
+ */
+
 interface AuthApi {
 
     @POST("/auth/register")
@@ -20,7 +26,7 @@ interface AuthApi {
     @POST("/auth/login")
     suspend fun login(
         @Body request: LoginRequest
-    ): Response<String>
+    ): Response<String> // Antwort vom Server -> Token
 
 
     @GET("auth/profile")

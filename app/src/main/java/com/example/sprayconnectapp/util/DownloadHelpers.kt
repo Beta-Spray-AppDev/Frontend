@@ -20,6 +20,14 @@ private const val DL_TAG = "SprayDL"
 fun sprayFileName(token: String): String = "spray_${token}.jpg"
 
 
+/**
+ * Baut aus der öffentlichen Nextcloud-Preview-URL eine Download-URL.
+ * Berücksichtigt optional den `file`-Query-Parameter (falls ein spezifisches File geteilt wurde).
+ *
+ * @return vollständige https-Download-URL oder null, wenn kein Token erkannt wird.
+ */
+
+
 fun buildDownloadUrlFromPreview(previewUrl: String): String? {
     val token = Regex("/s/([^/]+)/").find(previewUrl)?.groupValues?.get(1) ?: return null
     val uri = Uri.parse(previewUrl)
@@ -37,6 +45,13 @@ fun buildDownloadUrlFromPreview(previewUrl: String): String? {
     }
 }
 
+
+
+/**
+ * Bestimmt einen lokalen Dateinamen aus der Preview-URL.
+ * - Wenn `file`-Query vorhanden: der letzte Segmentname
+ * - sonst Fallback über Token
+ */
 
 fun localOutputNameFromPreview(previewUrl: String, tokenFallback: String): String {
     val uri = Uri.parse(previewUrl)
@@ -83,6 +98,8 @@ private val http by lazy {
         .build()
 }
 
+/** Baut eine GET-Request inkl. optionalem Referer (für Nextcloud-Preview-Downloads notwendig). */
+
 private fun buildRequest(url: String, referer: String?): Request {
     val b = Request.Builder()
         .url(url)
@@ -92,6 +109,14 @@ private fun buildRequest(url: String, referer: String?): Request {
     return b.build()
 }
 
+/**
+ * Lädt eine Bilddatei direkt in den privaten App-Speicher.
+ * - folgt bis zu 6 Redirects (inkl. absolut/relativ, erzwingt https)
+ * - speichert unter `outName` im Pictures-App-Verzeichnis
+ *
+ * @return `Uri` der lokal gespeicherten Datei.
+ * @throws IllegalStateException bei HTTP-Fehlern oder zu vielen Redirects.
+ */
 
 suspend fun downloadDirectToPrivate(
     context: Context,

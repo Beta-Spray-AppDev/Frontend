@@ -13,6 +13,9 @@ import retrofit2.http.Path
 import java.util.UUID
 
 
+/**
+ * Endpunkte rund um Boulder
+ */
 interface BoulderApi {
     @POST("boulders")
      suspend fun createBoulder(@Body request: CreateBoulderRequest): Response<BoulderDTO>
@@ -29,16 +32,16 @@ interface BoulderApi {
     suspend fun updateBoulder(@Path("boulderId") boulderId: String, @Body request: BoulderDTO): Response<BoulderDTO>
 
 
-
+    /** Markiert Boulder als getickt (Begehung) und liefert Tick-Info zurück */
     @POST("boulders/{boulderId}/ticks")
     suspend fun tickBoulder(@Path("boulderId") boulderId: String): Response<TickDto>
 
-    // BoulderApi
+    /** Löscht Boulder serverseitig */
     @DELETE("boulders/{boulderId}")
     suspend fun deleteBoulder(@Path("boulderId") boulderId: String): Response<Unit>
 
 
-    // alle ticks von einem User
+    /** Alle eigenen Ticks (als BoulderDTO-Liste) */
     @GET("boulders/ticks/mine")
     suspend fun getMyTickedBoulders(): Response<List<BoulderDTO>>
 

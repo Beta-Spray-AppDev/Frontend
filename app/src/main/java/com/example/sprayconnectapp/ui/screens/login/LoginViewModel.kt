@@ -15,17 +15,31 @@ import kotlinx.coroutines.launch
 import com.example.sprayconnectapp.util.saveTokenToPrefs
 
 
+/**
+ * ViewModel für den Login-Prozess.
+ * Verantwortlichkeiten:
+ * - Hält UI-States (Inputs, Loading, Fehler, Message)
+ * - Clientseitige Validierung
+ * - API-Call /auth/login
+ * - Token speichern + Erfolgsmeldung (triggert Navigation)
+ */
 
 class LoginViewModel : ViewModel() {
 
+
+    // Ui States für Textfelder
     var username by mutableStateOf("")
         private set
 
     var password by mutableStateOf("")
         private set
 
+
+    // message für Toast plus navigation Trigger
     var message by mutableStateOf("")
 
+
+    // Für rote error Messages unter den Inputs
     var usernameError by mutableStateOf<String?>(null)
         private set
 
@@ -33,6 +47,8 @@ class LoginViewModel : ViewModel() {
         private set
 
 
+
+    // Input-Handler
     fun onUsernameChange(new: String) {
         username = new
         usernameError = null
@@ -41,43 +57,63 @@ class LoginViewModel : ViewModel() {
 
     fun onPasswordChange(new: String) {
         password = new
-        passwordError = null
-        message = ""
+        passwordError = null // Fehler zurücksetzen wenn User tippt
+        message = "" // alten Meldungen löschen
     }
 
+
+    // Ladespinner - Steuerung
     var isLoading by mutableStateOf(false)
         private set
+
+
+    /**
+     * Führt den Login aus:
+     * - Validiert Inputs
+     * - Baut Request und ruft Retrofit-API
+     * - Bei Erfolg: Token speichern + Message setzen
+     * - Bei Fehler: differenzierte Fehlermeldungen
+     */
+
     fun loginUser(context: Context) {
 
-        // Input validieren
+        // Input Client-Seitig validieren
         if (!validateInputs()) return
 
         viewModelScope.launch {
             try {
+                isLoading = true // Spinner an
+
                 //Reset
                 usernameError = null
                 passwordError = null
                 message = ""
 
+
+                // Request Dto bauen
                 val request = LoginRequest(
                     username = username.trim(),
-                    password = password // Für später wie handeln wir Leerzeichen?
+                    password = password
                 )
 
+                // Api Call via Retrofit
                 val response = RetrofitInstance.getApi(context).login(request)
 
                 if (response.isSuccessful) {
                     val token = response.body()
 
                     if (!token.isNullOrBlank() && token.startsWith("ey")) {
-                        saveTokenToPrefs(context, token)
-                        message = "Login erfolgreich"
+                        saveTokenToPrefs(context, token) // in sharedPreferences speichern
+                        message = "Login erfolgreich" // Ui reagiert hier mit toast und Navigation
 
                     } else {
                         message = "Login fehlgeschlagen: Ungültige Antwort"
                     }
                 } else {
+                    // Fehlerbody von Backend
                     val raw = response.errorBody()?.string()?.trim().orEmpty()
+
+                    // Serverseitige Validierung Fehlgeschlagen
                     if(response.code() == 400){
                         message = "Eingaben ungültig."
                     }
@@ -99,11 +135,13 @@ class LoginViewModel : ViewModel() {
 
 
 
+    // Toast message zurücksetzen
     fun clearMessage() {
         message = ""
     }
 
 
+    // Client Validierung
     private fun validateInputs(): Boolean {
         var ok = true
         if (username.isBlank()) {

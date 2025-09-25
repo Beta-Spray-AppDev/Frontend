@@ -11,31 +11,49 @@ import com.example.sprayconnectapp.util.getTokenFromPrefs
 import retrofit2.http.GET
 
 
+/**
+ * Zentrale Stelle zum Erzeugen/Zurückgeben von Retrofit-Instanzen und API-Interfaces.
+ * - Fügt Logging hinzu
+ * - Hängt bei privaten Endpunkten automatisch den Bearer-Token an
+ */
+
+
 object RetrofitInstance {
+
 
     private var retrofit: Retrofit? = null
 
+    /** Setzt die gecachte Retrofit-Instanz zurück (nach Logout) */
     fun resetRetrofit() {
         retrofit = null
     }
 
 
-    // Übergabe des Contexts für Zugriff auf SharedPreferences
+    /**
+     * Baut eine Retrofit-Instanz mit Auth-/Logging-Interceptors.
+     * Token wird pro Request frisch aus SharedPreferences gelesen.
+     */
     fun getRetrofit(context: Context): Retrofit {
 
+
+        // wenn schon gebaut
         if (retrofit != null) return retrofit!!
 
-        val token = getTokenFromPrefs(context)
 
         val logger = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
 
+        // Client konfigurieren
         val client = OkHttpClient.Builder()
             .addInterceptor(logger)
+
+            // Eigener Interceptor für Auth:
+            // entscheidet, ob ein Authorization-Header angehängt wird
+            // liest den Token pro Request frisch aus SharedPreferences
             .addInterceptor { chain ->
-                val original = chain.request()
-                val requestBuilder = original.newBuilder()
+                val original = chain.request() // holt aktuelle Anfrage
+                val requestBuilder = original.newBuilder() // builder um header zu ändern
 
                 //Token nicht mitschicken bei auth endpoint
                 val publicEndpoints = listOf("/auth/login", "/auth/register")
@@ -43,7 +61,7 @@ object RetrofitInstance {
 
                 if(!isPublic){
 
-                    val freshToken = getTokenFromPrefs(context)
+                    val freshToken = getTokenFromPrefs(context) // Token wird pro request frisch gelesen - nicht im Client cachen
                     // Wenn Token vorhanden: Authorization-Header hinzufügen
                     freshToken?.let {
                         requestBuilder.addHeader("Authorization", "Bearer $it")
@@ -55,11 +73,14 @@ object RetrofitInstance {
 
         return Retrofit.Builder()
             .baseUrl("http://leitln.at:8090/")
-            .addConverterFactory(ScalarsConverterFactory.create())
+            .addConverterFactory(ScalarsConverterFactory.create()) // für string responses
             .addConverterFactory(GsonConverterFactory.create())
             .client(client)
             .build()
     }
+
+
+    // Factory-Methoden für die API-Interfaces
 
     fun getApi(context: Context): AuthApi {
         return getRetrofit(context).create(AuthApi::class.java)

@@ -14,6 +14,13 @@ import com.example.sprayconnectapp.network.RetrofitInstance
 import kotlinx.coroutines.launch
 import java.util.UUID
 
+/**
+ * ViewModel für Spraywalls:
+ * - Synchronisiert Liste pro Gym zwischen Backend und Room
+ * - Erstellen einer Spraywall (nach Bild-Upload)
+ * - Offline-Fallback: lokale Daten anzeigen
+ */
+
 class SpraywallViewModel(context: Context) : ViewModel() {
 
     private val repo: SpraywallRepository
@@ -27,6 +34,13 @@ class SpraywallViewModel(context: Context) : ViewModel() {
         private set
     var isLoading = mutableStateOf(false)
     var errorMessage = mutableStateOf<String?>(null)
+
+
+    /**
+     * Lädt alle Spraywalls eines Gyms:
+     * - Falls online: holt vom Backend und spiegelt in Room (purge + upsert)
+     * - Danach immer lokal aus Room lesen → UI State
+     */
 
     fun loadSpraywalls(context: Context, gymId: String) {
         viewModelScope.launch {
@@ -60,6 +74,11 @@ class SpraywallViewModel(context: Context) : ViewModel() {
             isLoading.value = false
         }
     }
+
+    /**
+     * Legt eine Spraywall am Backend an (benötigt Internet).
+     * - Nach Erfolg wird die gesamte Liste neu synchronisiert, damit die UI konsistent ist.
+     */
 
     fun createSpraywall(
         context: Context,
@@ -97,12 +116,15 @@ class SpraywallViewModel(context: Context) : ViewModel() {
         }
     }
 
+    /** Simple Online-Check über ConnectivityManager. */
     private fun isOnline(ctx: Context): Boolean {
         val cm = ctx.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val net = cm.activeNetwork ?: return false
         val caps = cm.getNetworkCapabilities(net) ?: return false
         return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
+
+    /** Mapper Room → DTO (nur relevante Felder). */
 
     private fun SpraywallEntity.toDto(): SpraywallDTO =
         SpraywallDTO(
