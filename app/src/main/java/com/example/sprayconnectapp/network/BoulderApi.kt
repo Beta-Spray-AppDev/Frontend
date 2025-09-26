@@ -46,6 +46,11 @@ interface BoulderApi {
     suspend fun getMyTickedBoulders(): Response<List<BoulderDTO>>
 
 
+    /** Untick: entfernt den Tick des eingeloggten Users für diesen Boulder */
+    @DELETE("boulders/{boulderId}/ticks")
+    suspend fun deleteTick(@Path("boulderId") boulderId: String): Response<Unit>
+
+
 
 
 

@@ -77,6 +77,7 @@ class LoginViewModel : ViewModel() {
 
     fun loginUser(context: Context) {
 
+        if (isLoading) return
         // Input Client-Seitig validieren
         if (!validateInputs()) return
 
@@ -129,6 +130,9 @@ class LoginViewModel : ViewModel() {
             } catch (e: Exception) {
                 message = "Netzwerkfehler: ${e.localizedMessage}"
                 Log.e("LoginViewModel", "Fehler beim Login", e)
+            }
+            finally {
+                isLoading = false // wird garantiert ausgeführt
             }
         }
     }

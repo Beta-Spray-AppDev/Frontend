@@ -41,6 +41,59 @@ class ProfileViewModel : ViewModel() {
     val myTicks: StateFlow<List<BoulderDTO>> = _myTicks
 
 
+    private val _isDeletingTicks = MutableStateFlow(false)
+    val isDeletingTicks: StateFlow<Boolean> = _isDeletingTicks
+
+
+    private val _isDeletingBoulders = MutableStateFlow(false)
+    val isDeletingBoulders: StateFlow<Boolean> = _isDeletingBoulders
+
+
+
+    /** Löscht mehrere eigene Boulder am Server und refresht Listen. */
+    fun deleteBoulders(context: Context, boulderIds: List<String>, onDone: () -> Unit = {}) {
+        viewModelScope.launch {
+            _isDeletingBoulders.value = true
+            try {
+                val api = RetrofitInstance.getBoulderApi(context)
+                boulderIds.forEach { id ->
+                    try { api.deleteBoulder(id) } catch (_: Exception) { /* optional: log */ }
+                }
+                // danach neu laden (Boulder weg, evtl. auch Tick-Liste ändern)
+                loadMyBoulders(context)
+                loadMyTicks(context)
+            } finally {
+                _isDeletingBoulders.value = false
+                onDone()
+            }
+        }
+    }
+
+
+    /** Löscht Ticks (mehrere Boulder-IDs) beim Backend und refresht die Tick-Liste. */
+    fun deleteTicks(context: Context, boulderIds: List<String>, onDone: () -> Unit = {}) {
+        viewModelScope.launch {
+            _isDeletingTicks.value = true
+            try {
+                val api = RetrofitInstance.getBoulderApi(context)
+                // nacheinander; reicht ohne Bulk
+                boulderIds.forEach { id ->
+                    try { api.deleteTick(id) } catch (_: Exception) {}
+                }
+                // danach neu laden
+                loadMyTicks(context)
+                // optional: falls du irgendwo Tick-Status in "Meine Boulder" zeigst:
+                // loadMyBoulders(context)
+            } catch (e: Exception) {
+                Log.e("ProfileVM", "Ticks löschen fehlgeschlagen: ${e.localizedMessage}")
+            } finally {
+                _isDeletingTicks.value = false
+                onDone()
+            }
+        }
+    }
+
+
 
     /** Holt das Profil des aktuellen Nutzers. */
     fun loadProfile(context: Context) {
