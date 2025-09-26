@@ -93,6 +93,8 @@ fun CreateBoulderScreen(
 
 ) {
 
+    val MAX_NAME = 35
+
     // lokaler State für das Bild
     var resolvedImageUri by remember { mutableStateOf(imageUri ?: "") }
     var loadingImage by remember { mutableStateOf(false) }
@@ -567,12 +569,17 @@ fun CreateBoulderScreen(
                     Column {
                         OutlinedTextField(
                             value = boulderName,
-                            onValueChange = { boulderName = it },
+                            onValueChange = { new ->
+                                if (new.length <= MAX_NAME) {
+                                    boulderName = new
+                                }
+                            },
                             label = { Text("Name") },
                             isError = triedSave && !isNameValid,
                             supportingText = {
                                 if (triedSave && !isNameValid) Text("Bitte einen Namen eingeben")
-                            }
+                            },
+                            singleLine = true
                         )
                         Spacer(Modifier.height(8.dp))
 

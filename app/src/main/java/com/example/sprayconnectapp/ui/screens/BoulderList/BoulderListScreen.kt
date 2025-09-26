@@ -57,6 +57,9 @@ fun BoulderListScreen(
     val errorMessage by viewModel.errorMessage
     val tickedBoulderIds by viewModel.tickedBoulderIds
 
+    val tickArea = 35.dp      // Icongröße
+    val tickSpacing = 3.dp   // Abstand vor dem Icon
+
     var showFilter by remember { mutableStateOf(false) }
 
     val fbGrades = listOf(
@@ -239,23 +242,29 @@ fun BoulderListScreen(
                                         Modifier
                                             .fillMaxWidth()
                                             .padding(horizontal = 12.dp, vertical = 8.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Column(Modifier.weight(1f)) {
-                                            Text(boulder.name, style = MaterialTheme.typography.titleMedium)
+                                        Column(Modifier.weight(1f).padding(end = tickSpacing + tickArea)) {
+                                            Text(boulder.name, style = MaterialTheme.typography.titleMedium,  maxLines = 1, overflow = TextOverflow.Ellipsis,     softWrap = false
+                                            )
                                             Spacer(Modifier.height(3.dp))
                                             Text("Schwierigkeit: ${boulder.difficulty}", style = MaterialTheme.typography.bodyMedium)
                                         }
 
-                                        if (isTicked) {
-                                            Spacer(Modifier.width(12.dp))
-                                            Icon(
-                                                imageVector = Icons.Default.CheckCircle,
-                                                contentDescription = "Getickt",
-                                                tint = colorResource(R.color.button_normal),
-                                                modifier = Modifier.size(38.dp)
-                                            )
+                                        // Fester Bereich für den Haken – immer gleich breit
+                                        Spacer(Modifier.width(tickSpacing))
+
+
+                                        // Fester Iconbereich – immer vorhanden
+                                        Box(Modifier.size(tickArea), contentAlignment = Alignment.Center) {
+                                            if (isTicked) {
+                                                Icon(
+                                                    imageVector = Icons.Default.CheckCircle,
+                                                    contentDescription = "Getickt",
+                                                    tint = colorResource(R.color.button_normal),
+                                                    modifier = Modifier.size(tickArea)
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -296,12 +305,14 @@ fun BoulderListScreen(
                                 style = MaterialTheme.typography.titleMedium
                             )                        }
                     },
-                    title = { Text("Filter-Optionen:") },
+                    title = { Text("Filter-Optionen:", modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center) },
                     text = {
                         Column {
 
-                            Spacer(Modifier.height(16.dp))
-                            Text("Sortierung nach Schwierigkeit:", style = MaterialTheme.typography.titleMedium)
+                            Spacer(Modifier.height(10.dp))
+                            Text("Sortierung nach Schwierigkeit:", style = MaterialTheme.typography.titleMedium,  modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Center)
                             Spacer(Modifier.height(8.dp))
 
 
@@ -338,15 +349,17 @@ fun BoulderListScreen(
                                 )
                             }
 
-                            Spacer(Modifier.height(16.dp))
+                            Spacer(Modifier.height(19.dp))
 
 
 
                             Text(
                                 " ${fbGrades[startIndex]} - ${fbGrades[endIndex]}",
                                 style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Center
                             )
-                            Spacer(Modifier.height(8.dp))
+                            Spacer(Modifier.height(2.dp))
                             RangeSlider(
                                 value = sliderRange,
                                 onValueChange = { r ->

@@ -34,6 +34,7 @@ import com.example.sprayconnectapp.util.localOutputNameFromPreview
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.ui.text.style.TextOverflow
 
 
 /**
@@ -254,6 +255,10 @@ fun BoulderCard(
     isTicked: Boolean = false,
     onClick: (() -> Unit)? = null
 ) {
+
+    val tickArea = 28.dp      // Icon-Größe
+    val tickSpacing = 2.dp   // Abstand vor dem Icon
+
     Card(
         modifier = Modifier
             .fillMaxWidth(),
@@ -269,8 +274,8 @@ fun BoulderCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(Modifier.weight(1f)) {
-                    Text(boulder.name, style = MaterialTheme.typography.titleMedium)
+                Column(Modifier.weight(1f) .padding(end = tickSpacing + tickArea)) {
+                    Text(boulder.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis, softWrap = false)
                     Spacer(Modifier.height(3.dp))
                     Text(
                         "Schwierigkeit: ${boulder.difficulty}",
@@ -278,14 +283,16 @@ fun BoulderCard(
                     )
                 }
 
-                if (isTicked) {
-                    Spacer(Modifier.width(12.dp))
-                    Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = "Getickt",
-                        tint = colorResource(R.color.button_normal),
-                        modifier = Modifier.size(34.dp)
-                    )
+                // Fester Iconbereich (immer da, auch wenn leer)
+                Box(Modifier.size(tickArea), contentAlignment = Alignment.Center) {
+                    if (isTicked) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "Getickt",
+                            tint = colorResource(R.color.button_normal),
+                            modifier = Modifier.size(tickArea)
+                        )
+                    }
                 }
             }
         }
