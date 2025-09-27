@@ -163,7 +163,8 @@ fun AddSpraywallScreen(
                                     description = description,
                                     photoUrl = uploadedUrl,
                                     isPublic = isPublic,
-                                    gymId = UUID.fromString(gymId)
+                                    gymId = UUID.fromString(gymId),
+                                    isArchived = false
                                 )
 
                                 viewModel.createSpraywall(

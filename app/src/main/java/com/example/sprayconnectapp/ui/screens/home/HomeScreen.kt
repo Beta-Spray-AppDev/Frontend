@@ -1,5 +1,6 @@
 package com.example.sprayconnectapp.ui.screens.home
 
+import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.background
@@ -46,7 +47,14 @@ import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.ui.text.input.ImeAction
 import com.example.sprayconnectapp.util.AppMeta
+
+import com.example.sprayconnectapp.util.LatestRelease
+import com.example.sprayconnectapp.util.UpdateChecker
+import com.example.sprayconnectapp.BuildConfig
+
+
 import com.example.sprayconnectapp.util.TokenStore
+
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -87,13 +95,17 @@ fun HomeScreen(navController: NavController) {
             .fillMaxSize()
             .background(screenBg)
     ) {
+
+        UpdateNotice()
+
+
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
                 CenterAlignedTopAppBar(
                     title = { Text("SprayConnect") },
                     actions = {
-                        // ⭐ Immer verfügbar: Feedback
+                        // Immer verfügbar: Feedback
                         IconButton(
                             onClick = { showFeedbackDialog = true },
                             modifier = Modifier.focusProperties { canFocus = false }
@@ -195,8 +207,9 @@ fun HomeScreen(navController: NavController) {
                     onDismiss = { showFeedbackDialog = false; viewModel.resetFeedbackState() },
                     onSubmit = { stars, text ->
                         val username = displayName.ifBlank { "anonym" }
-                        val appVersion = AppMeta.VERSION
+                        val appVersion = BuildConfig.VERSION_NAME
                         val deviceInfo = AppMeta.deviceInfo()
+
 
                         val dto = com.example.sprayconnectapp.data.dto.feedback.CreateFeedbackDto(
                             stars = stars,
@@ -308,3 +321,118 @@ fun FeedbackDialog(
         }
     )
 }
+
+
+@Composable
+fun CheckForUpdateDialog() {
+    val context = LocalContext.current
+    var latest by remember { mutableStateOf<LatestRelease?>(null) }
+    var showDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        val release = UpdateChecker.fetchLatest(BuildConfig.LATEST_JSON_URL)
+
+        if (release != null &&
+            release.versionCode > BuildConfig.VERSION_CODE &&
+            !release.apkUrl.isNullOrBlank()
+        ) {
+            latest = release
+            showDialog = true
+        }
+    }
+
+    if (showDialog && latest != null) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text("Neue Version verfügbar!") },
+            text = {
+                Text("Version ${latest!!.versionName} ist verfügbar.\n\n${latest!!.changelog ?: ""}")
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(latest!!.apkUrl))
+                    context.startActivity(intent)
+                    showDialog = false
+                }) {
+                    Text("Download starten")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text("Später")
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun UpdateNotice() {
+    val ctx = LocalContext.current
+    var latest by remember { mutableStateOf<LatestRelease?>(null) }
+    var show by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        Log.d("Update", "➡️ Starte Update-Check...")
+        Log.d("Update", "➡️ URL = ${BuildConfig.LATEST_JSON_URL}")
+        Log.d("Update", "➡️ Aktuelle App-Version = ${BuildConfig.VERSION_CODE}")
+
+        val l = UpdateChecker.fetchLatest(BuildConfig.LATEST_JSON_URL)
+
+        Log.d("Update", "➡️ Ergebnis vom Server: $l")
+
+        if (l == null) {
+            Log.e("Update", "❌ Kein gültiges JSON empfangen oder Fehler beim Laden")
+            return@LaunchedEffect
+        }
+
+        val condCode = l.versionCode > BuildConfig.VERSION_CODE
+        val condUrl = !l.apkUrl.isNullOrBlank()
+        val seen = UpdatePrefs.wasSeen(ctx, l.versionCode)
+
+        Log.d("Update", "➡️ condCode=$condCode condUrl=$condUrl seen=$seen")
+
+        if (condCode && condUrl) {
+            UpdatePrefs.saveLatest(ctx, l.versionCode, l.versionName, l.apkUrl!!, l.changelog)
+            if (!seen) {
+                latest = l
+                show = true
+                Log.d("Update", "✅ Zeige Update-Dialog für Version ${l.versionName}")
+            } else {
+                Log.d("Update", "ℹ️ Update wurde bereits gesehen, Dialog wird nicht erneut gezeigt")
+            }
+        } else {
+            Log.d("Update", "ℹ️ Bedingungen nicht erfüllt – kein Update-Dialog")
+        }
+    }
+
+
+    if (show && latest != null) {
+        AlertDialog(
+            onDismissRequest = {
+                UpdatePrefs.markSeen(ctx, latest!!.versionCode)
+                show = false
+            },
+            title = { Text("Neue Version ${latest!!.versionName}") },
+            text = { Text(latest!!.changelog ?: "Es gibt ein Update.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    UpdatePrefs.markSeen(ctx, latest!!.versionCode)
+                    ctx.startActivity(
+                        Intent(Intent.ACTION_VIEW, Uri.parse(latest!!.apkUrl))
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    )
+                    show = false
+                }) { Text("Zur APK") }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    UpdatePrefs.markSeen(ctx, latest!!.versionCode)
+                    show = false
+                }) { Text("Später") }
+            }
+        )
+    }
+}
+
+

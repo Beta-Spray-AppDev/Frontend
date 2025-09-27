@@ -8,7 +8,16 @@ data class SpraywallDTO(
     val name: String,
     val description: String,
     val photoUrl: String,
-    @SerializedName("isPublic") val isPublic: Boolean,
+
+    // Backend: "publicVisible"
+    @SerializedName("publicVisible")
+    val isPublic: Boolean,
+
     val gymId: UUID,
-    val createdBy: UUID? = null
+    val createdBy: UUID? = null,
+
+    // Backend: "archived"
+    @SerializedName("archived")
+    val isArchived: Boolean = false
 )
+

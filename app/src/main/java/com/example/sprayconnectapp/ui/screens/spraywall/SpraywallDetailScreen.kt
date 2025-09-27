@@ -5,12 +5,14 @@ import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -65,7 +67,7 @@ fun SpraywallDetailScreen(
     val context = LocalContext.current
 
     LaunchedEffect(gymId) {
-        viewModel.loadSpraywalls(context, gymId)
+        viewModel.loadSpraywallsWithArchived(context, gymId)
     }
 
     // Download + Navigation in die Boulderliste
@@ -147,16 +149,32 @@ fun SpraywallDetailScreen(
                         }
                     },
                     actions = {
-                        IconButton(
-                            onClick = { navController.navigate("addSpraywall/$gymId/$encodedGymName") }
-                        ) {
+
+                        IconButton(onClick = { navController.navigate("addSpraywall/$gymId/$encodedGymName") }) {
                             Icon(Icons.Default.Add, contentDescription = "Spraywall hinzufügen")
                         }
                     }
                 )
             },
+            floatingActionButton = {
+                ExtendedFloatingActionButton(
+                    onClick = {
+                        viewModel.showArchived.value = !viewModel.showArchived.value
+                        viewModel.loadSpraywallsWithArchived(context, gymId)
+                    },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.Archive,
+                            contentDescription = if (viewModel.showArchived.value) "Aktive anzeigen" else "Archiv anzeigen"
+                        )
+                    },
+                    text = {
+                        Text(text = if (viewModel.showArchived.value) "Aktiv" else "Archiv")
+                    }
+                )
+            },
             bottomBar = { BottomNavigationBar(navController) }
-        ) { innerPadding ->
+        )  { innerPadding ->
             Column(
                 modifier = Modifier
                     .padding(innerPadding)
@@ -182,9 +200,25 @@ fun SpraywallDetailScreen(
                         items(spraywalls) { spraywall ->
                             SpraywallCard(
                                 spraywall = spraywall,
-                                onClick = { startDownloadAndOpen(spraywall) }
+                                onClick = { startDownloadAndOpen(spraywall) },
+                                onToggleArchive = {
+                                    viewModel.toggleArchive(
+                                        context = context,
+                                        gymId = gymId,
+                                        wall = spraywall,
+                                        onSuccess = {
+                                            Toast.makeText(
+                                                context,
+                                                if (spraywall.isArchived) "Aus Archiv geholt" else "Archiviert",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        },
+                                        onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() }
+                                    )
+                                }
                             )
                         }
+
                     }
                 }
 
@@ -198,35 +232,73 @@ fun SpraywallDetailScreen(
 @Composable
 private fun SpraywallCard(
     spraywall: SpraywallDTO,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onToggleArchive: () -> Unit
 ) {
-    val cleanUrl = spraywall.photoUrl.trim()
-    Log.d("SpraywallCard", "URL geladen: [$cleanUrl]")
+    var menuOpen by remember { mutableStateOf(false) }
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = spraywall.name, style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(text = spraywall.description, style = MaterialTheme.typography.bodyMedium)
-            Spacer(modifier = Modifier.height(8.dp))
+    // Box als Anchor für DropdownMenu
+    Box {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = { menuOpen = true } // <— Long-press öffnet Menü
+                ),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
 
-            AsyncImage(
-                model = cleanUrl,
-                contentDescription = "Spraywall Bild",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(180.dp)
-                    .clip(RoundedCornerShape(8.dp)),
-                contentScale = ContentScale.Crop
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(text = spraywall.name, style = MaterialTheme.typography.titleMedium)
+                        Spacer(Modifier.height(4.dp))
+                        Text(text = spraywall.description, style = MaterialTheme.typography.bodyMedium)
+                        if (spraywall.isArchived) {
+                            Spacer(Modifier.height(6.dp))
+                            AssistChip(onClick = {}, label = { Text("Archiviert") })
+                        }
+                    }
+                    // Optional: Drei-Punkte als Alternativ-Trigger
+                    // IconButton(onClick = { menuOpen = true }) {
+                    //     Icon(Icons.Default.MoreVert, contentDescription = "Menü")
+                    // }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                AsyncImage(
+                    model = spraywall.photoUrl.trim(),
+                    contentDescription = "Spraywall Bild",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop
+                )
+            }
+        }
+
+        // Kontextmenü (öffnet sich am Card-Anker)
+        DropdownMenu(
+            expanded = menuOpen,
+            onDismissRequest = { menuOpen = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text("Öffnen") },
+                onClick = { menuOpen = false; onClick() }
+            )
+            DropdownMenuItem(
+                text = { Text(if (spraywall.isArchived) "Aus Archiv holen" else "Archivieren") },
+                onClick = { menuOpen = false; onToggleArchive() }
             )
         }
     }
 }
+
 
 
 /**

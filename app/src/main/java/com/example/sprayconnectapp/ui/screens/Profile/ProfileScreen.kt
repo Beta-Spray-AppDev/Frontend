@@ -1,6 +1,10 @@
 package com.example.sprayconnectapp.ui.screens.Profile
 
+import android.app.DownloadManager
+import android.content.Context
+import android.content.Intent
 import android.net.Uri
+import android.os.Environment
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.BorderStroke
@@ -35,6 +39,11 @@ import com.example.sprayconnectapp.util.getPrivateImageFileByName
 import com.example.sprayconnectapp.util.localOutputNameFromPreview
 
 import androidx.compose.foundation.lazy.items
+
+import com.example.sprayconnectapp.BuildConfig
+import com.example.sprayconnectapp.util.UpdateChecker
+import kotlinx.coroutines.launch
+
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Checklist
@@ -44,6 +53,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import kotlinx.coroutines.launch
 import kotlin.text.contains
+
 
 
 /**
@@ -190,11 +200,17 @@ fun ProfileScreen(navController: NavController) {
                         }
 
 
+
+
                         // Kein Zustand
                         else -> {
                             Text("Keine Profildaten vorhanden.")
                         }
                     }
+                }
+
+                item {
+                    ProfileUpdateCard()
                 }
             }
         }
@@ -664,6 +680,97 @@ private fun ListHeader(
         }
     }
 }
+
+@Composable
+fun ProfileUpdateCard() {
+    val ctx = LocalContext.current
+    var latest by remember { mutableStateOf(UpdatePrefs.readLatest(ctx)) } // Triple<Int, String, Pair<url, log>?>?
+    var checking by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(6.dp)
+    ) {
+        Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("App-Update", style = MaterialTheme.typography.headlineSmall)
+            Divider()
+
+            val appCode = BuildConfig.VERSION_CODE
+            val info = latest
+            if (info == null) {
+                Text("Keine Update-Information gespeichert.")
+            } else {
+                val (code, name, pair) = info
+                val (url, log) = pair
+                val newer = code > appCode
+
+                Text("Aktuelle App-Version: ${BuildConfig.VERSION_NAME} (code $appCode)")
+                Text("Verfügbare Version: $name (code $code)")
+                if (!log.isNullOrBlank()) Text(log)
+
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    if (newer) {
+                        Button(onClick = {
+                            val req = DownloadManager.Request(Uri.parse(url))
+                                .setTitle("SprayConnect Update")
+                                .setDescription("Neue Version wird heruntergeladen…")
+                                .setNotificationVisibility(
+                                    DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED
+                                )
+                                // legt die Datei im öffentlichen Download-Ordner ab:
+                                .setDestinationInExternalPublicDir(
+                                    Environment.DIRECTORY_DOWNLOADS,
+                                    "sprayconnect-latest.apk"
+                                )
+
+                            val dm = ctx.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+                            dm.enqueue(req)
+
+                            Toast.makeText(ctx, "Download gestartet (siehe Benachrichtigung)", Toast.LENGTH_SHORT).show()
+                        }) {
+                            Text("Zur APK")
+                        }
+
+                    } else {
+                        Text("Du bist auf dem neuesten Stand.")
+                    }
+                }
+            }
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (checking) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                    Text("Prüfe…")
+                } else {
+                    OutlinedButton(onClick = {
+                        checking = true
+                        scope.launch {
+                            val l = UpdateChecker.fetchLatest(BuildConfig.LATEST_JSON_URL)
+                            checking = false
+                            if (l != null && !l.apkUrl.isNullOrBlank()) {
+                                UpdatePrefs.saveLatest(ctx, l.versionCode, l.versionName, l.apkUrl!!, l.changelog)
+                                latest = UpdatePrefs.readLatest(ctx)
+                                val newer = l.versionCode > BuildConfig.VERSION_CODE
+                                android.widget.Toast.makeText(
+                                    ctx,
+                                    if (newer) "Update gefunden: ${l.versionName}" else "Kein Update verfügbar",
+                                    android.widget.Toast.LENGTH_SHORT
+                                ).show()
+                            } else {
+                                android.widget.Toast.makeText(ctx, "Fehler beim Prüfen", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }) { Text("Jetzt prüfen") }
+                }
+            }
+        }
+    }
+}
+
 
 
 
