@@ -18,7 +18,7 @@ android {
         buildConfigField(
             "String",
             "LATEST_JSON_URL",
-            "\"http://10.0.2.2:8080/latest.json\""
+            "\"http://leitln.at/latest.json\""
         )
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

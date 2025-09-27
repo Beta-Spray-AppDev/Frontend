@@ -35,6 +35,8 @@ class SpraywallViewModel(context: Context) : ViewModel() {
     var isLoading = mutableStateOf(false)
     var errorMessage = mutableStateOf<String?>(null)
 
+    var showArchived = mutableStateOf(false)
+
 
     /**
      * Lädt alle Spraywalls eines Gyms:
@@ -42,7 +44,7 @@ class SpraywallViewModel(context: Context) : ViewModel() {
      * - Danach immer lokal aus Room lesen → UI State
      */
 
-    fun loadSpraywalls(context: Context, gymId: String) {
+    fun loadSpraywallsWithArchived(context: Context, gymId: String, archived: Boolean = showArchived.value) {
         viewModelScope.launch {
             isLoading.value = true
             errorMessage.value = null
@@ -50,26 +52,26 @@ class SpraywallViewModel(context: Context) : ViewModel() {
             val online = isOnline(context)
             if (online) {
                 try {
-                    val response = RetrofitInstance.getSpraywallApi(context)
-                        .getSpraywallsByGym(UUID.fromString(gymId))
-
-                    if (response.isSuccessful) {
-                        val remoteList = response.body().orEmpty()
-                        repo.syncFromBackend(gymId, remoteList)
+                    val api = RetrofitInstance.getSpraywallApi(context)
+                    val resp = api.getSpraywallsByGym(UUID.fromString(gymId), archived = archived)
+                    if (resp.isSuccessful) {
+                        val remoteList = resp.body().orEmpty()
+                        // Repo: neue Signatur, die nur die jeweilige Teilmenge spiegelt
+                        repo.syncFromBackend(gymId, remoteList, archived = archived)
                     } else {
-                        errorMessage.value = "Fehler: ${response.code()}"
+                        errorMessage.value = "Fehler: ${resp.code()}"
                     }
                 } catch (e: Exception) {
                     errorMessage.value = "Netzwerkfehler: ${e.localizedMessage}"
                 }
-            } else {
-                if (spraywalls.value.isEmpty()) {
-                    errorMessage.value = "Offline – zeige lokale Daten"
-                }
+            } else if (spraywalls.value.isEmpty()) {
+                errorMessage.value = "Offline – zeige lokale Daten"
             }
 
-            val locals = repo.getByGym(gymId)
-            spraywalls.value = locals.map { it.toDto() }
+            // Lokal NUR die gewünschte Teilmenge lesen
+            val locals = repo.getByGym(gymId, archived = archived)
+            // Nutze den neuen Mapper mit Archived
+            spraywalls.value = locals.map { it.toDtoWithArchive() }
 
             isLoading.value = false
         }
@@ -100,9 +102,13 @@ class SpraywallViewModel(context: Context) : ViewModel() {
                         onSuccess(); isLoading.value = false
                     }
                     val listResp = RetrofitInstance.getSpraywallApi(context)
-                        .getSpraywallsByGym(UUID.fromString(gymId))
+                        .getSpraywallsByGym(UUID.fromString(gymId), archived = false)
                     if (listResp.isSuccessful) {
-                        repo.syncFromBackend(gymId, listResp.body().orEmpty())
+                        repo.syncFromBackend(
+                            gymId,
+                            listResp.body().orEmpty(),
+                            archived = false
+                        )
                     }
                     onSuccess()
                 } else {
@@ -112,6 +118,35 @@ class SpraywallViewModel(context: Context) : ViewModel() {
                 onError("Fehler: ${e.localizedMessage}")
             } finally {
                 isLoading.value = false
+            }
+        }
+    }
+
+    fun toggleArchive(
+        context: Context,
+        gymId: String,
+        wall: SpraywallDTO,
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            if (!isOnline(context)) {
+                onError("Du bist offline – Archivieren nur mit Internet möglich.")
+                return@launch
+            }
+            try {
+                val api = RetrofitInstance.getSpraywallApi(context)
+                val wid = wall.id ?: return@launch onError("Ungültige Spraywall-ID")
+                val resp = api.setArchived(UUID.fromString(gymId), wid, archived = !wall.isArchived)
+                if (!resp.isSuccessful) {
+                    onError("Archivieren fehlgeschlagen: ${resp.code()} ${resp.message()}")
+                    return@launch
+                }
+                // Aktuelle Ansicht (aktiv/archiviert) erneut laden
+                loadSpraywallsWithArchived(context, gymId, archived = showArchived.value)
+                onSuccess()
+            } catch (e: Exception) {
+                onError("Fehler: ${e.localizedMessage}")
             }
         }
     }
@@ -135,6 +170,19 @@ class SpraywallViewModel(context: Context) : ViewModel() {
             isPublic = isPublic,
             gymId = UUID.fromString(gymId),
             createdBy = createdBy?.let { UUID.fromString(it) }
+        )
+
+    private fun SpraywallEntity.toDtoWithArchive(): SpraywallDTO =
+        SpraywallDTO(
+            id = UUID.fromString(id),
+            name = name,
+            description = description,
+            photoUrl = photoUrl,
+            isPublic = isPublic,
+            gymId = UUID.fromString(gymId),
+            createdBy = createdBy?.let { UUID.fromString(it) },
+            // braucht ein Feld im DTO: `val isArchived: Boolean = false`
+            isArchived = this.isArchived
         )
 }
 

@@ -41,7 +41,7 @@ abstract class AppDatabase : RoomDatabase() {
                     "sprayconnect-db"
                 )
 
-                builder.addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                builder.addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
 
 
                 builder.build().also { INSTANCE = it }

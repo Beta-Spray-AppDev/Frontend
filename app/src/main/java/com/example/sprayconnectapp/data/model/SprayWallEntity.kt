@@ -12,5 +12,6 @@ data class SpraywallEntity(
     val description: String,
     val photoUrl: String,
     val isPublic: Boolean,
-    val createdBy: String?
+    val createdBy: String?,
+    val isArchived: Boolean = false
 )

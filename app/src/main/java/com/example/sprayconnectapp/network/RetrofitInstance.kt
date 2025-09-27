@@ -72,7 +72,7 @@ object RetrofitInstance {
             .build()
 
         return Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:8080/")
+            .baseUrl("http://leitln.at:8090/")
             .addConverterFactory(ScalarsConverterFactory.create()) // für string responses
             .addConverterFactory(GsonConverterFactory.create())
             .client(client)

@@ -1,66 +1,41 @@
-// data/repository/SpraywallRepository.kt
+
 package com.example.sprayconnectapp.data.repository
 
-import android.util.Log
-import com.example.sprayconnectapp.data.local.SpraywallDao
-import com.example.sprayconnectapp.data.local.BoulderDao
-import com.example.sprayconnectapp.data.model.SpraywallEntity
 import com.example.sprayconnectapp.data.dto.SpraywallDTO
-import java.util.UUID
-
-/**
- * Repository für Spraywalls.
- * - Verwaltet lokale Datenbankzugriffe
- * - Synchronisiert Spraywalls mit dem Server
- */
-
+import com.example.sprayconnectapp.data.local.BoulderDao
+import com.example.sprayconnectapp.data.local.SpraywallDao
+import com.example.sprayconnectapp.data.model.SpraywallEntity
 
 class SpraywallRepository(
     private val spraywallDao: SpraywallDao,
-    private val boulderDao: BoulderDao
+    private val boulderDao: BoulderDao // falls vorhanden; sonst entfernen
 ) {
-
-    /** Holt alle Spraywalls eines Gyms lokal */
-    suspend fun getByGym(gymId: String): List<SpraywallEntity> =
-        spraywallDao.getByGym(gymId)
-
     /**
-     * Synchronisiert Spraywalls eines Gyms mit Serverdaten.
-     * - Löscht lokale Spraywalls, die es am Server nicht mehr gibt
-     * - Fügt neue oder geänderte hinzu
+     * Spiegelt die vom Backend geholte Teilmenge (aktiv ODER archiviert) nach Room.
+     * Es wird nur die entsprechende Teilmenge (isArchived = archived) vorher gepurged.
      */
+    suspend fun syncFromBackend(gymId: String, remote: List<SpraywallDTO>, archived: Boolean) {
+        // purge nur diese Teilmenge
+        spraywallDao.purgeByGymAndArchived(gymId, archived)
 
-
-    suspend fun syncFromBackend(gymId: String, remote: List<SpraywallDTO>) {
-        val remoteIds = remote.mapNotNull { it.id?.toString() }.toSet()
-
-        // alte lokale, die es am Server nicht mehr gibt, löschen (+ abhängige Boulder)
-        val locals = spraywallDao.getByGym(gymId)
-        for (l in locals) {
-            if (l.id !in remoteIds) {
-                spraywallDao.deleteById(l.id)
-
-            }
+        val entities = remote.map { dto ->
+            SpraywallEntity(
+                id = dto.id.toString(),
+                gymId = (dto.gymId ?: java.util.UUID.fromString(gymId)).toString(),
+                name = dto.name,
+                description = dto.description,
+                photoUrl = dto.photoUrl,
+                isPublic = dto.isPublic,
+                createdBy = dto.createdBy?.toString(),
+                isArchived = dto.isArchived  // Backend-Quelle ist maßgeblich
+            )
         }
-
-        // upsert aller Server-Einträge
-        val entities = remote
-            .filter { it.id != null }
-            .map { it.toEntity() }
-
-        spraywallDao.insertAll(entities)
+        if (entities.isNotEmpty()) {
+            spraywallDao.insertAll(entities)
+        }
     }
+
+    /** Lokal lesen – nach Gym und Archiv-Flag. */
+    suspend fun getByGym(gymId: String, archived: Boolean): List<SpraywallEntity> =
+        spraywallDao.getByGymAndArchived(gymId, archived)
 }
-
-
-/** Mapper: SpraywallDTO → SpraywallEntity */
-private fun SpraywallDTO.toEntity() = SpraywallEntity(
-    id          = requireNotNull(id).toString(),
-    gymId       = gymId.toString(),
-    name        = name,
-    description = description,
-    photoUrl    = photoUrl,
-    isPublic    = isPublic,
-    createdBy   = createdBy?.toString()
-)
-
