@@ -97,6 +97,15 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+
+
+
+
+
+    implementation("androidx.compose.animation:animation:<compose-version>")
+    implementation("androidx.compose.material:material-icons-extended:<compose-version>")
+
 
 
 

@@ -40,8 +40,8 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import com.example.sprayconnectapp.ui.screens.BottomNavigationBar
-import com.example.sprayconnectapp.util.getTokenFromPrefs
-import com.example.sprayconnectapp.util.getUserIdFromToken
+import com.example.sprayconnectapp.util.TokenStore
+
 import java.lang.reflect.Modifier.isPublic
 import java.util.UUID
 
@@ -141,8 +141,8 @@ fun AddGymScreen(
             // Speichern
             Button(
                 onClick = {
-                    val token = getTokenFromPrefs(context)
-                    val userId = token?.let { getUserIdFromToken(it) }
+                    val store = TokenStore(context)
+                    val userId = store.getUserId()
 
                     if (userId != null){
                         val dto = CreateGymDTO(

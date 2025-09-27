@@ -41,14 +41,19 @@ import androidx.navigation.NavController
 import com.example.sprayconnectapp.R
 import com.example.sprayconnectapp.ui.screens.BottomNavigationBar
 import com.example.sprayconnectapp.ui.screens.Profile.ProfileViewModel
-import com.example.sprayconnectapp.util.getTokenFromPrefs
-import com.example.sprayconnectapp.util.getUsernameFromToken
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.TextFieldColors
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.ui.text.input.ImeAction
 import com.example.sprayconnectapp.util.AppMeta
+
 import com.example.sprayconnectapp.util.LatestRelease
 import com.example.sprayconnectapp.util.UpdateChecker
 import com.example.sprayconnectapp.BuildConfig
+
+
+import com.example.sprayconnectapp.util.TokenStore
 
 
 
@@ -72,8 +77,9 @@ fun HomeScreen(navController: NavController) {
         profileViewModel.loadProfile(context)
     }
 
-    val token = getTokenFromPrefs(context)
-    val displayName = profile?.username ?: token?.let { getUsernameFromToken(it) }.orEmpty()
+    val store = TokenStore(context)
+    val displayName = profile?.username ?: store.getUsername().orEmpty()
+
 
     val screenBg = Brush.verticalGradient(
         colors = listOf(
@@ -160,7 +166,7 @@ fun HomeScreen(navController: NavController) {
 
                 when {
                     viewModel.isLoading.value -> {
-                        CircularProgressIndicator(color = colorResource(R.color.button_normal))
+                    CircularProgressIndicator(color = colorResource(R.color.button_normal), modifier = Modifier.align(Alignment.CenterHorizontally))
                     }
                     viewModel.errorMessage.value != null -> {
                         Text(
@@ -240,6 +246,7 @@ fun HomeScreen(navController: NavController) {
 }
 
 /** Immer verfügbarer Feedback-Dialog (weißer Button, schwarze Schrift) */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeedbackDialog(
     onDismiss: () -> Unit,
@@ -280,6 +287,13 @@ fun FeedbackDialog(
                     value = text,
                     onValueChange = { if (it.length <= maxMessageLength) text = it },
                     label = { Text("Dein Feedback (optional)") },
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = colorResource(id = R.color.button_normal),
+                        unfocusedBorderColor = colorResource(id = R.color.button_normal),
+                        focusedLabelColor = colorResource(id = R.color.button_normal),
+                        cursorColor = colorResource(id = R.color.button_normal),
+                        focusedTextColor  = Color.Black
+                    ),
                     minLines = 3,
                     maxLines = 6,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
@@ -294,18 +308,16 @@ fun FeedbackDialog(
             TextButton(
                 onClick = { if (isValid) onSubmit(stars, text.trim()) },
                 enabled = isValid,
-                modifier = Modifier
-                    .background(
-                        if (isValid) Color.White else Color(0xFFE0E0E0),
-                        CircleShape
-                    )
-                    .padding(horizontal = 16.dp, vertical = 6.dp)
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = colorResource(R.color.button_normal),
+                    disabledContentColor = Color.LightGray
+                )
             ) {
-                Text("Senden", color = Color.Black)
+                Text("Senden")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Später") }
+            TextButton(onClick = onDismiss) { Text("Später", color = Color.Black) }
         }
     )
 }

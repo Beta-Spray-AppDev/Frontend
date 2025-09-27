@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -23,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -37,6 +39,7 @@ import com.example.sprayconnectapp.util.downloadDirectToPrivate
 import com.example.sprayconnectapp.util.getPrivateImageFileByName
 import com.example.sprayconnectapp.util.localOutputNameFromPreview
 import kotlinx.coroutines.launch
+import androidx.compose.material.icons.outlined.ImageSearch
 
 
 /**
@@ -180,7 +183,8 @@ fun SpraywallDetailScreen(
             ) {
 
                 if (isLoading) {
-                    CircularProgressIndicator(color = colorResource(R.color.button_normal))
+                    CircularProgressIndicator(color = colorResource(R.color.button_normal), modifier = Modifier.align(
+                        Alignment.CenterHorizontally))
                 }
 
                 errorMessage?.let {
@@ -190,7 +194,7 @@ fun SpraywallDetailScreen(
                 }
 
                 if (spraywalls.isEmpty() && !isLoading) {
-                    Text("Keine Spraywalls gefunden.")
+                    EmptySpraywallsState()
                 } else {
                     LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         items(spraywalls) { spraywall ->
@@ -312,3 +316,42 @@ fun rememberSpraywallViewModel(): SpraywallViewModel {
         }
     })
 }
+
+
+
+
+
+@Composable
+fun EmptySpraywallsState() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.ImageSearch,
+                contentDescription = null,
+                tint =  colorResource(R.color.button_normal_dark),
+                modifier = Modifier.size(72.dp)
+            )
+            Text(
+                "Keine Spraywalls gefunden",
+                style = MaterialTheme.typography.titleLarge,
+                color = Color.White,
+            )
+            Text(
+                "Es wurden noch keine Spraywalls für dieses Gym erstellt.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White.copy(alpha = 0.8f),
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+
