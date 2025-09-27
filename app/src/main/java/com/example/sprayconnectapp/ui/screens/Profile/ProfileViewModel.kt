@@ -8,7 +8,7 @@ import com.example.sprayconnectapp.data.dto.BoulderDTO
 import com.example.sprayconnectapp.data.dto.UpdateProfileRequest
 import com.example.sprayconnectapp.data.dto.UserProfile
 import com.example.sprayconnectapp.network.RetrofitInstance
-import com.example.sprayconnectapp.util.clearTokenFromPrefs
+import com.example.sprayconnectapp.session.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -23,6 +23,8 @@ import org.json.JSONObject
  */
 
 class ProfileViewModel : ViewModel() {
+
+    private val session = SessionManager()
 
     private val _profile = MutableStateFlow<UserProfile?>(null)
     val profile: StateFlow<UserProfile?> = _profile
@@ -195,10 +197,8 @@ class ProfileViewModel : ViewModel() {
 
 
     /** Logout: Token löschen, Retrofit-Instanz verwerfen. */
-    fun logout(context: Context) {
-        clearTokenFromPrefs(context)
-        RetrofitInstance.resetRetrofit()
-    }
+    fun logout(context: Context) = session.logout(context)
+
 
 
 

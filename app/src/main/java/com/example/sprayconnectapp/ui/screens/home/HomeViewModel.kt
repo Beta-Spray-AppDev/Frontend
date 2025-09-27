@@ -9,13 +9,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sprayconnectapp.data.dto.CreateGymDTO
 import com.example.sprayconnectapp.data.dto.Gym
+import com.example.sprayconnectapp.data.dto.LogoutRequest
 import com.example.sprayconnectapp.data.dto.feedback.CreateFeedbackDto
 import com.example.sprayconnectapp.data.dto.feedback.FeedbackDto
 import com.example.sprayconnectapp.data.local.AppDatabase
 import com.example.sprayconnectapp.data.repository.FeedbackRepository
 import com.example.sprayconnectapp.data.repository.GymRepository
 import com.example.sprayconnectapp.network.RetrofitInstance
-import com.example.sprayconnectapp.util.clearTokenFromPrefs
+import com.example.sprayconnectapp.session.SessionManager
+import com.example.sprayconnectapp.util.TokenStore
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -28,6 +30,9 @@ import java.util.UUID
  */
 
 class HomeViewModel : ViewModel() {
+
+    private val session = SessionManager()
+
 
     private lateinit var gymRepository: GymRepository
     private lateinit var feedbackRepository: FeedbackRepository
@@ -158,10 +163,7 @@ class HomeViewModel : ViewModel() {
         }
     }
 
-    fun logout(context: Context) {
-        clearTokenFromPrefs(context)
-        RetrofitInstance.resetRetrofit()
-    }
+    fun logout(context: Context) = session.logout(context)
 
     // FEEDBACK: Senden
     fun sendFeedback(dto: CreateFeedbackDto) {

@@ -71,8 +71,8 @@ fun BoulderListScreen(
 
     val gradeToIndex = remember { fbGrades.withIndex().associate { it.value to it.index } }
 
-    val rangeSaver = Saver<ClosedFloatingPointRange<Float>, Pair<Float, Float>>(
-        save = { it.start to it.endInclusive },
+    val rangeSaver = Saver<ClosedFloatingPointRange<Float>, List<Float>>(
+        save = { listOf(it.start, it.endInclusive)  },
         restore = { (s, e) -> s..e }
     )
 

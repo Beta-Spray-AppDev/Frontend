@@ -9,10 +9,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
 import com.example.sprayconnectapp.data.dto.LoginRequest
+import com.example.sprayconnectapp.data.dto.TokenResponse
 import com.example.sprayconnectapp.network.RetrofitInstance
+import com.example.sprayconnectapp.util.TokenStore
 import kotlinx.coroutines.launch
 
-import com.example.sprayconnectapp.util.saveTokenToPrefs
 
 
 /**
@@ -101,11 +102,12 @@ class LoginViewModel : ViewModel() {
                 val response = RetrofitInstance.getApi(context).login(request)
 
                 if (response.isSuccessful) {
-                    val token = response.body()
+                    val tokens: TokenResponse? = response.body()
 
-                    if (!token.isNullOrBlank() && token.startsWith("ey")) {
-                        saveTokenToPrefs(context, token) // in sharedPreferences speichern
-                        message = "Login erfolgreich" // Ui reagiert hier mit toast und Navigation
+                    if (tokens != null) {
+                        // NEU: sicher speichern (access + refresh)
+                        TokenStore(context).save(tokens.accessToken, tokens.refreshToken)
+                        message = "Login erfolgreich"
 
                     } else {
                         message = "Login fehlgeschlagen: Ungültige Antwort"

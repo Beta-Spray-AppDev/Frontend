@@ -9,7 +9,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
 import com.example.sprayconnectapp.data.dto.RegisterRequest
+import com.example.sprayconnectapp.data.dto.TokenResponse
 import com.example.sprayconnectapp.network.RetrofitInstance
+import com.example.sprayconnectapp.util.TokenStore
 import kotlinx.coroutines.launch
 
 
@@ -145,15 +147,15 @@ class RegisterViewModel : ViewModel() {
                     if (loginResponse.isSuccessful) {
 
                         //Auto-Login
-                        val token = loginResponse.body()
+                        val tokens: TokenResponse? = loginResponse.body()
 
-                        if (!token.isNullOrBlank()) {
-                            com.example.sprayconnectapp.util.saveTokenToPrefs(context, token)
-                            RetrofitInstance.resetRetrofit()
+                        if (tokens != null) {
+                            TokenStore(context).save(tokens.accessToken, tokens.refreshToken)
+                            // Optional: RetrofitInstance.resetRetrofit()
                             message = "Registrierung & Login erfolgreich"
                             onLoginSuccess()
                         } else {
-                            message = "Registrierung ok, aber Login fehlgeschlagen"
+                            message = "Registrierung ok, aber Login fehlgeschlagen (leere Antwort)"
                         }
 
                     }

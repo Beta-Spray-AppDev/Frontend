@@ -64,8 +64,7 @@ import com.example.sprayconnectapp.R
 import com.example.sprayconnectapp.data.dto.HoldType
 import com.example.sprayconnectapp.ui.screens.BoulderList.BoulderListViewModel
 import com.example.sprayconnectapp.ui.screens.Profile.ProfileViewModel
-import com.example.sprayconnectapp.util.getTokenFromPrefs
-import com.example.sprayconnectapp.util.getUserIdFromToken
+
 
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -73,6 +72,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import com.example.sprayconnectapp.util.TokenStore
 import java.text.DateFormat
 import java.util.Date
 import kotlin.math.roundToInt
@@ -225,8 +225,8 @@ fun ViewBoulderScreen(
             // Bearbeiten Button nur für den Ersteller
             floatingActionButton = {
                 // FAB nur für den Setter
-                val token = getTokenFromPrefs(context)
-                val currentUserId = token?.let { getUserIdFromToken(it) }
+                val store = TokenStore(context)
+                val currentUserId = store.getUserId()
                 if (boulder?.createdBy == currentUserId) {
                     FloatingActionButton(
                         containerColor = Color(0xFF7FBABF),
