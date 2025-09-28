@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.PointerEventPass
 
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -404,27 +405,28 @@ fun CreateBoulderScreen(
                                     .pointerInput(hold.id, laidOut, scale.value) {
                                         awaitEachGesture {
                                             val down = awaitFirstDown(requireUnconsumed = false)
+
+                                            // sofort: Parent-Transformable blocken
+                                            isPointerDownOnHold = true
                                             showTrash = true
                                             overTrash = false
 
                                             val startHold = uiState.holds.first { it.id == hold.id }
                                             var currentNorm = Offset(startHold.x, startHold.y)
-
                                             if (uiState.selectedHoldId != hold.id) viewModel.selectHold(hold.id)
 
-                                            isPointerDownOnHold = true
-                                            down.consume()
-
+                                            down.consume() // Down verbrauchen
 
                                             var lastFingerWindow: Offset? = holdCoords?.localToWindow(down.position)
 
                                             try {
                                                 while (true) {
-                                                    val event = awaitPointerEvent()
+                                                    // <<< WICHTIG: Initial-Pass
+                                                    val event = awaitPointerEvent(PointerEventPass.Initial)
                                                     val change = event.changes.firstOrNull { it.id == down.id } ?: event.changes.first()
 
                                                     val deltaPx = change.positionChange()
-                                                    change.consume()
+                                                    change.consume() // selbst konsumieren
 
                                                     if (laidOut.width != 0 && laidOut.height != 0) {
                                                         val dx = deltaPx.x / (laidOut.width * scale.value)
@@ -436,7 +438,6 @@ fun CreateBoulderScreen(
                                                         viewModel.updateHoldPosition(hold.id, currentNorm.x, currentNorm.y)
                                                     }
 
-
                                                     val fingerInWindow = holdCoords?.localToWindow(change.position)
                                                     if (fingerInWindow != null) lastFingerWindow = fingerInWindow
                                                     overTrash = trashBounds?.contains(fingerInWindow ?: lastFingerWindow ?: Offset.Zero) == true
@@ -444,10 +445,8 @@ fun CreateBoulderScreen(
                                                     if (!change.pressed) break
                                                 }
                                             } finally {
-                                                //löschen, wenn der finger über dem Trash liegt
                                                 if (trashBounds?.contains(lastFingerWindow ?: Offset.Zero) == true) {
                                                     viewModel.removeHold(hold.id)
-
                                                 }
                                                 showTrash = false
                                                 overTrash = false
@@ -455,6 +454,7 @@ fun CreateBoulderScreen(
                                             }
                                         }
                                     }
+
 
                                     .drawBehind {
 

@@ -8,6 +8,7 @@ import android.os.Environment
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
@@ -285,7 +286,7 @@ fun ProfileCard(profile: UserProfile, navController: NavController) {
 
 
 // Karte für einzelnen Boulder
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun BoulderCard(
     boulder: BoulderDTO,

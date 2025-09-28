@@ -139,9 +139,14 @@ class SpraywallViewModel(context: Context) : ViewModel() {
                 val wid = wall.id ?: return@launch onError("Ungültige Spraywall-ID")
                 val resp = api.setArchived(UUID.fromString(gymId), wid, archived = !wall.isArchived)
                 if (!resp.isSuccessful) {
-                    onError("Archivieren fehlgeschlagen: ${resp.code()} ${resp.message()}")
+                    if (resp.code() == 403) {
+                        onError("Nur der Ersteller darf diese Spraywall archivieren/entarchivieren.")
+                    } else {
+                        onError("Archivieren fehlgeschlagen: ${resp.code()} ${resp.message()}")
+                    }
                     return@launch
                 }
+
                 // Aktuelle Ansicht (aktiv/archiviert) erneut laden
                 loadSpraywallsWithArchived(context, gymId, archived = showArchived.value)
                 onSuccess()
@@ -181,7 +186,6 @@ class SpraywallViewModel(context: Context) : ViewModel() {
             isPublic = isPublic,
             gymId = UUID.fromString(gymId),
             createdBy = createdBy?.let { UUID.fromString(it) },
-            // braucht ein Feld im DTO: `val isArchived: Boolean = false`
             isArchived = this.isArchived
         )
 }

@@ -1,8 +1,9 @@
 package com.example.sprayconnectapp.ui.screens.BoulderView
 
 import android.graphics.BitmapFactory
-import android.media.ExifInterface
+import androidx.exifinterface.media.ExifInterface
 import android.net.Uri
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.gestures.rememberTransformableState
@@ -68,6 +69,7 @@ import com.example.sprayconnectapp.ui.screens.Profile.ProfileViewModel
 
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.runtime.saveable.rememberSaveable
 
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
@@ -76,6 +78,8 @@ import com.example.sprayconnectapp.util.TokenStore
 import java.text.DateFormat
 import java.util.Date
 import kotlin.math.roundToInt
+
+
 
 
 /**
@@ -87,7 +91,7 @@ import kotlin.math.roundToInt
  */
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun ViewBoulderScreen(
     navController: NavController,
@@ -113,6 +117,8 @@ fun ViewBoulderScreen(
     val myList = profileVm?.myBoulders?.collectAsState()?.value ?: emptyList()
     // getickte Boulder
     val tickedList = profileVm?.myTicks?.collectAsState()?.value ?: emptyList()
+
+    var currentBoulderId by rememberSaveable { mutableStateOf(boulderId) }
 
 
     // Wählt Liste nach Quelle
@@ -147,9 +153,9 @@ fun ViewBoulderScreen(
     var laidOut by remember { mutableStateOf(IntSize.Zero) }
 
     // Repository init + Boulder laden (einmalig, konfliktfrei)
-    LaunchedEffect(boulderId) {
+    LaunchedEffect(currentBoulderId) {
         viewModel.initRepository(context)
-        viewModel.loadBoulder(context, boulderId)
+        viewModel.loadBoulder(context, currentBoulderId)
     }
 
     // Bildmaße (inkl. EXIF) bestimmen
@@ -224,10 +230,14 @@ fun ViewBoulderScreen(
             },
             // Bearbeiten Button nur für den Ersteller
             floatingActionButton = {
-                // FAB nur für den Setter
                 val store = TokenStore(context)
                 val currentUserId = store.getUserId()
-                if (boulder?.createdBy == currentUserId) {
+
+                // Achtung: createdBy kann UUID sein -> toString() für sicheren Vergleich
+                val isOwner = boulder?.createdBy?.toString() == currentUserId
+                val canEdit = isOwner || store.isSuperUser()
+
+                if (canEdit) {
                     FloatingActionButton(
                         containerColor = Color(0xFF7FBABF),
                         onClick = {
@@ -251,14 +261,16 @@ fun ViewBoulderScreen(
                 ) {
                     val iconSize = 35.dp
 
-                    //Prev Button
-                    IconButton(enabled = prevId != null, onClick = {
-                        val enc = Uri.encode(imageUri)
-                        prevId?.let { navController.navigate("view_boulder/$it/$spraywallId?src=$source&imageUri=$enc"){
-                            launchSingleTop = true
-                        } }
-                    }) {
-                        Icon(Icons.Default.NavigateBefore, contentDescription = "Vorheriger Boulder", modifier = Modifier.size(iconSize))
+                    // Prev Button
+                    IconButton(
+                        enabled = prevId != null,
+                        onClick = { prevId?.let { currentBoulderId = it } }
+                    ) {
+                        Icon(
+                            Icons.Default.NavigateBefore,
+                            contentDescription = "Vorheriger Boulder",
+                            modifier = Modifier.size(iconSize)
+                        )
                     }
 
                     Spacer(Modifier.weight(1f))
@@ -273,19 +285,17 @@ fun ViewBoulderScreen(
 
                     Spacer(Modifier.weight(1f))
 
-
                     // Next Button
-                    IconButton(enabled = nextId != null, onClick = {
-                        val enc = Uri.encode(imageUri)
-                        nextId?.let { navController.navigate("view_boulder/$it/$spraywallId?src=$source&imageUri=$enc"){
-                            launchSingleTop = true
-                        } }
-                    }) {
+                    IconButton(
+                        enabled = nextId != null,
+                        onClick = { nextId?.let { currentBoulderId = it } }
+                    ) {
                         Icon(
                             Icons.Default.NavigateNext,
                             contentDescription = "Nächster Boulder",
                             modifier = Modifier.size(iconSize)
-                        )                }
+                        )
+                    }
                 }
             }
         ) { padding ->

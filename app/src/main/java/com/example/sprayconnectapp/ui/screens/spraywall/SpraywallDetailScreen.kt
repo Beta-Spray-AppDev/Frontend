@@ -3,6 +3,7 @@ package com.example.sprayconnectapp.ui.screens.spraywall
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -229,6 +230,7 @@ fun SpraywallDetailScreen(
 
 
 /** Einfache Card für Spraywall-Daten (Name, Beschreibung, Bild-Preview). */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun SpraywallCard(
     spraywall: SpraywallDTO,
@@ -244,7 +246,7 @@ private fun SpraywallCard(
                 .fillMaxWidth()
                 .combinedClickable(
                     onClick = onClick,
-                    onLongClick = { menuOpen = true } // <— Long-press öffnet Menü
+                    onLongClick = { menuOpen = true }
                 ),
             shape = RoundedCornerShape(12.dp)
         ) {
@@ -322,7 +324,10 @@ fun rememberSpraywallViewModel(): SpraywallViewModel {
 
 
 @Composable
-fun EmptySpraywallsState() {
+fun EmptySpraywallsState(viewModel: SpraywallViewModel = rememberSpraywallViewModel()) {
+
+    val isArchivedView = viewModel.showArchived.value
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -345,7 +350,10 @@ fun EmptySpraywallsState() {
                 color = Color.White,
             )
             Text(
-                "Es wurden noch keine Spraywalls für dieses Gym erstellt.",
+                text = if (isArchivedView)
+                    "Im Archiv ist noch nichts."
+                else
+                    "Es wurden noch keine Spraywalls für dieses Gym erstellt.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.White.copy(alpha = 0.8f),
                 textAlign = TextAlign.Center

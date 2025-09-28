@@ -43,6 +43,7 @@ import com.example.sprayconnectapp.ui.screens.BottomNavigationBar
 import com.example.sprayconnectapp.ui.screens.Profile.ProfileViewModel
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.ui.text.input.ImeAction
@@ -54,6 +55,7 @@ import com.example.sprayconnectapp.BuildConfig
 
 
 import com.example.sprayconnectapp.util.TokenStore
+
 
 
 
@@ -287,20 +289,16 @@ fun FeedbackDialog(
                     value = text,
                     onValueChange = { if (it.length <= maxMessageLength) text = it },
                     label = { Text("Dein Feedback (optional)") },
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        focusedBorderColor = colorResource(id = R.color.button_normal),
-                        unfocusedBorderColor = colorResource(id = R.color.button_normal),
-                        focusedLabelColor = colorResource(id = R.color.button_normal),
-                        cursorColor = colorResource(id = R.color.button_normal),
-                        focusedTextColor  = Color.Black
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = colorResource(R.color.button_normal),
+                        unfocusedBorderColor = colorResource(R.color.button_normal),
+                        focusedLabelColor = colorResource(R.color.button_normal),
+                        cursorColor = colorResource(R.color.button_normal),
+                        focusedTextColor = Color.Black,           // optional
+                        unfocusedTextColor = Color.Black          // optional
                     ),
                     minLines = 3,
                     maxLines = 6,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    supportingText = {
-                        Text("${remaining.coerceAtLeast(0)} Zeichen übrig")
-                    },
-                    modifier = Modifier.fillMaxWidth()
                 )
             }
         },
