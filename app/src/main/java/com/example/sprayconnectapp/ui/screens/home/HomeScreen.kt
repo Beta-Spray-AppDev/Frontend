@@ -1,5 +1,6 @@
 package com.example.sprayconnectapp.ui.screens.home
 
+import android.app.DownloadManager
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
@@ -42,6 +43,7 @@ import com.example.sprayconnectapp.R
 import com.example.sprayconnectapp.ui.screens.BottomNavigationBar
 import com.example.sprayconnectapp.ui.screens.Profile.ProfileViewModel
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.TextFieldColors
@@ -55,7 +57,8 @@ import com.example.sprayconnectapp.BuildConfig
 
 
 import com.example.sprayconnectapp.util.TokenStore
-
+import com.example.sprayconnectapp.util.UpdateInstaller
+import com.example.sprayconnectapp.ui.screens.Profile.DownloadProgress
 
 
 
@@ -164,7 +167,12 @@ fun HomeScreen(navController: NavController) {
                     style = MaterialTheme.typography.headlineMedium,
                     color = Color.White
                 )
-                Spacer(Modifier.height(32.dp))
+
+                Spacer(Modifier.height(16.dp))
+
+                InstallDownloadedUpdateBanner()
+
+                Spacer(Modifier.height(16.dp))
 
                 when {
                     viewModel.isLoading.value -> {
@@ -322,47 +330,71 @@ fun FeedbackDialog(
 
 
 @Composable
-fun CheckForUpdateDialog() {
-    val context = LocalContext.current
-    var latest by remember { mutableStateOf<LatestRelease?>(null) }
-    var showDialog by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        val release = UpdateChecker.fetchLatest(BuildConfig.LATEST_JSON_URL)
-
-        if (release != null &&
-            release.versionCode > BuildConfig.VERSION_CODE &&
-            !release.apkUrl.isNullOrBlank()
-        ) {
-            latest = release
-            showDialog = true
-        }
+private fun UpdateDialog(
+    versionName: String,
+    changelog: String?,
+    apkUrl: String,
+    onDismiss: () -> Unit,
+) {
+    val ctx = LocalContext.current
+    var downloadId by remember {
+        mutableStateOf<Long?>(null)
     }
 
-    if (showDialog && latest != null) {
-        AlertDialog(
-            onDismissRequest = { showDialog = false },
-            title = { Text("Neue Version verfügbar!") },
-            text = {
-                Text("Version ${latest!!.versionName} ist verfügbar.\n\n${latest!!.changelog ?: ""}")
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(latest!!.apkUrl))
-                    context.startActivity(intent)
-                    showDialog = false
-                }) {
-                    Text("Download starten")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDialog = false }) {
-                    Text("Später")
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Neue Version $versionName") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(changelog ?: "Es gibt ein Update.")
+
+                // ⬇️ Fortschritt anzeigen, wenn ein Download läuft
+                if (downloadId != null) {
+                    DownloadProgress(
+                        downloadId = downloadId!!,
+                        onFinished = { uri ->
+                            UpdateInstaller.startPackageInstaller(ctx, uri)
+                            // optional: Download-ID zurücksetzen, damit Progress verschwindet
+                            UpdatePrefs.saveDownloadId(ctx, -1)
+                            downloadId = null
+                            onDismiss() // Dialog schließen
+                        },
+                        onFailed = {
+                            android.widget.Toast.makeText(
+                                ctx, "Download fehlgeschlagen.", android.widget.Toast.LENGTH_LONG
+                            ).show()
+                            UpdatePrefs.saveDownloadId(ctx, -1)
+                            downloadId = null
+                        }
+                    )
                 }
             }
-        )
-    }
+        },
+        confirmButton = {
+            Button(
+                enabled = downloadId == null,
+                onClick = {
+                    if (downloadId == null) {
+                        val id = UpdateInstaller.enqueueDownload(ctx, apkUrl)
+                        if (id != null) {
+                            downloadId = id
+                            android.widget.Toast.makeText(
+                                ctx, "Download gestartet …", android.widget.Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                }
+            ) {
+                Text(if (downloadId == null) "Download & installieren" else "Lädt …")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Später") }
+        }
+    )
 }
+
+
 
 @Composable
 fun UpdateNotice() {
@@ -406,31 +438,64 @@ fun UpdateNotice() {
 
 
     if (show && latest != null) {
-        AlertDialog(
-            onDismissRequest = {
+        UpdateDialog(
+            versionName = latest!!.versionName,
+            changelog = latest!!.changelog,
+            apkUrl = latest!!.apkUrl!!,
+            onDismiss = {
                 UpdatePrefs.markSeen(ctx, latest!!.versionCode)
                 show = false
-            },
-            title = { Text("Neue Version ${latest!!.versionName}") },
-            text = { Text(latest!!.changelog ?: "Es gibt ein Update.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    UpdatePrefs.markSeen(ctx, latest!!.versionCode)
-                    ctx.startActivity(
-                        Intent(Intent.ACTION_VIEW, Uri.parse(latest!!.apkUrl))
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    )
-                    show = false
-                }) { Text("Zur APK") }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    UpdatePrefs.markSeen(ctx, latest!!.versionCode)
-                    show = false
-                }) { Text("Später") }
             }
         )
     }
+
 }
+
+
+@Composable
+private fun InstallDownloadedUpdateBanner(
+    modifier: Modifier = Modifier
+) {
+    val ctx = LocalContext.current
+    var apkUri by remember { mutableStateOf<Uri?>(null) }
+
+    // Beim Eintritt prüfen, ob schon ein fertiger Download existiert
+    LaunchedEffect(Unit) {
+        apkUri = UpdateInstaller.findCompletedApkUri(ctx)
+    }
+
+    if (apkUri != null) {
+        Card(
+            modifier = modifier.fillMaxWidth(),
+        ) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Update heruntergeladen", style = MaterialTheme.typography.titleMedium)
+                Text("Tippe auf „Jetzt installieren“, um die neue Version zu installieren.")
+
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Button(onClick = {
+                        UpdateInstaller.startPackageInstaller(ctx, apkUri!!)
+                        // (optional) Download-ID zurücksetzen, damit der Banner nicht erneut erscheint:
+                        // UpdatePrefs.saveDownloadId(ctx, -1)
+                    }) {
+                        Text("Jetzt installieren")
+                    }
+                    TextButton(onClick = {
+                        // Banner schließen – bleibt in den Downloads verfügbar
+                        apkUri = null
+                    }) {
+                        Text("Später")
+                    }
+                }
+
+                // zusätzlicher Fallback, falls gewünscht:
+                TextButton(onClick = {
+                    ctx.startActivity(Intent(DownloadManager.ACTION_VIEW_DOWNLOADS))
+                }) { Text("Downloads öffnen") }
+            }
+        }
+    }
+}
+
 
 

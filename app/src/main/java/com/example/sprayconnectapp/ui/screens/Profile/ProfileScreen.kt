@@ -52,6 +52,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import com.example.sprayconnectapp.util.UpdateInstaller
 import kotlinx.coroutines.launch
 import kotlin.text.contains
 
@@ -687,6 +688,13 @@ fun ProfileUpdateCard() {
     val ctx = LocalContext.current
     var latest by remember { mutableStateOf(UpdatePrefs.readLatest(ctx)) } // Triple<Int, String, Pair<url, log>?>?
     var checking by remember { mutableStateOf(false) }
+    // ⬇️ NEU: Download-Status merken (überlebt Recompose durch Prefs-Seed)
+    var downloadId by remember {
+        mutableStateOf<Long?>(
+            UpdatePrefs.getDownloadId(ctx).takeIf { it > 0L }
+        )
+    }
+
     val scope = rememberCoroutineScope()
 
     Card(
@@ -710,29 +718,40 @@ fun ProfileUpdateCard() {
                 Text("Verfügbare Version: $name (code $code)")
                 if (!log.isNullOrBlank()) Text(log)
 
+                // ⬇️ Fortschrittsanzeige, wenn Download läuft
+                if (downloadId != null) {
+                    DownloadProgress(
+                        downloadId = downloadId!!,
+                        onFinished = { uri ->
+                            UpdateInstaller.startPackageInstaller(ctx, uri)
+                            // Download als „verbraucht“ markieren, damit die Progress-UI verschwindet
+                            UpdatePrefs.saveDownloadId(ctx, -1)
+                            downloadId = null
+                        },
+                        onFailed = {
+                            android.widget.Toast.makeText(ctx, "Download fehlgeschlagen.", android.widget.Toast.LENGTH_LONG).show()
+                            UpdatePrefs.saveDownloadId(ctx, -1)
+                            downloadId = null
+                        }
+                    )
+                }
+
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (newer) {
-                        Button(onClick = {
-                            val req = DownloadManager.Request(Uri.parse(url))
-                                .setTitle("SprayConnect Update")
-                                .setDescription("Neue Version wird heruntergeladen…")
-                                .setNotificationVisibility(
-                                    DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED
-                                )
-                                // legt die Datei im öffentlichen Download-Ordner ab:
-                                .setDestinationInExternalPublicDir(
-                                    Environment.DIRECTORY_DOWNLOADS,
-                                    "sprayconnect-latest.apk"
-                                )
-
-                            val dm = ctx.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-                            dm.enqueue(req)
-
-                            Toast.makeText(ctx, "Download gestartet (siehe Benachrichtigung)", Toast.LENGTH_SHORT).show()
-                        }) {
-                            Text("Zur APK")
+                        Button(
+                            enabled = downloadId == null, // während des Downloads deaktiviert
+                            onClick = {
+                                val id = UpdateInstaller.enqueueDownload(ctx, url)
+                                if (id != null) {
+                                    downloadId = id
+                                    android.widget.Toast
+                                        .makeText(ctx, "Download gestartet …", android.widget.Toast.LENGTH_SHORT)
+                                        .show()
+                                }
+                            }
+                        ) {
+                            Text(if (downloadId == null) "Download & installieren" else "Lädt …")
                         }
-
                     } else {
                         Text("Du bist auf dem neuesten Stand.")
                     }
@@ -771,6 +790,7 @@ fun ProfileUpdateCard() {
         }
     }
 }
+
 
 
 
