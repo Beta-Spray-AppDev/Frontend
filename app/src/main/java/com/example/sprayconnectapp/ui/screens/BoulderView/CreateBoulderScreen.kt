@@ -95,6 +95,7 @@ fun CreateBoulderScreen(
 ) {
 
     val MAX_NAME = 35
+    val MAX_NOTE = 500
 
     // lokaler State für das Bild
     var resolvedImageUri by remember { mutableStateOf(imageUri ?: "") }
@@ -117,6 +118,7 @@ fun CreateBoulderScreen(
     var showDialog by remember { mutableStateOf(false) }
     var boulderName by remember { mutableStateOf("") }
     var boulderDifficulty by remember { mutableStateOf("3") }
+    var setterNote by remember { mutableStateOf("") }
     var showTrash by remember { mutableStateOf(false) }
     var trashBounds by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
     var overTrash by remember { mutableStateOf(false) }
@@ -158,6 +160,7 @@ fun CreateBoulderScreen(
     LaunchedEffect(uiState.boulder) {
         boulderName = uiState.boulder?.name.orEmpty()
         boulderDifficulty = uiState.boulder?.difficulty.orEmpty().ifEmpty { "3" }
+        setterNote = uiState.boulder?.setterNote.orEmpty()
     }
 
     // Falls im Edit-Modus dann Boulder-Daten laden
@@ -523,13 +526,24 @@ fun CreateBoulderScreen(
                             return@TextButton
                         }
 
+                        if (!com.example.sprayconnectapp.ui.screens.isOnline(context)) {
+                            Toast.makeText(
+                                context,
+                                "Boulder können nur online gespeichert/bearbeitet werden.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@TextButton
+                        }
+
                         if (mode is BoulderScreenMode.Edit) {
                             viewModel.updateBoulder(
                                 context = context,
                                 name = boulderName,
                                 difficulty = boulderDifficulty,
                                 spraywallId = spraywallId,
-                                boulderIdOverride = mode.boulderId
+                                boulderIdOverride = mode.boulderId,
+                                setterNote = setterNote
+
                             )
                             Toast
                                 .makeText(context, "Boulder aktualisiert", Toast.LENGTH_SHORT)
@@ -539,7 +553,8 @@ fun CreateBoulderScreen(
                                 context = context,
                                 name = boulderName,
                                 difficulty = boulderDifficulty,
-                                spraywallId = spraywallId
+                                spraywallId = spraywallId,
+                                setterNote = setterNote
                             )
                             Toast
                                 .makeText(context, "Boulder erstellt", Toast.LENGTH_SHORT)
@@ -596,6 +611,21 @@ fun CreateBoulderScreen(
                             options = fbGrades,
                             value = boulderDifficulty.ifEmpty { fbGrades.first() },
                             onValueChange = { boulderDifficulty = it }
+                        )
+
+                        Spacer(Modifier.height(12.dp))
+
+                        OutlinedTextField(
+                            value = setterNote,
+                            onValueChange = { new ->
+                                if (new.length <= MAX_NOTE) setterNote = new
+                            },
+                            label = { Text("Setter-Notiz (optional)") },
+                            supportingText = {
+                                Text("${setterNote.length} / $MAX_NOTE")
+                            },
+                            minLines = 2,
+                            maxLines = 5
                         )
                     }
                 }

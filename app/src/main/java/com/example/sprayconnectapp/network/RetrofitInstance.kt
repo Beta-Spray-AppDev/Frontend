@@ -106,6 +106,10 @@ object RetrofitInstance {
     fun getFeedbackApi(context: Context): FeedbackApi =
         getRetrofit(context).create(FeedbackApi::class.java)
 
+    fun getCommentApi(context: Context): CommentApi {
+        return getRetrofit(context).create(CommentApi::class.java)
+    }
+
 
 
 
@@ -120,6 +124,8 @@ object RetrofitInstance {
             .client(client)
             .build()
     }
+
+
 
 
 
@@ -198,14 +204,6 @@ object RetrofitInstance {
                 }
             }
         }
-
-
-
-
-
-
-
-
 
     }
 

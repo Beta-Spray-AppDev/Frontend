@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.NavigateBefore
 import androidx.compose.material.icons.filled.NavigateNext
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.RateReview
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
@@ -220,12 +221,16 @@ fun ViewBoulderScreen(
                             Icon(Icons.Default.ArrowBack, contentDescription = "Zurück", modifier = Modifier.size(28.dp))
                         }
                     },
+
                     // Info Button
                     actions = {
+                        //Info-Button
                         IconButton(onClick = { showInfo = true }, modifier = Modifier.padding(end = 8.dp)) {
                             Icon(Icons.Default.Info, contentDescription = "Info", modifier = Modifier.size(28.dp))
                         }
+
                     }
+
                 )
             },
             // Bearbeiten Button nur für den Ersteller
@@ -372,14 +377,41 @@ fun ViewBoulderScreen(
     }
 
     // Info-Dialog
+    // Info-Dialog
     if (showInfo) {
         val created = formatDate(uiState.boulder?.createdAt)
         val updated = formatDate(uiState.boulder?.lastUpdated)
         val difficulty = uiState.boulder?.difficulty ?: "-"
+        val nameForRoute = boulder?.name.orEmpty()
+        val encodedName = Uri.encode(nameForRoute)
+        val targetId = boulder?.id // String?
 
         AlertDialog(
             onDismissRequest = { showInfo = false },
-            confirmButton = { TextButton(onClick = { showInfo = false }) { Text("OK", color = colorResource(R.color.button_normal)) } },
+
+
+            confirmButton = {
+                Row {
+                    // Mehr Infos
+                    TextButton(
+                        enabled = targetId != null,
+                        onClick = {
+                            showInfo = false
+                            if (targetId != null) {
+                                navController.navigate("boulderComments/$targetId?boulderName=$encodedName")
+                            }
+                        }
+                    ) { Text("Mehr Infos", color = colorResource(R.color.button_normal)) }
+
+                    // OK
+                    Spacer(Modifier.width(8.dp))
+                    TextButton(onClick = { showInfo = false }) {
+                        Text("OK", color = colorResource(R.color.button_normal))
+                    }
+                }
+            },
+
+
             title = { Text(uiState.boulder?.name ?: "Boulder") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -397,6 +429,7 @@ fun ViewBoulderScreen(
             }
         )
     }
+
 
     // Tick-Dialog
     if (showTickDialog) {
@@ -417,6 +450,7 @@ fun ViewBoulderScreen(
             dismissButton = { TextButton(onClick = { showTickDialog = false }) { Text("Abbrechen") } }
         )
     }
+
 }
 
 
