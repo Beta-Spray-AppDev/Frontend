@@ -10,6 +10,7 @@ import com.example.sprayconnectapp.data.dto.BoulderDTO
 import com.example.sprayconnectapp.data.dto.CreateBoulderRequest
 import com.example.sprayconnectapp.data.dto.Hold
 import com.example.sprayconnectapp.data.dto.HoldType
+import com.example.sprayconnectapp.data.dto.TickCreateRequest
 import com.example.sprayconnectapp.data.local.AppDatabase
 import com.example.sprayconnectapp.data.repository.BoulderRepository
 import com.example.sprayconnectapp.network.RetrofitInstance
@@ -202,10 +203,15 @@ class CreateBoulderViewModel : ViewModel() {
 
 
     /** Boulder als "getickt" am Server markieren (toaster Feedback) */
-    fun tickBoulder(context: Context, boulderId: String) {
+    fun tickBoulder(context: Context, boulderId: String,  stars: Int? = null, proposedGrade: String? = null) {
         viewModelScope.launch {
             try {
-                val res = RetrofitInstance.getBoulderApi(context).tickBoulder(boulderId)
+
+                val body = if (stars != null || !proposedGrade.isNullOrBlank())
+                    TickCreateRequest(stars, proposedGrade)
+                else TickCreateRequest()
+
+                val res = RetrofitInstance.getBoulderApi(context).tickBoulder(boulderId, body)
                 if (res.isSuccessful) {
                     android.widget.Toast.makeText(context, "Eingetragen!", android.widget.Toast.LENGTH_SHORT).show()
                 } else {

@@ -22,6 +22,8 @@ import androidx.compose.material.icons.filled.NavigateBefore
 import androidx.compose.material.icons.filled.NavigateNext
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
@@ -74,6 +76,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import com.example.sprayconnectapp.data.dto.BoulderDTO
 import com.example.sprayconnectapp.util.TokenStore
 import java.text.DateFormat
 import java.util.Date
@@ -115,18 +118,22 @@ fun ViewBoulderScreen(
 
     // eigene Boulder
     val myList = profileVm?.myBoulders?.collectAsState()?.value ?: emptyList()
-    // getickte Boulder
-    val tickedList = profileVm?.myTicks?.collectAsState()?.value ?: emptyList()
+
+    // Getickte Boulder (einfach als BoulderDTO-Liste vom ViewModel)
+    val tickedBoulders = profileVm?.myTicks?.collectAsState()?.value ?: emptyList()
+    val tickedIds: Set<String> = remember(tickedBoulders) { tickedBoulders.mapNotNull { it.id }.toSet() }
+
 
     var currentBoulderId by rememberSaveable { mutableStateOf(boulderId) }
 
 
     // Wählt Liste nach Quelle
     val fromProfile = source == "mine" || source == "ticked"
-    val list = if (fromProfile) {
-        if (source == "mine") myList else tickedList
-    } else {
-        gymList
+
+    val list: List<BoulderDTO> = when {
+        !fromProfile -> gymList
+        source == "mine" -> myList
+        else -> tickedBoulders // <- das ist unsere echte Liste der getickten Boulder
     }
 
     //Ui-State holen
@@ -400,17 +407,45 @@ fun ViewBoulderScreen(
 
     // Tick-Dialog
     if (showTickDialog) {
+
+        var stars by remember { mutableStateOf(3) } // Default 3/5
+        val fbGrades = listOf(
+            "3", "4", "5A", "5B", "5C",
+            "6A", "6A+", "6B", "6B+", "6C", "6C+",
+            "7A", "7A+", "7B", "7B+", "7C", "7C+",
+            "8A", "8A+", "8B", "8B+", "8C", "8C+", "9A"
+        )
+
+        var proposed by remember { mutableStateOf(boulder?.difficulty ?: fbGrades.first()) }
+
+
         val title = "Boulder eintragen?"
         val name = boulder?.name ?: "diesen Boulder"
         AlertDialog(
             onDismissRequest = { showTickDialog = false },
             title = { Text(title) },
-            text = { Text("Möchtest du „$name“ wirklich eintragen?") },
+            text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Wie hat er dir gefallen?")
+                StarRating(value = stars, onChange = { stars = it })
+
+                Divider()
+
+                DifficultyStepper(
+                    options = fbGrades,
+                    value = proposed.ifEmpty { fbGrades.first() },
+                    onValueChange = { proposed = it }
+                )
+
+            } },
             confirmButton = {
                 TextButton(
                     onClick = {
                         showTickDialog = false
-                        boulder?.id?.let { viewModel.tickBoulder(context, it) }
+                        boulder?.id?.let { viewModel.tickBoulder(
+                            context = context,
+                            boulderId = it,
+                            stars = stars,
+                            proposedGrade = proposed) }
                     }
                 ) { Text("Ja, eintragen",color = colorResource(R.color.button_normal)) }
             },
@@ -463,6 +498,35 @@ private fun InfoLine(label: String, value: String, icon: ImageVector? = null) {
 
 
 }
+
+
+
+
+@Composable
+fun StarRating(
+    value: Int,
+    onChange: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    max: Int = 5
+) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+        repeat(max) { i ->
+            val filled = i < value
+            IconButton(onClick = { onChange(i + 1) }) {
+                Icon(
+                    imageVector = if (filled) Icons.Default.Star else Icons.Default.StarBorder,
+                    contentDescription = null,
+                )
+            }
+        }
+    }
+}
+
+
+
+
+
+
 
 // Datumshilfe
 private fun formatDate(ms: Long?): String {
