@@ -14,7 +14,8 @@ fun BoulderEntity.toDtoBase() = BoulderDTO(
     holds = emptyList(),
     createdBy = createdBy,
     createdAt = createdAt,
-    lastUpdated = lastUpdated
+    lastUpdated = lastUpdated,
+    setterNote = setterNote
 )
 
 // Entity -> DTO
@@ -26,7 +27,8 @@ fun BoulderEntity.toDtoWith(holds: List<Hold>) = BoulderDTO(
     holds = holds,
     createdBy = createdBy,
     createdAt = createdAt,
-    lastUpdated = lastUpdated
+    lastUpdated = lastUpdated,
+    setterNote = setterNote
 )
 
 // DTO -> Entity
@@ -38,7 +40,8 @@ fun BoulderDTO.toEntity() = BoulderEntity(
     holdsJson = "[]",
     createdBy = createdBy,
     createdAt = createdAt,
-    lastUpdated = lastUpdated
+    lastUpdated = lastUpdated,
+    setterNote = setterNote
 )
 
 

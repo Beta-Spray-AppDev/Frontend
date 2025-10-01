@@ -4,5 +4,6 @@ data class CreateBoulderRequest(
     val name: String,
     val difficulty: String,
     val spraywallId: String,
-    val holds: List<Hold>
+    val holds: List<Hold>,
+    val setterNote: String? = null
 )

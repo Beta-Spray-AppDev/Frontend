@@ -20,6 +20,7 @@ import com.example.sprayconnectapp.ui.screens.home.AddGymScreen
 import com.example.sprayconnectapp.ui.screens.home.HomeScreen
 import com.example.sprayconnectapp.ui.screens.spraywall.SpraywallDetailScreen
 import com.example.sprayconnectapp.ui.screens.BoulderView.ViewBoulderScreen
+import com.example.sprayconnectapp.ui.screens.comments.BoulderCommentsScreen
 
 @Composable
 fun NavGraph (navController: NavHostController){
@@ -203,6 +204,24 @@ fun NavGraph (navController: NavHostController){
         composable("editProfile") {
             EditProfileScreen(navController)
         }
+
+        composable(
+            route = "boulderComments/{boulderId}?boulderName={boulderName}",
+            arguments = listOf(
+                navArgument("boulderId") { type = NavType.StringType },
+                navArgument("boulderName") { type = NavType.StringType; defaultValue = "" }
+            )
+        ) { backStackEntry ->
+            val boulderId = backStackEntry.arguments?.getString("boulderId")!!
+            val boulderName = backStackEntry.arguments?.getString("boulderName").orEmpty()
+
+            BoulderCommentsScreen(
+                navController = navController,
+                boulderId = boulderId,
+                boulderName = boulderName
+            )
+        }
+
 
 
 

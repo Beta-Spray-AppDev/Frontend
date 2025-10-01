@@ -3,7 +3,9 @@ package com.example.sprayconnectapp.ui.screens.BoulderView
 import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sprayconnectapp.data.dto.BoulderDTO
@@ -11,6 +13,7 @@ import com.example.sprayconnectapp.data.dto.CreateBoulderRequest
 import com.example.sprayconnectapp.data.dto.Hold
 import com.example.sprayconnectapp.data.dto.HoldType
 import com.example.sprayconnectapp.data.local.AppDatabase
+import com.example.sprayconnectapp.data.repository.CommentRepository
 import com.example.sprayconnectapp.data.repository.BoulderRepository
 import com.example.sprayconnectapp.network.RetrofitInstance
 import com.example.sprayconnectapp.ui.screens.isOnline
@@ -32,6 +35,12 @@ class CreateBoulderViewModel : ViewModel() {
     val errorMessage: State<String?> = _errorMessage
 
     private lateinit var repo: BoulderRepository
+
+    private val commentRepo = CommentRepository()
+
+    var commentSending by mutableStateOf(false); private set
+    var commentError by mutableStateOf<String?>(null); private set
+    var commentResult by mutableStateOf<Boolean?>(null); private set
 
 
     /** Lazy-Initialisierung des Repositories (DAOs aus Room holen) */
@@ -60,7 +69,7 @@ class CreateBoulderViewModel : ViewModel() {
     }
 
     /** Boulder neu anlegen (Server) und State/DB aktualisieren */
-    fun saveBoulder(context: Context, name: String, difficulty: String, spraywallId: String) {
+    fun saveBoulder(context: Context, name: String, difficulty: String, spraywallId: String, setterNote: String? ) {
 
         if (name.isBlank()) {
             _errorMessage.value = "Name darf nicht leer sein."
@@ -73,11 +82,14 @@ class CreateBoulderViewModel : ViewModel() {
             try {
                 ensureRepo(context)
 
+                val note = setterNote?.trim().takeIf { !it.isNullOrEmpty() }
+
                 val req = CreateBoulderRequest(
                     name = name,
                     difficulty = difficulty,
                     spraywallId = spraywallId,
-                    holds = _uiState.value.holds
+                    holds = _uiState.value.holds,
+                    setterNote = note
                 )
 
                 val api = RetrofitInstance.getBoulderApi(context)
@@ -224,7 +236,8 @@ class CreateBoulderViewModel : ViewModel() {
         name: String,
         difficulty: String,
         spraywallId: String,
-        boulderIdOverride: String? = null
+        boulderIdOverride: String? = null,
+        setterNote: String?
     ) {
         if (name.isBlank()) {
             _errorMessage.value = "Name darf nicht leer sein."
@@ -241,7 +254,10 @@ class CreateBoulderViewModel : ViewModel() {
         }
 
         val updatedDto = BoulderDTO(
-            id = effectiveId, name = name, difficulty = difficulty,
+            id = effectiveId,
+            name = name,
+            difficulty = difficulty,
+            setterNote = setterNote?.trim().takeIf { !it.isNullOrEmpty() },
             spraywallId = spraywallId, holds = _uiState.value.holds
         )
 

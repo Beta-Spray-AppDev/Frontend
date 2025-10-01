@@ -12,5 +12,6 @@ data class BoulderEntity(
     val holdsJson: String,
     val createdBy: String?,
     val createdAt: Long?,
-    val lastUpdated: Long?
+    val lastUpdated: Long?,
+    val setterNote: String? = null
 )
