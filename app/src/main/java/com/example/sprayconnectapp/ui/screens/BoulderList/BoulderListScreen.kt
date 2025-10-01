@@ -314,32 +314,20 @@ fun BoulderListScreen(
                                             val avgRounded: Int? = boulder.avgStars
                                                 ?.takeIf { it.isFinite() && it > 0.0 }
                                                 ?.roundToInt()
-                                                ?.coerceIn(1, 5)
-
-                                            val myStars: Int? = starsOf(boulder)
-
-
-                                            when {
+                                                ?.coerceIn(0, 5)
                                                 // 1) Community-Durchschnitt zeigen (mit Count)
-                                                avgRounded != null -> {
                                                     Spacer(Modifier.height(2.dp))
                                                     Row(verticalAlignment = Alignment.CenterVertically) {
-                                                        TinyStars(avgRounded)
-                                                        boulder.starsCount?.let { cnt ->
-                                                            Spacer(Modifier.width(6.dp))
-                                                            Text("($cnt)", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                                                        }
+                                                        TinyStars(avgRounded ?: 0)
+                                                        Text(
+                                                            "(${boulder.starsCount ?: 0})",
+                                                            style = MaterialTheme.typography.bodySmall,
+                                                            color = Color.Gray
+                                                        )
                                                     }
-                                                }
 
-                                                // 2) sonst (wenn kein avg vorhanden) meine Sterne
-                                                myStars != null -> {
-                                                    Spacer(Modifier.height(2.dp))
-                                                    TinyStars(myStars)
-                                                }
 
-                                                // 3) sonst gar nix
-                                            }
+
 
                                         }
 
@@ -402,11 +390,6 @@ fun BoulderListScreen(
                     text = {
                         Column {
 
-                            Spacer(Modifier.height(10.dp))
-                            Text("Sortieren:",
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center)
                             Spacer(Modifier.height(8.dp))
 
                             SortRow(
