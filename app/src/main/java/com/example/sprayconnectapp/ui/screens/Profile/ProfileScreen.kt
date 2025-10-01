@@ -798,7 +798,13 @@ fun ProfileUpdateCard() {
                                 android.widget.Toast.makeText(ctx, "Fehler beim Prüfen", android.widget.Toast.LENGTH_SHORT).show()
                             }
                         }
-                    }) { Text("Jetzt prüfen") }
+                    },
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = colorResource(id = R.color.button_normal)
+                        ),
+                        border = BorderStroke(1.dp, colorResource(id = R.color.button_normal))
+
+                    ) { Text("Jetzt prüfen") }
                 }
             }
         }

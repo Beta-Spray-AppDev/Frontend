@@ -57,6 +57,7 @@ class BoulderRepository(
      */
 
     suspend fun syncFromBackend(spraywallId: String, remote: List<BoulderDTO>) {
+
         Log.d(TAG_REPO, "syncFromBackend spraywall=$spraywallId remote=${remote.size}")
 
         val remoteById = remote.filter { it.id != null }.associateBy { it.id!! }
@@ -74,17 +75,25 @@ class BoulderRepository(
         }
 
         //  upsert: erst die PARENTS speichern
+        // NEU
         val toUpsert = mutableListOf<BoulderEntity>()
         for ((id, dto) in remoteById) {
+            val local = localById[id]
             val rLU = dto.lastUpdated ?: Long.MIN_VALUE
-            val lLU = localById[id]?.lastUpdated ?: Long.MIN_VALUE
-            if (localById[id] == null || rLU > lLU) {
-                toUpsert += dto.toEntity()       // <- Mapper-Funktion
+            val lLU = local?.lastUpdated ?: Long.MIN_VALUE
+
+            val ratingsChanged =
+                (local?.avgStars != dto.avgStars) ||
+                        (local?.starsCount != dto.starsCount)
+
+            if (local == null || rLU > lLU || ratingsChanged) {
+                toUpsert += dto.toEntity()
             }
         }
         if (toUpsert.isNotEmpty()) {
-            boulderDao.insertAll(toUpsert)
+            boulderDao.insertAll(toUpsert) // OnConflictStrategy.REPLACE macht das Upsert
         }
+
 
 
         var totalHolds = 0

@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material.icons.outlined.Star
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
@@ -425,7 +426,6 @@ fun ViewBoulderScreen(
             onDismissRequest = { showTickDialog = false },
             title = { Text(title) },
             text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Wie hat er dir gefallen?")
                 StarRating(value = stars, onChange = { stars = it })
 
                 Divider()
@@ -449,7 +449,7 @@ fun ViewBoulderScreen(
                     }
                 ) { Text("Ja, eintragen",color = colorResource(R.color.button_normal)) }
             },
-            dismissButton = { TextButton(onClick = { showTickDialog = false }) { Text("Abbrechen") } }
+            dismissButton = { TextButton(onClick = { showTickDialog = false }) { Text("Abbrechen", color = Color(0xFFD32F2F)) } }
         )
     }
 }
@@ -514,8 +514,8 @@ fun StarRating(
             val filled = i < value
             IconButton(onClick = { onChange(i + 1) }) {
                 Icon(
-                    imageVector = if (filled) Icons.Default.Star else Icons.Default.StarBorder,
-                    contentDescription = null,
+                    imageVector = if (i + 1 <= value) Icons.Filled.Star else Icons.Outlined.Star,                    contentDescription = null,
+                    tint = if (i + 1 <= value) Color(0xFFFFC107) else Color(0xFFBDBDBD)
                 )
             }
         }
