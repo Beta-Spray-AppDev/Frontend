@@ -49,7 +49,7 @@ class BoulderListViewModel : ViewModel() {
             Log.d(TAG_VM, "GET /boulders/ticks/mine code=${resp.code()} ok=${resp.isSuccessful}")
 
             if (resp.isSuccessful) {
-                val ids = resp.body().orEmpty().mapNotNull { it.id }.toSet()
+                val ids = resp.body().orEmpty().mapNotNull { it. boulder.id }.toSet()
                 tickedBoulderIds.value = ids
             } else {
                 Log.w(TAG_VM, "Ticks laden fehlgeschlagen: ${resp.code()}")

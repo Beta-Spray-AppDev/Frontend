@@ -191,7 +191,10 @@ fun ProfileScreen(navController: NavController) {
 
                             Spacer(Modifier.height(17.dp))
 
-                            BoulderListCard(title = "Getickte Boulder", boulders = ticked, navController = navController, source = "ticked", tickedIds = tickedIds,  onDeleteSelected =
+                            val tickGrades by viewModel.myTickGrades.collectAsState()
+
+
+                            BoulderListCard(title = "Getickte Boulder", boulders = ticked, navController = navController, source = "ticked", tickedIds = tickedIds, userGrades = tickGrades,  onDeleteSelected =
                                 { ids ->
                                 viewModel.deleteTicks(context, ids) {
                                     Toast.makeText(context, "Tick(s) entfernt", Toast.LENGTH_SHORT).show()
@@ -290,6 +293,7 @@ fun ProfileCard(profile: UserProfile, navController: NavController) {
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun BoulderCard(
+    displayedDifficulty: String? = null,
     boulder: BoulderDTO,
     isTicked: Boolean = false,
     selectionMode: Boolean,
@@ -338,7 +342,7 @@ fun BoulderCard(
                     Text(boulder.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis, softWrap = false)
                     Spacer(Modifier.height(3.dp))
                     Text(
-                        "Schwierigkeit: ${boulder.difficulty}",
+                        "Schwierigkeit: ${displayedDifficulty ?: boulder.difficulty}",
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -370,7 +374,7 @@ fun BoulderCard(
 
 @Composable
 fun BoulderListCard( title: String, boulders: List<BoulderDTO>, source: String,  navController: NavController, maxHeight: Dp = 240.dp, tickedIds: Set<String> = emptySet(), onDeleteSelected: suspend (List<String>) -> Unit,
-                     onAfterDelete: () -> Unit, isDeleting: Boolean = false) {
+                     onAfterDelete: () -> Unit, isDeleting: Boolean = false, userGrades: Map<String, String> = emptyMap()) {
 
 
     val context = LocalContext.current
@@ -379,6 +383,7 @@ fun BoulderListCard( title: String, boulders: List<BoulderDTO>, source: String, 
     var selectionMode by remember { mutableStateOf(false) }
     var selected by remember { mutableStateOf<Set<String>>(emptySet()) }
     var showConfirm by remember { mutableStateOf(false) }
+
 
 
     fun toggleSelection(id: String) {
@@ -451,13 +456,22 @@ fun BoulderListCard( title: String, boulders: List<BoulderDTO>, source: String, 
                         val isTicked = boulder.id?.let { tickedIds.contains(it) } == true
                         val isSelected = selected.contains(id)
 
+                        val displayDifficulty = if (source == "ticked") {
+                            userGrades[id] ?: boulder.difficulty
+                        } else {
+                            boulder.difficulty
+                        }
+
+
+
 
                         BoulderCard(
                             boulder = boulder, isTicked = isTicked,
                             selectionMode = selectionMode,
                             isSelected = isSelected,
                             onToggleSelect = { toggleSelection(id) },
-                            onLongPressStartSelection = { startSelectionWith(id) }
+                            onLongPressStartSelection = { startSelectionWith(id) },
+                            displayedDifficulty = displayDifficulty
 
                         ) {
                             if (!selectionMode) {

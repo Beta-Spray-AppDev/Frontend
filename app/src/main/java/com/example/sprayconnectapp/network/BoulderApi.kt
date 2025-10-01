@@ -4,6 +4,7 @@ import com.example.sprayconnectapp.data.dto.BoulderDTO
 import com.example.sprayconnectapp.data.dto.CreateBoulderRequest
 import com.example.sprayconnectapp.data.dto.TickCreateRequest
 import com.example.sprayconnectapp.data.dto.TickDto
+import com.example.sprayconnectapp.data.dto.TickWithBoulderDto
 import retrofit2.http.POST
 import retrofit2.http.Body
 import retrofit2.Response
@@ -40,7 +41,7 @@ interface BoulderApi {
 
     /** Alle eigenen Ticks (als BoulderDTO-Liste) */
     @GET("boulders/ticks/mine")
-    suspend fun getMyTickedBoulders(): Response<List<BoulderDTO>>
+    suspend fun getMyTickedBoulders(): Response<List<TickWithBoulderDto>>
 
 
     /** Untick: entfernt den Tick des eingeloggten Users für diesen Boulder */

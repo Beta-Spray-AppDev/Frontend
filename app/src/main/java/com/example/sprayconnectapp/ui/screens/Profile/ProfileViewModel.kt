@@ -39,9 +39,6 @@ class ProfileViewModel : ViewModel() {
     val myBoulders: StateFlow<List<BoulderDTO>> = _myBoulders
 
 
-    private val _myTicks = MutableStateFlow<List<BoulderDTO>>(emptyList())
-    val myTicks: StateFlow<List<BoulderDTO>> = _myTicks
-
 
     private val _isDeletingTicks = MutableStateFlow(false)
     val isDeletingTicks: StateFlow<Boolean> = _isDeletingTicks
@@ -184,12 +181,28 @@ class ProfileViewModel : ViewModel() {
     }
 
 
+    private val _myTicks = MutableStateFlow<List<BoulderDTO>>(emptyList())
+    val myTicks: StateFlow<List<BoulderDTO>> = _myTicks
+
+    private val _myTickGrades = MutableStateFlow<Map<String, String>>(emptyMap())
+    val myTickGrades: StateFlow<Map<String, String>> = _myTickGrades
+
+
     /** Lädt getickte Boulder. */
     fun loadMyTicks(context: Context) {
         viewModelScope.launch {
             try {
                 val res = RetrofitInstance.getBoulderApi(context).getMyTickedBoulders()
-                if (res.isSuccessful) _myTicks.value = res.body() ?: emptyList()
+                if (res.isSuccessful) {
+                    val list = res.body().orEmpty()
+                    _myTicks.value = list.map { it.boulder }
+                    _myTickGrades.value = list.mapNotNull { twb ->
+                        val bId = twb.boulder.id ?: return@mapNotNull null
+                        val grade = twb.tick.proposedGrade ?: return@mapNotNull null
+                        bId to grade
+                    }.toMap()
+                }
+
             } catch (_: Exception) { }
         }
     }

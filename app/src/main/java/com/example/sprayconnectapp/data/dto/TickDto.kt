@@ -13,3 +13,8 @@ data class TickCreateRequest(
     val stars: Int? = null,           // 1..5
     val proposedGrade: String? = null // z.B. "6B+"
 )
+
+data class TickWithBoulderDto(
+    val tick: TickDto,
+    val boulder: BoulderDTO
+)
