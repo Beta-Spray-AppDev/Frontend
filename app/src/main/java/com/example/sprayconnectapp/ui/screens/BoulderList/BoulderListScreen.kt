@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
@@ -34,12 +35,14 @@ import com.example.sprayconnectapp.ui.screens.BottomNavigationBar
 import androidx.compose.ui.text.style.TextOverflow
 import com.example.sprayconnectapp.ui.screens.isOnline
 import kotlin.math.roundToInt
-
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material.icons.outlined.ImageSearch
 import androidx.compose.ui.text.style.TextAlign
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun BoulderListScreen(
     navController: NavController,
@@ -50,8 +53,7 @@ fun BoulderListScreen(
     val context = LocalContext.current
     val viewModel: BoulderListViewModel = viewModel()
 
-
-    // UI-State aus dem ViewModel
+    // --- UI-State
     val boulders by viewModel.boulders
     val isLoading by viewModel.isLoading
     val errorMessage by viewModel.errorMessage
@@ -68,37 +70,27 @@ fun BoulderListScreen(
         "7A", "7A+", "7B", "7B+", "7C", "7C+",
         "8A", "8A+", "8B", "8B+", "8C", "8C+", "9A"
     )
-
     val gradeToIndex = remember { fbGrades.withIndex().associate { it.value to it.index } }
 
     val rangeSaver = Saver<ClosedFloatingPointRange<Float>, List<Float>>(
-        save = { listOf(it.start, it.endInclusive)  },
+        save = { listOf(it.start, it.endInclusive) },
         restore = { (s, e) -> s..e }
     )
-
     var sliderRange by rememberSaveable(stateSaver = rangeSaver) {
         mutableStateOf(0f..fbGrades.lastIndex.toFloat())
     }
-
     val startIndex = sliderRange.start.roundToInt().coerceIn(0, fbGrades.lastIndex)
-    val endIndex   = sliderRange.endInclusive.roundToInt().coerceIn(0, fbGrades.lastIndex)
-
+    val endIndex = sliderRange.endInclusive.roundToInt().coerceIn(0, fbGrades.lastIndex)
 
     var excludeTicked by rememberSaveable { mutableStateOf(false) }
-
     var sortAscending by rememberSaveable { mutableStateOf(true) }
 
-
-
-    val filteredBoulders = remember(boulders, startIndex, endIndex,tickedBoulderIds, excludeTicked, sortAscending) {
+    val filteredBoulders = remember(boulders, startIndex, endIndex, tickedBoulderIds, excludeTicked, sortAscending) {
         val filtered = boulders.filter { b ->
             val idx = gradeToIndex[b.difficulty]
             val inRange = idx != null && idx in startIndex..endIndex
             if (!inRange) return@filter false
-
             if (!excludeTicked) return@filter true
-
-            // Wenn "Getickte ausblenden" aktiv ist:
             val id = b.id
             id == null || !tickedBoulderIds.contains(id)
         }
@@ -106,32 +98,27 @@ fun BoulderListScreen(
         if (sortAscending) sorted else sorted.asReversed()
     }
 
+    // --- Pull-to-Refresh (Material pullrefresh)
 
+    val refreshState = rememberPullRefreshState(
+        refreshing = isLoading,
+        onRefresh = {
+            viewModel.load(context, spraywallId)
+            viewModel.loadTickedBoulders(context)
+        }
+    )
 
+    val barColor = colorResource(id = R.color.hold_type_bar)
 
-
-
-
-
-    val BarColor = colorResource(id = R.color.hold_type_bar)
-
-    // Daten laden
+    // Initial laden
     LaunchedEffect(spraywallId) {
         viewModel.initRepository(context)
         viewModel.load(context, spraywallId)
         viewModel.loadTickedBoulders(context)
-
-
-        
     }
 
-    // Hintergrund mit Farbverlauf
     val screenBg = Brush.verticalGradient(
-        colors = listOf(
-            Color(0xFF53535B),
-            Color(0xFF767981),
-            Color(0xFFA8ABB2)
-        )
+        colors = listOf(Color(0xFF53535B), Color(0xFF767981), Color(0xFFA8ABB2))
     )
 
     Box(
@@ -152,118 +139,116 @@ fun BoulderListScreen(
                         )
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = BarColor,
-                        scrolledContainerColor = BarColor,
+                        containerColor = barColor,
+                        scrolledContainerColor = barColor,
                         titleContentColor = Color.White,
                         navigationIconContentColor = Color.White,
                         actionIconContentColor = Color.White
                     ),
-                    // Zurück zur vorherigen Route
                     navigationIcon = {
                         IconButton(onClick = { navController.popBackStack() }) {
                             Icon(Icons.Default.ArrowBack, contentDescription = "Zurück")
                         }
                     },
-
-                    //Plus-Button zum Erstellen eines neuen Boulders
                     actions = {
                         val online = isOnline(context)
-
                         IconButton(
-                            onClick = {
-                                showFilter = true
-                            },
+                            onClick = { showFilter = true },
                             enabled = online,
                             modifier = Modifier.alpha(if (online) 1f else 0.4f)
                         ) {
-                            Icon(Icons.Default.FilterList, contentDescription = "Boulder hinzufügen")
+                            Icon(Icons.Default.FilterList, contentDescription = "Filter")
                         }
                     }
                 )
             },
-            // App-weite Bottom-Navigation
             bottomBar = { BottomNavigationBar(navController) }
         ) { innerPadding ->
-            Column(
+
+            // Hier passiert Pull-to-Refresh
+            Box(
                 modifier = Modifier
                     .padding(innerPadding)
-                    .padding(16.dp)
+                    .fillMaxSize()
+                    .pullRefresh(refreshState)
             ) {
-                if (isLoading) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(120.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = colorResource(R.color.button_normal))
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                ) {
+                    if (isLoading) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(120.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = colorResource(R.color.button_normal))
+                        }
+                        Spacer(Modifier.height(12.dp))
                     }
-                    Spacer(Modifier.height(12.dp))
-                }
 
-                val listToShow = filteredBoulders
+                    val listToShow = filteredBoulders
 
+                    errorMessage?.let {
+                        Text("Hinweis: $it", color = MaterialTheme.colorScheme.error)
+                        Spacer(Modifier.height(8.dp))
+                    }
 
-                // Hinweis-/Fehlermeldungen aus dem ViewModel
-                errorMessage?.let {
-                    Text("Hinweis: $it", color = MaterialTheme.colorScheme.error)
-                    Spacer(Modifier.height(8.dp))
-                }
-
-                if (listToShow.isEmpty() && !isLoading) {
-                    EmptyBouldersState()
-                } else {
-                    LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items(listToShow) { boulder ->
-
-                            val isTicked = boulder.id != null && tickedBoulderIds.contains(boulder.id)
-
-                            val accent = colorResource(R.color.button_normal)
-                            val tickedBg = Color(0xFFE6FAF7)
-
-                            Card(
-                                // Detailansicht öffnen
-                                onClick = {
-                                    val id = boulder.id ?: return@Card
-                                    val encoded = Uri.encode(imageUri ?: "")
-                                    navController.navigate("view_boulder/$id/$spraywallId?src=list&imageUri=$encoded")
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp),
-                                shape = RoundedCornerShape(12.dp),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = Color.White//if (isTicked) Color(0xFFDFF5F5) else MaterialTheme.colorScheme.surface
-                                )
-                            ) {
-                                Column(Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
-                                    Row(
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Column(Modifier.weight(1f).padding(end = tickSpacing + tickArea)) {
-                                            Text(boulder.name, style = MaterialTheme.typography.titleMedium,  maxLines = 1, overflow = TextOverflow.Ellipsis,     softWrap = false
-                                            )
-                                            Spacer(Modifier.height(3.dp))
-                                            Text("Schwierigkeit: ${boulder.difficulty}", style = MaterialTheme.typography.bodyMedium)
-                                        }
-
-                                        // Fester Bereich für den Haken – immer gleich breit
-                                        Spacer(Modifier.width(tickSpacing))
-
-
-                                        // Fester Iconbereich – immer vorhanden
-                                        Box(Modifier.size(tickArea), contentAlignment = Alignment.Center) {
-                                            if (isTicked) {
-                                                Icon(
-                                                    imageVector = Icons.Default.CheckCircle,
-                                                    contentDescription = "Getickt",
-                                                    tint = colorResource(R.color.button_normal),
-                                                    modifier = Modifier.size(tickArea)
+                    if (listToShow.isEmpty() && !isLoading) {
+                        EmptyBouldersState()
+                    } else {
+                        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            items(listToShow) { boulder ->
+                                val isTicked = boulder.id != null && tickedBoulderIds.contains(boulder.id)
+                                Card(
+                                    onClick = {
+                                        val id = boulder.id ?: return@Card
+                                        val encoded = Uri.encode(imageUri ?: "")
+                                        navController.navigate("view_boulder/$id/$spraywallId?src=list&imageUri=$encoded")
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                                ) {
+                                    Column(Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
+                                        Row(
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Column(
+                                                Modifier
+                                                    .weight(1f)
+                                                    .padding(end = tickSpacing + tickArea)
+                                            ) {
+                                                Text(
+                                                    boulder.name,
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                    softWrap = false
                                                 )
+                                                Spacer(Modifier.height(3.dp))
+                                                Text(
+                                                    "Schwierigkeit: ${boulder.difficulty}",
+                                                    style = MaterialTheme.typography.bodyMedium
+                                                )
+                                            }
+                                            Spacer(Modifier.width(tickSpacing))
+                                            Box(Modifier.size(tickArea), contentAlignment = Alignment.Center) {
+                                                if (isTicked) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.CheckCircle,
+                                                        contentDescription = "Getickt",
+                                                        tint = colorResource(R.color.button_normal)
+                                                    )
+                                                }
                                             }
                                         }
                                     }
@@ -272,6 +257,15 @@ fun BoulderListScreen(
                         }
                     }
                 }
+
+                // Sichtbarer Indicator (Foundation/Material-PullRefresh)
+                PullRefreshIndicator(
+                    refreshing = isLoading,
+                    state = refreshState,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 8.dp)
+                )
             }
 
 
