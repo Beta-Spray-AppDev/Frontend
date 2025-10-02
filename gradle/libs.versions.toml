@@ -30,6 +30,6 @@ room-compiler = { group = "androidx.room", name = "room-compiler", version = "2.
 androidx-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
 
 [plugins]
-androidApplication = { id = "com.android.application", version = "8.6.0" }
+androidApplication = { id = "com.android.application", version = "8.12.3" }
 jetbrainsKotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

@@ -4,10 +4,21 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 /**
- * Migration von Version 1 auf 2:
- * Erstellt Tabellen für Spraywalls und Boulder.
+ * Hilfsfunktion: prüft, ob eine Spalte existiert.
  */
+private fun hasColumn(db: SupportSQLiteDatabase, table: String, column: String): Boolean {
+    db.query("PRAGMA table_info(`$table`)").use { c ->
+        val nameIdx = c.getColumnIndex("name")
+        while (c.moveToNext()) {
+            if (c.getString(nameIdx) == column) return true
+        }
+    }
+    return false
+}
 
+/**
+ * 1 -> 2
+ */
 val MIGRATION_1_2 = object : Migration(1, 2) {
     override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("""
@@ -39,12 +50,9 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
     }
 }
 
-
 /**
- * Migration von Version 2 auf 3:
- * Erstellt die Holds-Tabelle.
+ * 2 -> 3
  */
-
 val MIGRATION_2_3 = object : Migration(2, 3) {
     override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("""
@@ -57,24 +65,33 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
                 PRIMARY KEY(`id`)
             )
         """.trimIndent())
-
     }
 }
 
+/**
+ * 3 -> 4  (idempotent)
+ */
 val MIGRATION_3_4 = object : Migration(3, 4) {
     override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL("""
-            ALTER TABLE `spraywalls`
-            ADD COLUMN `isArchived` INTEGER NOT NULL DEFAULT 0
-        """.trimIndent())
+        if (!hasColumn(db, "spraywalls", "isArchived")) {
+            db.execSQL("""
+                ALTER TABLE `spraywalls`
+                ADD COLUMN `isArchived` INTEGER NOT NULL DEFAULT 0
+            """.trimIndent())
+        }
     }
 }
 
+/**
+ * 4 -> 5  (auch idempotent machen – schadet nie)
+ */
 val MIGRATION_4_5 = object : Migration(4, 5) {
     override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL("""
-            ALTER TABLE `boulders`
-            ADD COLUMN `setterNote` TEXT
-        """.trimIndent())
+        if (!hasColumn(db, "boulders", "setterNote")) {
+            db.execSQL("""
+                ALTER TABLE `boulders`
+                ADD COLUMN `setterNote` TEXT
+            """.trimIndent())
+        }
     }
 }
