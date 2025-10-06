@@ -141,7 +141,7 @@ fun AddGymScreen(
             // Speichern
             Button(
                 onClick = {
-                    val store = TokenStore(context)
+                    val store = TokenStore.create(context)
                     val userId = store.getUserId()
 
                     if (userId != null){

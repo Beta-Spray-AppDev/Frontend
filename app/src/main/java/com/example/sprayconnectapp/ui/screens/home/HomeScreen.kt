@@ -82,7 +82,7 @@ fun HomeScreen(navController: NavController) {
         profileViewModel.loadProfile(context)
     }
 
-    val store = TokenStore(context)
+    val store = TokenStore.create(context)
     val displayName = profile?.username ?: store.getUsername().orEmpty()
 
 

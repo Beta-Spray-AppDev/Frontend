@@ -20,15 +20,17 @@ import com.example.sprayconnectapp.ui.screens.home.AddGymScreen
 import com.example.sprayconnectapp.ui.screens.home.HomeScreen
 import com.example.sprayconnectapp.ui.screens.spraywall.SpraywallDetailScreen
 import com.example.sprayconnectapp.ui.screens.BoulderView.ViewBoulderScreen
+import com.example.sprayconnectapp.ui.screens.SplashScreen
 import com.example.sprayconnectapp.ui.screens.comments.BoulderCommentsScreen
 
 @Composable
 fun NavGraph (navController: NavHostController){
     NavHost(
     navController = navController,
-    startDestination = "login"
+    startDestination = "splash"
     ){
         // Einstiegs-/Auth-/Basisrouten
+        composable("splash") { SplashScreen(navController) }
         composable("start"){ StartScreen(navController) }
         composable("login"){ LoginScreen(navController) }
         composable("register"){ RegisterScreen(navController) }

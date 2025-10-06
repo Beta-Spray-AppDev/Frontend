@@ -13,7 +13,7 @@ class SessionManager {
 
     /** Logout: Server best-effort + lokal aufräumen */
     fun logout(context: Context) {
-        val store = TokenStore(context)
+        val store = TokenStore.create(context)
         val rt = store.refreshToken()
 
         // serverseitig widerrufen (best effort, nicht blockierend für UI)
