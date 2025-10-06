@@ -18,20 +18,27 @@ import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.NavigateBefore
 import androidx.compose.material.icons.filled.NavigateNext
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -70,6 +77,8 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import androidx.core.content.edit
@@ -523,6 +532,94 @@ fun CreateBoulderScreen(
         if (showDialog) {
             AlertDialog(
                 onDismissRequest = { showDialog = false },
+                shape = RoundedCornerShape(24.dp),
+                containerColor = Color.White,
+                tonalElevation = 6.dp,
+
+
+                title = {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = if (mode is BoulderScreenMode.Edit) "Boulder bearbeiten" else "Boulder erstellen",
+                            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        // kleiner „Accent“-Strich in button_normal für visuelles Highlight
+                        Box(
+                            modifier = Modifier
+                                .width(70.dp)
+                                .height(4.dp)
+                                .background(colorResource(R.color.button_normal), RoundedCornerShape(2.dp))
+                        )
+                    }
+                },
+
+                text = {
+                    // Feld-Style wie in deinen Screens
+                    val tfColors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFF00796B),
+                        cursorColor = Color(0xFF00796B),
+                        focusedLabelColor = Color(0xFF00796B),
+                        unfocusedContainerColor = Color.White,
+                        focusedContainerColor = Color.White
+                    )
+
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+
+                        // Name
+                        OutlinedTextField(
+                            value = boulderName,
+                            onValueChange = { new ->
+                                if (new.length <= MAX_NAME) boulderName = new
+                            },
+                            label = { Text("Name") },
+                            isError = triedSave && !isNameValid,
+                            supportingText = {
+                                if (triedSave && !isNameValid) Text("Bitte einen Namen eingeben")
+                            },
+                            singleLine = true,
+                            leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null,
+                                tint = colorResource(R.color.button_normal)) },
+                            shape = RoundedCornerShape(50),
+                            colors = tfColors,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        // Schwierigkeits-Stepper
+                        val fbGrades = listOf(
+                            "3","4","5A","5B","5C",
+                            "6A","6A+","6B","6B+","6C","6C+",
+                            "7A","7A+","7B","7B+","7C","7C+",
+                            "8A","8A+","8B","8B+","8C","8C+","9A"
+                        )
+
+                        DifficultyStepper(
+                            options = fbGrades,
+                            value = boulderDifficulty.ifEmpty { fbGrades.first() },
+                            onValueChange = { boulderDifficulty = it }
+                        )
+
+                        // Setter-Notiz
+                        OutlinedTextField(
+                            value = setterNote,
+                            onValueChange = { new -> if (new.length <= MAX_NOTE) setterNote = new },
+                            label = { Text("Setter-Notiz (optional)") },
+                            supportingText = { Text("${setterNote.length} / $MAX_NOTE") },
+                            minLines = 2,
+                            maxLines = 5,
+                            leadingIcon = { Icon(Icons.Default.Info, contentDescription = null,
+                                tint = colorResource(R.color.button_normal)) },
+                            shape = RoundedCornerShape(20),
+                            colors = tfColors,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+
                 confirmButton = {
                     TextButton( onClick = {
                         Log.d(
@@ -574,71 +671,21 @@ fun CreateBoulderScreen(
                         showDialog = false
                         onSave()
                         onBack() // Einen Screen zurück
-                        if (fromPicker) { // Nur wenn wir vom Picker kommen noch einen Schritt zurück
-                            onBack()
-                        }
-                    }) {
+                        if (fromPicker) onBack() // Nur wenn wir vom Picker kommen noch einen Schritt zurück
+
+                    },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = colorResource(R.color.button_normal)
+                        )
+
+                    ) {
                         Text(if (mode is BoulderScreenMode.Edit) "Speichern" else "Anlegen")
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showDialog = false }) { Text("Abbrechen") }
-                },
-                title = {
-                    Text(
-                        if (mode is BoulderScreenMode.Edit) "Boulder speichern"
-                        else "Boulder anlegen"
-                    )
-                },
-                text = {
-                    Column {
-                        OutlinedTextField(
-                            value = boulderName,
-                            onValueChange = { new ->
-                                if (new.length <= MAX_NAME) {
-                                    boulderName = new
-                                }
-                            },
-                            label = { Text("Name") },
-                            isError = triedSave && !isNameValid,
-                            supportingText = {
-                                if (triedSave && !isNameValid) Text("Bitte einen Namen eingeben")
-                            },
-                            singleLine = true
-                        )
-                        Spacer(Modifier.height(8.dp))
-
-                        // Schwierigkeitsauswahl als Stepper
-                        val fbGrades = listOf(
-                            "3", "4", "5A", "5B", "5C",
-                            "6A", "6A+", "6B", "6B+", "6C", "6C+",
-                            "7A", "7A+", "7B", "7B+", "7C", "7C+",
-                            "8A", "8A+", "8B", "8B+", "8C", "8C+", "9A"
-                        )
-
-
-                        DifficultyStepper(
-                            options = fbGrades,
-                            value = boulderDifficulty.ifEmpty { fbGrades.first() },
-                            onValueChange = { boulderDifficulty = it }
-                        )
-
-                        Spacer(Modifier.height(12.dp))
-
-                        OutlinedTextField(
-                            value = setterNote,
-                            onValueChange = { new ->
-                                if (new.length <= MAX_NOTE) setterNote = new
-                            },
-                            label = { Text("Setter-Notiz (optional)") },
-                            supportingText = {
-                                Text("${setterNote.length} / $MAX_NOTE")
-                            },
-                            minLines = 2,
-                            maxLines = 5
-                        )
-                    }
-                }
+                    TextButton(onClick = { showDialog = false }) {
+                        Text("Abbrechen", color = Color(0xFFD32F2F))
+                    }                },
             )
         }
 
@@ -783,7 +830,6 @@ fun DifficultyStepper(
     val currentIndex = options.indexOf(value).let { if (it >= 0) it else 0 }
 
     Column(modifier) {
-        Text(label)
         Spacer(Modifier.height(4.dp))
         Row(
             modifier = Modifier
