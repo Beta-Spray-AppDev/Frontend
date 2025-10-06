@@ -106,9 +106,8 @@ class LoginViewModel : ViewModel() {
 
                     if (tokens != null) {
                         // NEU: sicher speichern (access + refresh)
-                        TokenStore(context).save(tokens.accessToken, tokens.refreshToken)
+                        TokenStore.create(context).save(tokens.accessToken, tokens.refreshToken)
                         message = "Login erfolgreich"
-
                     } else {
                         message = "Login fehlgeschlagen: Ungültige Antwort"
                     }

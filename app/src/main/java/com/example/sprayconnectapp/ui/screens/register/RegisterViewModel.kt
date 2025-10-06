@@ -150,7 +150,7 @@ class RegisterViewModel : ViewModel() {
                         val tokens: TokenResponse? = loginResponse.body()
 
                         if (tokens != null) {
-                            TokenStore(context).save(tokens.accessToken, tokens.refreshToken)
+                            TokenStore.create(context).save(tokens.accessToken, tokens.refreshToken)
                             // Optional: RetrofitInstance.resetRetrofit()
                             message = "Registrierung & Login erfolgreich"
                             onLoginSuccess()

@@ -267,7 +267,7 @@ fun ViewBoulderScreen(
             },
             // Bearbeiten Button nur für den Ersteller
             floatingActionButton = {
-                val store = TokenStore(context)
+                val store = TokenStore.create(context)
                 val currentUserId = store.getUserId()
 
                 // Achtung: createdBy kann UUID sein -> toString() für sicheren Vergleich
