@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.NavigateBefore
 import androidx.compose.material.icons.filled.NavigateNext
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -72,6 +73,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import androidx.core.content.edit
+import coil.compose.AsyncImagePainter
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.rememberAsyncImagePainter
 
 
 // Modus: Erstellen und Bearbeiten
@@ -351,34 +355,40 @@ fun CreateBoulderScreen(
                     // Bildrahmen mit korrekter Aspect Ratio
                     Box(
                         modifier = Modifier
+                            .fillMaxWidth()
                             .aspectRatio(aspect)
-                            .fillMaxHeight()
                             .onGloballyPositioned { laidOut = it.size }
                     ) {
 
-                        // Bild laden
-                        if (resolvedImageUri.isNotBlank()) {
-                            AsyncImage(
-                                model = ImageRequest.Builder(context)
-                                    .data(resolvedImageUri)
-                                    .size(Size.ORIGINAL)
-                                    .build(),
-                                contentDescription = "Spraywall",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Fit,
-                                onSuccess = { s ->
-                                    if (resolvedImageUri.startsWith("http", ignoreCase = true)) {
-                                        val d = s.result.drawable
-                                        imgW = d.intrinsicWidth.coerceAtLeast(1)
-                                        imgH = d.intrinsicHeight.coerceAtLeast(1)
-                                    }
-                                }
-                            )
-                        } else {
-                            Text(
-                                "Kein Bild verfügbar",
-                                modifier = Modifier.align(Alignment.Center)
-                            )
+                        val req = ImageRequest.Builder(context)
+                            .data(resolvedImageUri)
+                            .size(Size.ORIGINAL)
+                            .build()
+
+
+                        SubcomposeAsyncImage(
+                            model = req,
+                            contentDescription = "Spraywall",
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier.fillMaxSize(),
+                            loading = {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.align(Alignment.Center)
+                                )
+                            },
+                            error = {
+                                Text("Bild konnte nicht geladen werden", Modifier.align(Alignment.Center))
+                            }
+                        )
+
+                        val painter = rememberAsyncImagePainter(model = req)
+                        val state = painter.state
+                        if (state is AsyncImagePainter.State.Success) {
+                            val d = state.result.drawable
+                            LaunchedEffect(d) {
+                                imgW = d.intrinsicWidth.coerceAtLeast(1)
+                                imgH = d.intrinsicHeight.coerceAtLeast(1)
+                            }
                         }
 
                         // Holds zeichnen + Draggen
