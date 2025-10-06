@@ -139,10 +139,34 @@ fun ViewBoulderScreen(
     val markerRadiusPx = with(density) { (markerSizeDp / 2).toPx() }
 
     // Prev & Next
-    val currentId = boulder?.id
-    val idx = list.indexOfFirst { it.id == currentId }
-    val prevId = if (idx > 0) list[idx - 1].id else null
-    val nextId = if (idx >= 0 && idx + 1 < list.size) list[idx + 1].id else null
+    // IDs der aktiven Liste (egal ob aus Profil oder Gym-Liste)
+    val idList = remember(list) { list.map { it.id } }
+
+// aktuelle ID = Boulder aus dem UI oder Fallback auf currentBoulderId
+    val visibleId = boulder?.id ?: currentBoulderId
+
+// Index des aktuell sichtbaren Boulders
+    val currentIndex = idList.indexOf(visibleId)
+
+// Vorheriger & nächster Boulder
+    val prevId = if (currentIndex > 0) idList[currentIndex - 1] else null
+    val nextId = if (currentIndex >= 0 && currentIndex + 1 < idList.size) idList[currentIndex + 1] else null
+
+// Buttons im BottomBar:
+    IconButton(
+        enabled = prevId != null,
+        onClick = { prevId?.let { currentBoulderId = it } }
+    ) {
+        Icon(Icons.Default.NavigateBefore, contentDescription = "Vorheriger Boulder")
+    }
+
+    IconButton(
+        enabled = nextId != null,
+        onClick = { nextId?.let { currentBoulderId = it } }
+    ) {
+        Icon(Icons.Default.NavigateNext, contentDescription = "Nächster Boulder")
+    }
+
 
     // Dialogzustände
     var showTickDialog by remember { mutableStateOf(false) }
@@ -247,9 +271,13 @@ fun ViewBoulderScreen(
                         containerColor = Color(0xFF7FBABF),
                         onClick = {
                             val encodedUri = Uri.encode(imageUri)
-                            navController.navigate(
-                                "create_boulder/$spraywallId?imageUri=$encodedUri&mode=edit&boulderId=$boulderId"
-                            )
+                            val editTargetId = boulder?.id ?: currentBoulderId
+                            if (editTargetId.isNotBlank()) {
+                                navController.navigate(
+                                    "create_boulder/$spraywallId?imageUri=$encodedUri&mode=edit&boulderId=$editTargetId"
+                                )
+                            }
+
                         }
                     ) {
                         Icon(Icons.Default.Edit, contentDescription = "Bearbeiten")

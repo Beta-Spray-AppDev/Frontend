@@ -158,7 +158,7 @@ fun LoginScreen(
 
                 // Logo
                 Image(
-                    painter = painterResource(R.drawable.logosprayconnect),
+                    painter = painterResource(R.drawable.firstprototype),
                     contentDescription = null,
                     modifier = Modifier
                         .size(90.dp)

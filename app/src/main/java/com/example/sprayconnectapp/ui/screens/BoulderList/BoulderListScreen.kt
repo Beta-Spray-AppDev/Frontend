@@ -8,14 +8,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.CheckCircleOutline
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.Saver
@@ -27,20 +27,18 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.sprayconnectapp.R
 import com.example.sprayconnectapp.ui.screens.BottomNavigationBar
-import androidx.compose.ui.text.style.TextOverflow
 import com.example.sprayconnectapp.ui.screens.isOnline
 import kotlin.math.roundToInt
-import androidx.compose.material.pullrefresh.PullRefreshIndicator
-import androidx.compose.material.pullrefresh.pullRefresh
-import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material.icons.outlined.ImageSearch
-import androidx.compose.ui.text.style.TextAlign
-
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
@@ -53,15 +51,19 @@ fun BoulderListScreen(
     val context = LocalContext.current
     val viewModel: BoulderListViewModel = viewModel()
 
-    // --- UI-State
+    // --- UI-State aus VM
     val boulders by viewModel.boulders
-    val isLoading by viewModel.isLoading
+    val vmLoading by viewModel.isLoading
     val errorMessage by viewModel.errorMessage
     val tickedBoulderIds by viewModel.tickedBoulderIds
 
-    val tickArea = 35.dp      // Icongröße
-    val tickSpacing = 3.dp   // Abstand vor dem Icon
+    // --- eigenes UI-Refreshing-Flag für mind. Sichtdauer des Spinners
+    var isRefreshing by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val MIN_SPINNER_MS = 800L
 
+    val tickArea = 35.dp
+    val tickSpacing = 3.dp
     var showFilter by remember { mutableStateOf(false) }
 
     val fbGrades = listOf(
@@ -98,13 +100,28 @@ fun BoulderListScreen(
         if (sortAscending) sorted else sorted.asReversed()
     }
 
-    // --- Pull-to-Refresh (Material pullrefresh)
-
+    // --- Pull-to-Refresh
     val refreshState = rememberPullRefreshState(
-        refreshing = isLoading,
+        refreshing = isRefreshing, // einziges Flag -> sorgt für drehende Animation
         onRefresh = {
-            viewModel.load(context, spraywallId)
-            viewModel.loadTickedBoulders(context)
+            scope.launch {
+                isRefreshing = true
+                val t0 = System.currentTimeMillis()
+
+                viewModel.load(context, spraywallId)
+                viewModel.loadTickedBoulders(context)
+
+                // warte bis VM fertig geladen hat
+                while (viewModel.isLoading.value) {
+                    delay(32)
+                }
+
+                // Mindestdauer sicherstellen
+                val elapsed = System.currentTimeMillis() - t0
+                if (elapsed < MIN_SPINNER_MS) delay(MIN_SPINNER_MS - elapsed)
+
+                isRefreshing = false
+            }
         }
     )
 
@@ -165,7 +182,7 @@ fun BoulderListScreen(
             bottomBar = { BottomNavigationBar(navController) }
         ) { innerPadding ->
 
-            // Hier passiert Pull-to-Refresh
+            // Pull-to-Refresh muss am Container hängen
             Box(
                 modifier = Modifier
                     .padding(innerPadding)
@@ -177,7 +194,7 @@ fun BoulderListScreen(
                         .fillMaxSize()
                         .padding(16.dp)
                 ) {
-                    if (isLoading) {
+                    if (vmLoading) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -196,7 +213,7 @@ fun BoulderListScreen(
                         Spacer(Modifier.height(8.dp))
                     }
 
-                    if (listToShow.isEmpty() && !isLoading) {
+                    if (listToShow.isEmpty() && !vmLoading) {
                         EmptyBouldersState()
                     } else {
                         LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -258,9 +275,9 @@ fun BoulderListScreen(
                     }
                 }
 
-                // Sichtbarer Indicator (Foundation/Material-PullRefresh)
+                // Sichtbarer Pull-to-Refresh-Indikator (dreht, solange isRefreshing=true)
                 PullRefreshIndicator(
-                    refreshing = isLoading,
+                    refreshing = isRefreshing,
                     state = refreshState,
                     modifier = Modifier
                         .align(Alignment.TopCenter)
@@ -268,13 +285,7 @@ fun BoulderListScreen(
                 )
             }
 
-
-
-            val resetColor = Color(0xFFB3261E)
-
-
-
-            // Dialog mit RangeSlider
+            // --- Filter-Dialog
             if (showFilter) {
                 AlertDialog(
                     onDismissRequest = { showFilter = false },
@@ -284,31 +295,40 @@ fun BoulderListScreen(
                                 "Fertig",
                                 color = colorResource(R.color.button_normal),
                                 style = MaterialTheme.typography.titleMedium
-                            )                        }
+                            )
+                        }
                     },
                     dismissButton = {
                         TextButton(onClick = {
-                            sliderRange = 0f..fbGrades.lastIndex.toFloat() // Reset
+                            sliderRange = 0f..fbGrades.lastIndex.toFloat()
                             excludeTicked = false
-                            showFilter = false
                             sortAscending = true
+                            showFilter = false
                         }) {
                             Text(
                                 "Zurücksetzen",
                                 color = Color.Black,
                                 style = MaterialTheme.typography.titleMedium
-                            )                        }
+                            )
+                        }
                     },
-                    title = { Text("Filter-Optionen:", modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center) },
+                    title = {
+                        Text(
+                            "Filter-Optionen:",
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center
+                        )
+                    },
                     text = {
                         Column {
-
                             Spacer(Modifier.height(10.dp))
-                            Text("Sortierung nach Schwierigkeit:", style = MaterialTheme.typography.titleMedium,  modifier = Modifier.fillMaxWidth(),
-                                textAlign = TextAlign.Center)
+                            Text(
+                                "Sortierung nach Schwierigkeit:",
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Center
+                            )
                             Spacer(Modifier.height(8.dp))
-
 
                             Row(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -318,23 +338,18 @@ fun BoulderListScreen(
                                     selected = sortAscending,
                                     onClick = { sortAscending = true },
                                     label = { Text("Aufsteigend") },
-                                    leadingIcon = {
-                                        Icon(Icons.Filled.ArrowUpward, contentDescription = null)
-                                    },
+                                    leadingIcon = { Icon(Icons.Filled.ArrowUpward, contentDescription = null) },
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = colorResource(R.color.button_normal),
                                         selectedLabelColor = Color.White,
                                         selectedLeadingIconColor = Color.White
                                     )
                                 )
-
                                 FilterChip(
                                     selected = !sortAscending,
                                     onClick = { sortAscending = false },
                                     label = { Text("Absteigend") },
-                                    leadingIcon = {
-                                        Icon(Icons.Filled.ArrowDownward, contentDescription = null)
-                                    },
+                                    leadingIcon = { Icon(Icons.Filled.ArrowDownward, contentDescription = null) },
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = colorResource(R.color.button_normal),
                                         selectedLabelColor = Color.White,
@@ -344,8 +359,6 @@ fun BoulderListScreen(
                             }
 
                             Spacer(Modifier.height(19.dp))
-
-
 
                             Text(
                                 " ${fbGrades[startIndex]} - ${fbGrades[endIndex]}",
@@ -373,7 +386,6 @@ fun BoulderListScreen(
                                 )
                             )
 
-
                             Spacer(Modifier.height(16.dp))
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -396,24 +408,13 @@ fun BoulderListScreen(
                                     )
                                 )
                             }
-
-
-
-
                         }
                     }
                 )
             }
-
-
-
-
-
         }
     }
 }
-
-
 
 @Composable
 private fun EmptyBouldersState() {
@@ -447,4 +448,3 @@ private fun EmptyBouldersState() {
         }
     }
 }
-
