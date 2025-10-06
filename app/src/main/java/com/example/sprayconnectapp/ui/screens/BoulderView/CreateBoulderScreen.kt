@@ -533,7 +533,7 @@ fun CreateBoulderScreen(
             AlertDialog(
                 onDismissRequest = { showDialog = false },
                 shape = RoundedCornerShape(24.dp),
-                containerColor = Color.White,
+                containerColor = Color.White.copy(alpha = 0.7f),
                 tonalElevation = 6.dp,
 
 
@@ -561,11 +561,11 @@ fun CreateBoulderScreen(
                 text = {
                     // Feld-Style wie in deinen Screens
                     val tfColors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF00796B),
-                        cursorColor = Color(0xFF00796B),
-                        focusedLabelColor = Color(0xFF00796B),
-                        unfocusedContainerColor = Color.White,
-                        focusedContainerColor = Color.White
+                        focusedContainerColor = Color.White.copy(alpha = 0.8f),
+                        unfocusedContainerColor = Color.White.copy(alpha = 0.7f),
+                        focusedBorderColor = colorResource(R.color.button_normal),
+                        cursorColor = colorResource(R.color.button_normal),
+                        focusedLabelColor = colorResource(R.color.button_normal)
                     )
 
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -585,7 +585,15 @@ fun CreateBoulderScreen(
                             leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null,
                                 tint = colorResource(R.color.button_normal)) },
                             shape = RoundedCornerShape(50),
-                            colors = tfColors,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                // internen Container ausschalten
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                // (rest wie gehabt)
+                                focusedBorderColor = Color(0xFF00796B),
+                                cursorColor = Color(0xFF00796B),
+                                focusedLabelColor = Color(0xFF00796B)
+                            ),
                             modifier = Modifier.fillMaxWidth()
                         )
 
@@ -614,7 +622,15 @@ fun CreateBoulderScreen(
                             leadingIcon = { Icon(Icons.Default.Info, contentDescription = null,
                                 tint = colorResource(R.color.button_normal)) },
                             shape = RoundedCornerShape(20),
-                            colors = tfColors,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                // internen Container ausschalten
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                // (rest wie gehabt)
+                                focusedBorderColor = Color(0xFF00796B),
+                                cursorColor = Color(0xFF00796B),
+                                focusedLabelColor = Color(0xFF00796B)
+                            ),
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
