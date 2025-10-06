@@ -171,7 +171,9 @@ fun SpraywallDetailScreen(
                     },
                     text = {
                         Text(text = if (viewModel.showArchived.value) "Aktiv" else "Archiv")
-                    }
+                    },
+                    containerColor = colorResource(id = R.color.button_normal),     
+                    contentColor = Color.White
                 )
             },
             bottomBar = { BottomNavigationBar(navController) }

@@ -316,7 +316,7 @@ fun BoulderListScreen(
                                                 ?.roundToInt()
                                                 ?.coerceIn(0, 5)
                                                 // 1) Community-Durchschnitt zeigen (mit Count)
-                                                    Spacer(Modifier.height(2.dp))
+                                            Spacer(Modifier.height(2.dp))
                                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                                         TinyStars(avgRounded ?: 0)
                                                         Text(
