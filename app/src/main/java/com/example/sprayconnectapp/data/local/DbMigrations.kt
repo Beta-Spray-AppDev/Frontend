@@ -87,22 +87,30 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
  */
 val MIGRATION_4_5 = object : Migration(4, 5) {
     override fun migrate(db: SupportSQLiteDatabase) {
+
+
         if (!hasColumn(db, "boulders", "setterNote")) {
             db.execSQL("""
                 ALTER TABLE `boulders`
                 ADD COLUMN `setterNote` TEXT
             """.trimIndent())
         }
+
+        // avgStars
+        if (!hasColumn(db, "boulders", "avgStars")) {
+            db.execSQL("""ALTER TABLE `boulders` ADD COLUMN `avgStars` REAL""")
+        }
+
+        // starsCount
+        if (!hasColumn(db, "boulders", "starsCount")) {
+            db.execSQL("""ALTER TABLE `boulders` ADD COLUMN `starsCount` INTEGER""")
+        }
+
+
+
+
     }
 }
 
-
-val MIGRATION_4_5 = object : Migration(4, 5) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        // neue, NULL-able Spalten hinzufügen (keine Defaults nötig)
-        db.execSQL("""ALTER TABLE `boulders` ADD COLUMN `avgStars` REAL""")
-        db.execSQL("""ALTER TABLE `boulders` ADD COLUMN `starsCount` INTEGER""")
-    }
-}
 
 

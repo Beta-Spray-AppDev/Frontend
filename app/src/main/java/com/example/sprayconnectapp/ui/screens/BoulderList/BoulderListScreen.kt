@@ -45,6 +45,7 @@ import androidx.compose.material.icons.outlined.Star
 import com.example.sprayconnectapp.data.dto.BoulderDTO
 
 
+
 enum class SortKey { GRADE, STARS }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
@@ -118,11 +119,16 @@ fun BoulderListScreen(
     fun starsOf(b: BoulderDTO): Int? = b.id?.let { tickStars[it] }
 
 
-
-
-
-
-    val filteredBoulders = remember(boulders, startIndex, endIndex,tickedBoulderIds, excludeTicked, primaryKey, gradeAsc, starsAsc) {
+    val filteredBoulders = remember(
+        boulders,
+        startIndex,
+        endIndex,
+        tickedBoulderIds,
+        excludeTicked,
+        primaryKey,
+        gradeAsc,
+        starsAsc
+    ) {
         val filtered = boulders.filter { b ->
             val idx = gradeIdxOf(b)
             val inRange = idx != null && idx in startIndex..endIndex
@@ -160,7 +166,7 @@ fun BoulderListScreen(
 
         // Sekundärschlüssel ist das jeweils andere Kriterium
         val secondaryKey = if (primaryKey == SortKey.GRADE) SortKey.STARS else SortKey.GRADE
-        val primaryCmp   = if (primaryKey == SortKey.GRADE) cmpGrade else cmpStars
+        val primaryCmp = if (primaryKey == SortKey.GRADE) cmpGrade else cmpStars
         val secondaryCmp = if (secondaryKey == SortKey.GRADE) cmpGrade else cmpStars
 
         filtered.sortedWith(primaryCmp.then(secondaryCmp).then(compareBy { it.name }))
@@ -275,95 +281,111 @@ fun BoulderListScreen(
 
                     val listToShow = filteredBoulders
 
-                
-                // Hinweis-/Fehlermeldungen aus dem ViewModel
-                errorMessage?.let {
-                    Text("Hinweis: $it", color = MaterialTheme.colorScheme.error)
-                    Spacer(Modifier.height(8.dp))
-                }
 
-                if (listToShow.isEmpty() && !vmLoading) {
-                    EmptyBouldersState()
-                } else {
-                    LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items(listToShow) { boulder ->
+                    // Hinweis-/Fehlermeldungen aus dem ViewModel
+                    errorMessage?.let {
+                        Text("Hinweis: $it", color = MaterialTheme.colorScheme.error)
+                        Spacer(Modifier.height(8.dp))
+                    }
 
-                            val isTicked = boulder.id != null && tickedBoulderIds.contains(boulder.id)
+                    if (listToShow.isEmpty() && !vmLoading) {
+                        EmptyBouldersState()
+                    } else {
+                        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            items(listToShow) { boulder ->
 
-                            val accent = colorResource(R.color.button_normal)
-                            val tickedBg = Color(0xFFE6FAF7)
+                                val isTicked =
+                                    boulder.id != null && tickedBoulderIds.contains(boulder.id)
 
-                            Card(
-                                // Detailansicht öffnen
-                                onClick = {
-                                    val id = boulder.id ?: return@Card
-                                    val encoded = Uri.encode(imageUri ?: "")
-                                    navController.navigate("view_boulder/$id/$spraywallId?src=list&imageUri=$encoded")
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp),
-                                shape = RoundedCornerShape(12.dp),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = Color.White//if (isTicked) Color(0xFFDFF5F5) else MaterialTheme.colorScheme.surface
-                                )
-                            ) {
-                                Column(Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
-                                    Row(
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Column(Modifier.weight(1f).padding(end = tickSpacing + tickArea)) {
-                                            Text(boulder.name, style = MaterialTheme.typography.titleMedium,  maxLines = 1, overflow = TextOverflow.Ellipsis,     softWrap = false
-                                            )
-                                            Spacer(Modifier.height(3.dp))
-                                            Text("Schwierigkeit: ${boulder.difficulty}", style = MaterialTheme.typography.bodyMedium)
+                                val accent = colorResource(R.color.button_normal)
+                                val tickedBg = Color(0xFFE6FAF7)
 
-                                            val avgRounded: Int? = boulder.avgStars
-                                                ?.takeIf { it.isFinite() && it > 0.0 }
-                                                ?.roundToInt()
-                                                ?.coerceIn(0, 5)
-                                                // 1) Community-Durchschnitt zeigen (mit Count)
-                                            Spacer(Modifier.height(2.dp))
-                                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                                        TinyStars(avgRounded ?: 0)
-                                                        Text(
-                                                            "(${boulder.starsCount ?: 0})",
-                                                            style = MaterialTheme.typography.bodySmall,
-                                                            color = Color.Gray
-                                                        )
-                                                    }
-
-
-
-
-                                        }
-
-                                        // Fester Bereich für den Haken – immer gleich breit
-                                        Spacer(Modifier.width(tickSpacing))
-
-
-                                        // Fester Iconbereich – immer vorhanden
-                                        Box(Modifier.size(tickArea), contentAlignment = Alignment.Center) {
-                                            if (isTicked) {
-                                                Icon(
-                                                    imageVector = Icons.Default.CheckCircle,
-                                                    contentDescription = "Getickt",
-                                                    tint = colorResource(R.color.button_normal),
-                                                    modifier = Modifier.size(tickArea)
+                                Card(
+                                    // Detailansicht öffnen
+                                    onClick = {
+                                        val id = boulder.id ?: return@Card
+                                        val encoded = Uri.encode(imageUri ?: "")
+                                        navController.navigate("view_boulder/$id/$spraywallId?src=list&imageUri=$encoded")
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = Color.White//if (isTicked) Color(0xFFDFF5F5) else MaterialTheme.colorScheme.surface
+                                    )
+                                ) {
+                                    Column(Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
+                                        Row(
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Column(
+                                                Modifier.weight(1f)
+                                                    .padding(end = tickSpacing + tickArea)
+                                            ) {
+                                                Text(
+                                                    boulder.name,
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                    softWrap = false
                                                 )
-                                              
+                                                Spacer(Modifier.height(3.dp))
+                                                Text(
+                                                    "Schwierigkeit: ${boulder.difficulty}",
+                                                    style = MaterialTheme.typography.bodyMedium
+                                                )
+
+                                                val avgRounded: Int? = boulder.avgStars
+                                                    ?.takeIf { it.isFinite() && it > 0.0 }
+                                                    ?.roundToInt()
+                                                    ?.coerceIn(0, 5)
+                                                // 1) Community-Durchschnitt zeigen (mit Count)
+                                                Spacer(Modifier.height(2.dp))
+                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                    TinyStars(avgRounded ?: 0)
+                                                    Text(
+                                                        "(${boulder.starsCount ?: 0})",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = Color.Gray
+                                                    )
+                                                }
+
+
                                             }
-                                    
+
+                                            // Fester Bereich für den Haken – immer gleich breit
+                                            Spacer(Modifier.width(tickSpacing))
+
+
+                                            // Fester Iconbereich – immer vorhanden
+                                            Box(
+                                                Modifier.size(tickArea),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                if (isTicked) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.CheckCircle,
+                                                        contentDescription = "Getickt",
+                                                        tint = colorResource(R.color.button_normal),
+                                                        modifier = Modifier.size(tickArea)
+                                                    )
+
+                                                }
+
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
                     }
+
+
                 }
 
                 // Sichtbarer Pull-to-Refresh-Indikator (dreht, solange isRefreshing=true)
@@ -374,128 +396,141 @@ fun BoulderListScreen(
                         .align(Alignment.TopCenter)
                         .padding(top = 8.dp)
                 )
-            }
 
-            // --- Filter-Dialog
-            if (showFilter) {
-                AlertDialog(
-                    onDismissRequest = { showFilter = false },
-                    confirmButton = {
-                        TextButton(onClick = { showFilter = false }) {
+                // --- Filter-Dialog
+                if (showFilter) {
+                    AlertDialog(
+                        onDismissRequest = { showFilter = false },
+                        confirmButton = {
+                            TextButton(onClick = { showFilter = false }) {
+                                Text(
+                                    "Fertig",
+                                    color = colorResource(R.color.button_normal),
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = {
+                                sliderRange = 0f..fbGrades.lastIndex.toFloat()
+                                excludeTicked = false
+                                showFilter = false
+                                primaryKey = SortKey.GRADE
+                                gradeAsc = true
+                                starsAsc = true
+
+
+                            }) {
+                                Text(
+                                    "Zurücksetzen",
+                                    color = Color.Black,
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                            }
+                        },
+                        title = {
                             Text(
-                                "Fertig",
-                                color = colorResource(R.color.button_normal),
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = {
-                            sliderRange = 0f..fbGrades.lastIndex.toFloat()
-                            excludeTicked = false
-                            showFilter = false
-                            primaryKey = SortKey.GRADE
-                            gradeAsc = true
-                            starsAsc = true
-
-
-
-                        }) {
-                            Text(
-                                "Zurücksetzen",
-                                color = Color.Black,
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                        }
-                    },
-                    title = {
-                        Text(
-                            "Filter-Optionen:",
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center
-                        )
-                    },
-                    text = {
-                        Column {
-
-                            Spacer(Modifier.height(8.dp))
-
-                            SortRow(
-                                title = "Schwierigkeit",
-                                isPrimary = primaryKey == SortKey.GRADE,
-                                ascSelected = gradeAsc,
-                                onSetPrimary = { primaryKey = SortKey.GRADE },
-                                onAsc = { gradeAsc = true },
-                                onDesc = { gradeAsc = false }
-                            )
-
-                            SortRow(
-                                title = "Sterne",
-                                isPrimary = primaryKey == SortKey.STARS,
-                                ascSelected = starsAsc,
-                                onSetPrimary = { primaryKey = SortKey.STARS },
-                                onAsc = { starsAsc = true },
-                                onDesc = { starsAsc = false }
-                            )
-
-
-                            Spacer(Modifier.height(19.dp))
-
-                            Text(
-                                " ${fbGrades[startIndex]} - ${fbGrades[endIndex]}",
-                                style = MaterialTheme.typography.titleMedium,
+                                "Filter-Optionen:",
                                 modifier = Modifier.fillMaxWidth(),
                                 textAlign = TextAlign.Center
                             )
-                            Spacer(Modifier.height(2.dp))
-                            RangeSlider(
-                                value = sliderRange,
-                                onValueChange = { r ->
-                                    val s = r.start.roundToInt().coerceIn(0, fbGrades.lastIndex)
-                                    val e = r.endInclusive.roundToInt().coerceIn(0, fbGrades.lastIndex)
-                                    val (sIdx, eIdx) = if (s <= e) s to e else e to s
-                                    sliderRange = sIdx.toFloat()..eIdx.toFloat()
-                                },
-                                valueRange = 0f..fbGrades.lastIndex.toFloat(),
-                                steps = fbGrades.size - 2,
-                                colors = SliderDefaults.colors(
-                                    thumbColor = colorResource(R.color.button_normal),
-                                    activeTrackColor = colorResource(R.color.button_normal),
-                                    inactiveTrackColor = colorResource(R.color.button_normal).copy(alpha = 0.3f),
-                                    activeTickColor = Color.White,
-                                    inactiveTickColor = Color.Gray
-                                )
-                            )
+                        },
+                        text = {
+                            Column {
 
-                            Spacer(Modifier.height(16.dp))
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(
-                                    "Exclude my repeats:",
-                                    modifier = Modifier.weight(1f),
-                                    style = MaterialTheme.typography.titleMedium
+                                Spacer(Modifier.height(8.dp))
+
+                                SortRow(
+                                    title = "Schwierigkeit",
+                                    isPrimary = primaryKey == SortKey.GRADE,
+                                    ascSelected = gradeAsc,
+                                    onSetPrimary = { primaryKey = SortKey.GRADE },
+                                    onAsc = { gradeAsc = true },
+                                    onDesc = { gradeAsc = false }
                                 )
-                                Switch(
-                                    checked = excludeTicked,
-                                    onCheckedChange = { excludeTicked = it },
-                                    colors = SwitchDefaults.colors(
-                                        checkedTrackColor = colorResource(R.color.button_normal),
-                                        uncheckedTrackColor = colorResource(R.color.button_normal).copy(alpha = 0.35f),
-                                        uncheckedThumbColor = Color.White,
-                                        checkedBorderColor = Color.Transparent,
-                                        uncheckedBorderColor = Color.Transparent
+
+                                SortRow(
+                                    title = "Sterne",
+                                    isPrimary = primaryKey == SortKey.STARS,
+                                    ascSelected = starsAsc,
+                                    onSetPrimary = { primaryKey = SortKey.STARS },
+                                    onAsc = { starsAsc = true },
+                                    onDesc = { starsAsc = false }
+                                )
+
+
+                                Spacer(Modifier.height(19.dp))
+
+                                Text(
+                                    " ${fbGrades[startIndex]} - ${fbGrades[endIndex]}",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    textAlign = TextAlign.Center
+                                )
+                                Spacer(Modifier.height(2.dp))
+                                RangeSlider(
+                                    value = sliderRange,
+                                    onValueChange = { r ->
+                                        val s = r.start.roundToInt().coerceIn(0, fbGrades.lastIndex)
+                                        val e = r.endInclusive.roundToInt()
+                                            .coerceIn(0, fbGrades.lastIndex)
+                                        val (sIdx, eIdx) = if (s <= e) s to e else e to s
+                                        sliderRange = sIdx.toFloat()..eIdx.toFloat()
+                                    },
+                                    valueRange = 0f..fbGrades.lastIndex.toFloat(),
+                                    steps = fbGrades.size - 2,
+                                    colors = SliderDefaults.colors(
+                                        thumbColor = colorResource(R.color.button_normal),
+                                        activeTrackColor = colorResource(R.color.button_normal),
+                                        inactiveTrackColor = colorResource(R.color.button_normal).copy(
+                                            alpha = 0.3f
+                                        ),
+                                        activeTickColor = Color.White,
+                                        inactiveTickColor = Color.Gray
                                     )
                                 )
+
+                                Spacer(Modifier.height(16.dp))
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        "Exclude my repeats:",
+                                        modifier = Modifier.weight(1f),
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                    Switch(
+                                        checked = excludeTicked,
+                                        onCheckedChange = { excludeTicked = it },
+                                        colors = SwitchDefaults.colors(
+                                            checkedTrackColor = colorResource(R.color.button_normal),
+                                            uncheckedTrackColor = colorResource(R.color.button_normal).copy(
+                                                alpha = 0.35f
+                                            ),
+                                            uncheckedThumbColor = Color.White,
+                                            checkedBorderColor = Color.Transparent,
+                                            uncheckedBorderColor = Color.Transparent
+                                        )
+                                    )
+                                }
                             }
                         }
-                    }
-                )
+                    )
+                }
             }
         }
     }
+
+
+
+
+
+
+
 }
+
+
 
 @Composable
 private fun EmptyBouldersState() {
@@ -546,13 +581,8 @@ private fun TinyStars(ratingRounded: Int, modifier: Modifier = Modifier, max: In
 }
 
 
-
-
-
-
-
 @Composable
-private fun SortRow(
+ fun SortRow(
     title: String,
     isPrimary: Boolean,
     ascSelected: Boolean,
@@ -601,5 +631,4 @@ private fun SortRow(
         }
     }
 }
-
 
