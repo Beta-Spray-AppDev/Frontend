@@ -7,6 +7,7 @@ lifecycle = "2.8.6"
 navigation = "2.8.3"
 ksp = "1.9.25-1.0.20"
 runtime = "1.9.2"
+foundation = "1.9.2"
 
 [libraries]
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
@@ -28,6 +29,7 @@ room-runtime = { group = "androidx.room", name = "room-runtime", version = "2.6.
 room-ktx = { group = "androidx.room", name = "room-ktx", version = "2.6.1" }
 room-compiler = { group = "androidx.room", name = "room-compiler", version = "2.6.1" }
 androidx-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
+foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version = "8.12.3" }
