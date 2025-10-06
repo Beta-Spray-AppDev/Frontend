@@ -83,7 +83,7 @@ fun BoulderCommentsScreen(
             floatingActionButton = {
                 FloatingActionButton(
                     onClick = { showDialog = true },
-                    containerColor = Color(0xFF7FBABF)
+                    containerColor = colorResource(R.color.button_normal)
                 ) { Icon(Icons.Default.RateReview, contentDescription = "Kommentieren") }
             }
         ) { inner ->
