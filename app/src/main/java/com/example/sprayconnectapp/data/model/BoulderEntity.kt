@@ -14,4 +14,6 @@ data class BoulderEntity(
     val createdAt: Long?,
     val lastUpdated: Long?,
     val setterNote: String? = null
+    val avgStars: Double?,
+    val starsCount: Int?
 )

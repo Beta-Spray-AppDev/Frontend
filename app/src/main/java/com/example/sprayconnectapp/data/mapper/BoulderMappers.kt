@@ -16,6 +16,8 @@ fun BoulderEntity.toDtoBase() = BoulderDTO(
     createdAt = createdAt,
     lastUpdated = lastUpdated,
     setterNote = setterNote
+    avgStars = avgStars,
+    starsCount = starsCount
 )
 
 // Entity -> DTO
@@ -29,6 +31,8 @@ fun BoulderEntity.toDtoWith(holds: List<Hold>) = BoulderDTO(
     createdAt = createdAt,
     lastUpdated = lastUpdated,
     setterNote = setterNote
+    avgStars = avgStars,
+    starsCount = starsCount
 )
 
 // DTO -> Entity
@@ -42,6 +46,8 @@ fun BoulderDTO.toEntity() = BoulderEntity(
     createdAt = createdAt,
     lastUpdated = lastUpdated,
     setterNote = setterNote
+    avgStars = avgStars,
+    starsCount = starsCount
 )
 
 

@@ -2,7 +2,9 @@ package com.example.sprayconnectapp.network
 
 import com.example.sprayconnectapp.data.dto.BoulderDTO
 import com.example.sprayconnectapp.data.dto.CreateBoulderRequest
+import com.example.sprayconnectapp.data.dto.TickCreateRequest
 import com.example.sprayconnectapp.data.dto.TickDto
+import com.example.sprayconnectapp.data.dto.TickWithBoulderDto
 import retrofit2.http.POST
 import retrofit2.http.Body
 import retrofit2.Response
@@ -32,10 +34,6 @@ interface BoulderApi {
     suspend fun updateBoulder(@Path("boulderId") boulderId: String, @Body request: BoulderDTO): Response<BoulderDTO>
 
 
-    /** Markiert Boulder als getickt (Begehung) und liefert Tick-Info zurück */
-    @POST("boulders/{boulderId}/ticks")
-    suspend fun tickBoulder(@Path("boulderId") boulderId: String): Response<TickDto>
-
     /** Löscht Boulder serverseitig */
     @DELETE("boulders/{boulderId}")
     suspend fun deleteBoulder(@Path("boulderId") boulderId: String): Response<Unit>
@@ -43,12 +41,20 @@ interface BoulderApi {
 
     /** Alle eigenen Ticks (als BoulderDTO-Liste) */
     @GET("boulders/ticks/mine")
-    suspend fun getMyTickedBoulders(): Response<List<BoulderDTO>>
+    suspend fun getMyTickedBoulders(): Response<List<TickWithBoulderDto>>
 
 
     /** Untick: entfernt den Tick des eingeloggten Users für diesen Boulder */
     @DELETE("boulders/{boulderId}/ticks")
     suspend fun deleteTick(@Path("boulderId") boulderId: String): Response<Unit>
+
+
+
+    @POST("boulders/{boulderId}/ticks")
+    suspend fun tickBoulder(
+        @Path("boulderId") boulderId: String,
+        @Body body: TickCreateRequest = TickCreateRequest()
+    ): Response<TickDto>
 
 
 

@@ -95,3 +95,14 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
         }
     }
 }
+
+
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // neue, NULL-able Spalten hinzufügen (keine Defaults nötig)
+        db.execSQL("""ALTER TABLE `boulders` ADD COLUMN `avgStars` REAL""")
+        db.execSQL("""ALTER TABLE `boulders` ADD COLUMN `starsCount` INTEGER""")
+    }
+}
+
+
