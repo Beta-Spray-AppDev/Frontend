@@ -75,7 +75,7 @@ object RetrofitInstance {
 
 
         val built = Retrofit.Builder()
-            .baseUrl("http://192.168.0.241:8080/")
+            .baseUrl("http://10.0.2.2:8080/")
             .addConverterFactory(ScalarsConverterFactory.create()) // falls einige Endpoints String liefern
             .addConverterFactory(GsonConverterFactory.create())
             .client(client)
@@ -119,7 +119,7 @@ object RetrofitInstance {
             .build()
 
         return Retrofit.Builder()
-            .baseUrl("http://192.168.0.241:8080/")
+            .baseUrl("http://10.0.2.2:8080/")
             .addConverterFactory(GsonConverterFactory.create())
             .client(client)
             .build()

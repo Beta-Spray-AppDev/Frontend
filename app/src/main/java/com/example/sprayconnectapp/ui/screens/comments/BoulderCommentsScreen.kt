@@ -293,7 +293,7 @@ private fun EmptyCommentsState(
             modifier = Modifier.offset(y = (-40).dp)
         ) {
             Icon(
-                imageVector = Icons.Default.ImageSearch, 
+                imageVector = Icons.Default.ImageSearch,
                 contentDescription = null,
                 tint = colorResource(R.color.button_normal_dark),
                 modifier = Modifier.size(60.dp)
