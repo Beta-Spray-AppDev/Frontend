@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.navigation.NavController
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
+import com.example.sprayconnectapp.R
 import com.example.sprayconnectapp.data.dto.RefreshRequest
 import com.example.sprayconnectapp.network.RetrofitInstance
 import com.example.sprayconnectapp.util.TokenStore
@@ -50,6 +52,8 @@ fun SplashScreen(nav: NavController) {
     }
 
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator()
+        CircularProgressIndicator(
+            color = colorResource(id = R.color.button_normal)
+        )
     }
 }
