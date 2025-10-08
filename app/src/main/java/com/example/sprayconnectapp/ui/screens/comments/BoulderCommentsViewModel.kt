@@ -34,12 +34,34 @@ class BoulderCommentsViewModel : ViewModel() {
     var deleting by mutableStateOf(false); private set
     var deleteError by mutableStateOf<String?>(null); private set
 
+
+
+    var totalSends by mutableStateOf<Int?>(null); private set
+    var avgGradeLabel by mutableStateOf<String?>(null); private set
+
+    var gradesCount by mutableStateOf<Int?>(null); private set
+
+
     fun load(context: Context, boulderId: String) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
             try {
                 _comments.value = repo.getComments(context, UUID.fromString(boulderId))
+
+                // 2) Boulder + Stats
+                val boulderApi = com.example.sprayconnectapp.network.RetrofitInstance.getBoulderApi(context)
+                val resp = boulderApi.getBoulderById(UUID.fromString(boulderId))
+                if (resp.isSuccessful) {
+                    resp.body()?.let { b ->
+                        totalSends   = b.totalSends?.toInt()
+                        avgGradeLabel = b.avgGradeLabel
+                        gradesCount   = b.gradesCount
+                    }
+                } else {
+
+                }
+
             } catch (e: Exception) {
                 _error.value = e.message ?: "Fehler beim Laden"
             } finally {

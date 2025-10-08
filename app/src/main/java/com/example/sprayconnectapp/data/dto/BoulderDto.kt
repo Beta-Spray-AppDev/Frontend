@@ -19,5 +19,9 @@ data class BoulderDTO(
     val spraywallName: String? = null,
     val setterNote: String? = null,
     val avgStars: Double? = null,
-    val starsCount: Int? = null
+    val starsCount: Int? = null,
+    val totalSends: Long? = null,
+    val avgGradeLabel: String? = null,
+    val gradesCount: Int? = null
+
 )

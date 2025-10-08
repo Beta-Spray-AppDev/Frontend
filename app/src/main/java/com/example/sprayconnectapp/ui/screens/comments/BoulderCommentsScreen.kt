@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ImageSearch
 import androidx.compose.material.icons.filled.RateReview
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -91,8 +92,8 @@ fun BoulderCommentsScreen(
 
                 // --- Stats-Bereich (Platzhalter für später) ---
                 StatsHeader(
-                    totalSends = null,          // TODO: später befüllen
-                    avgRating = null,           // TODO: später befüllen
+                    totalSends = vm.totalSends,
+                    avgGradeLabel = vm.avgGradeLabel,
                     lastActivity = comments.maxOfOrNull { it.created }?.let { formatDate(it) }
                 )
 
@@ -108,9 +109,7 @@ fun BoulderCommentsScreen(
                         ErrorBox(message = error!!) { vm.refresh(ctx, boulderId) }
                     }
                     comments.isEmpty() -> {
-                        EmptyBox(
-                            text = "Noch keine Kommentare.\nSei der Erste und schreibe einen!"
-                        )
+                        EmptyCommentsState()
                     }
                     else -> {
                         LazyColumn(
@@ -198,7 +197,7 @@ fun BoulderCommentsScreen(
 @Composable
 private fun StatsHeader(
     totalSends: Int?,
-    avgRating: Double?,
+    avgGradeLabel: String?,
     lastActivity: String?
 ) {
     Row(
@@ -210,11 +209,7 @@ private fun StatsHeader(
             value = totalSends?.toString() ?: "—",
             modifier = Modifier.weight(1f)
         )
-        StatCard(
-            label = "Ø Bewertung",
-            value = avgRating?.let { String.format("%.1f", it) } ?: "—",
-            modifier = Modifier.weight(1f)
-        )
+        StatCard("Ø Grad", avgGradeLabel ?: "—", Modifier.weight(1f))
         StatCard(
             label = "Aktivität",
             value = lastActivity ?: "—",
@@ -275,14 +270,46 @@ private fun ErrorBox(message: String, onRetry: () -> Unit) {
     }
 }
 
-@Composable
-private fun EmptyBox(text: String) {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text, color = Color.White.copy(alpha = 0.9f))
-    }
-}
 
 private fun formatDate(ms: Long): String {
     val df = DateFormat.getDateInstance()
     return df.format(Date(ms))
 }
+
+
+@Composable
+private fun EmptyCommentsState(
+    text: String = "Sei der Erste und schreibe einen!"
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.offset(y = (-40).dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.ImageSearch, 
+                contentDescription = null,
+                tint = colorResource(R.color.button_normal_dark),
+                modifier = Modifier.size(60.dp)
+            )
+            Text(
+                "Noch keine Kommentare vorhanden",
+                style = MaterialTheme.typography.titleLarge,
+                color = Color.White
+            )
+            Text(
+                text,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White.copy(alpha = 0.85f),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+        }
+    }
+}
+

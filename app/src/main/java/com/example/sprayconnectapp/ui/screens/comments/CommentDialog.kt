@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import com.example.sprayconnectapp.R
 
 @Composable
@@ -39,7 +40,7 @@ fun CommentDialog(
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
-                Text("Verbleibend: $remaining", style = MaterialTheme.typography.bodySmall)
+                Text("Verbleibend: $remaining", style = MaterialTheme.typography.bodySmall, color = Color.Black)
             }
         },
         confirmButton = {
@@ -48,6 +49,6 @@ fun CommentDialog(
                 onClick = { if (valid) onSubmit(text.trim()) }
             ) { Text("Senden", color = colorResource(R.color.button_normal)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Abbrechen") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Abbrechen", color = Color(0xFFD32F2F)) } }
     )
 }
