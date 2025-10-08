@@ -44,7 +44,7 @@ fun BoulderCommentsScreen(
     val comments by vm.comments
     val isLoading by vm.isLoading
     val error by vm.error
-    val store = TokenStore(ctx)
+    val store = TokenStore.create(ctx)
     val currentUserId = store.getUserId()
     val isSuper = Superusers.isSuper(currentUserId)
 

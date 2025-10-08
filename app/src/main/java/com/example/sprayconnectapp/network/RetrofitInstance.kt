@@ -57,7 +57,7 @@ object RetrofitInstance {
             level = HttpLoggingInterceptor.Level.BODY
         }
 
-        val tokenStore = TokenStore(context)
+        val store = TokenStore.create(context)
 
         val authApi: AuthApi = buildAuthOnlyRetrofit(logger).create(AuthApi::class.java)
 
@@ -69,13 +69,13 @@ object RetrofitInstance {
             // Eigener Interceptor für Auth:
             // entscheidet, ob ein Authorization-Header angehängt wird
             // liest den Token pro Request frisch aus SharedPreferences
-            .addInterceptor(AuthInterceptor(tokenStore))
-            .authenticator(TokenAuthenticator(authApi, tokenStore))
+            .addInterceptor(AuthInterceptor(store))
+            .authenticator(TokenAuthenticator(authApi, store))
             .build()
 
 
         val built = Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:8080/")
+            .baseUrl("http://192.168.0.241:8080/")
             .addConverterFactory(ScalarsConverterFactory.create()) // falls einige Endpoints String liefern
             .addConverterFactory(GsonConverterFactory.create())
             .client(client)
@@ -119,7 +119,7 @@ object RetrofitInstance {
             .build()
 
         return Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:8080/")
+            .baseUrl("http://192.168.0.241:8080/")
             .addConverterFactory(GsonConverterFactory.create())
             .client(client)
             .build()
