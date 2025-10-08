@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.NavigateBefore
 import androidx.compose.material.icons.filled.NavigateNext
+import androidx.compose.material.icons.outlined.ImageSearch
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -381,12 +382,19 @@ fun CreateBoulderScreen(
                             contentScale = ContentScale.Fit,
                             modifier = Modifier.fillMaxSize(),
                             loading = {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.align(Alignment.Center)
-                                )
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator(
+                                        color = colorResource(R.color.button_normal),
+                                        strokeWidth = 3.dp,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                }
                             },
                             error = {
-                                Text("Bild konnte nicht geladen werden", Modifier.align(Alignment.Center))
+                                ImageLoadErrorState()
                             }
                         )
 
@@ -883,4 +891,43 @@ fun DifficultyStepper(
         }
     }
 }
+
+
+
+
+@Composable
+private fun ImageLoadErrorState(
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.ImageSearch,
+                contentDescription = null,
+                tint = colorResource(R.color.button_normal_dark),
+                modifier = Modifier.size(72.dp)
+            )
+            Text(
+                "Bild konnte nicht geladen werden",
+                style = MaterialTheme.typography.titleLarge,
+                color = Color.White
+            )
+            Text(
+                "Bitte überprüfe deine Internetverbindung oder versuche es später erneut.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White.copy(alpha = 0.85f),
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
 

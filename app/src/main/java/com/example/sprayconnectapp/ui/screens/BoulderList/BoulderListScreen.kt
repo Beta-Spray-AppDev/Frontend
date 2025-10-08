@@ -300,9 +300,21 @@ fun BoulderListScreen(
                                 val accent = colorResource(R.color.button_normal)
                                 val tickedBg = Color(0xFFE6FAF7)
 
+
+                                // vor dem navigate() – die aktuell sichtbare Reihenfolge festhalten
+                                val visibleIds: List<String> = listToShow.mapNotNull { it.id }
+
+
+
+
                                 Card(
                                     // Detailansicht öffnen
                                     onClick = {
+                                        // in den SavedStateHandle der aktuellen Destination schreiben
+                                        navController.currentBackStackEntry
+                                            ?.savedStateHandle
+                                            ?.set("visibleIds", ArrayList(visibleIds)) // ArrayList für SafeArgs
+
                                         val id = boulder.id ?: return@Card
                                         val encoded = Uri.encode(imageUri ?: "")
                                         navController.navigate("view_boulder/$id/$spraywallId?src=list&imageUri=$encoded")

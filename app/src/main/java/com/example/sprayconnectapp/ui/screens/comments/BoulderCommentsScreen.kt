@@ -153,7 +153,7 @@ fun BoulderCommentsScreen(
                                     ) { Text("Löschen", color = colorResource(R.color.button_normal)) }
                                 },
                                 dismissButton = {
-                                    TextButton(onClick = { toDelete = null }) { Text("Abbrechen") }
+                                    TextButton(onClick = { toDelete = null }) { Text("Abbrechen", color = Color(0xFFD32F2F)) }
                                 }
                             )
 

@@ -135,15 +135,6 @@ fun ViewBoulderScreen(
     var currentBoulderId by rememberSaveable { mutableStateOf(boulderId) }
 
 
-    // Wählt Liste nach Quelle
-    val fromProfile = source == "mine" || source == "ticked"
-
-    val list: List<BoulderDTO> = when {
-        !fromProfile -> gymList
-        source == "mine" -> myList
-        else -> tickedBoulders // <- das ist unsere echte Liste der getickten Boulder
-    }
-
     //Ui-State holen
     val context = LocalContext.current
     val uiState by viewModel.uiState
@@ -152,12 +143,39 @@ fun ViewBoulderScreen(
     val markerSizeDp = 32.dp
     val markerRadiusPx = with(density) { (markerSizeDp / 2).toPx() }
 
-    // Prev & Next
-    // IDs der aktiven Liste (egal ob aus Profil oder Gym-Liste)
-    val idList = remember(list) { list.map { it.id } }
+    // Wählt Liste nach Quelle
+    val fromProfile = source == "mine" || source == "ticked"
 
-// aktuelle ID = Boulder aus dem UI oder Fallback auf currentBoulderId
-    val visibleId = boulder?.id ?: currentBoulderId
+    // IDs aus dem SavedStateHandle der vorherigen BackStack-Entry holen
+    val visibleIdsFromList: List<String> =
+        if (!fromProfile && source == "list") {
+            navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.get<ArrayList<String>>("visibleIds")
+                ?.toList()
+                ?: emptyList()
+        } else emptyList()
+
+    // Aktuelle ID (aus dem geladenen Boulder oder Fallback)
+    val visibleId = (uiState.boulder?.id ?: currentBoulderId)
+
+
+    // Die ID-Liste, durch die geswiped werden darf:
+    val idList: List<String> = when {
+        // wenn aus der BoulderList gekommen: NUR gefilterte IDs verwenden
+        source == "list" && visibleIdsFromList.isNotEmpty() -> visibleIdsFromList
+
+        // aus dem Profil: bestehende Logik behalten
+        fromProfile -> when (source) {
+            "mine"   -> myList.mapNotNull { it.id }
+            "ticked" -> tickedBoulders.mapNotNull { it.id }
+            else     -> emptyList()
+        }
+
+        // Fallback (sollte kaum noch gebraucht werden)
+        else -> gymList.mapNotNull { it.id }
+    }
+
 
 // Index des aktuell sichtbaren Boulders
     val currentIndex = idList.indexOf(visibleId)
@@ -165,21 +183,6 @@ fun ViewBoulderScreen(
 // Vorheriger & nächster Boulder
     val prevId = if (currentIndex > 0) idList[currentIndex - 1] else null
     val nextId = if (currentIndex >= 0 && currentIndex + 1 < idList.size) idList[currentIndex + 1] else null
-
-// Buttons im BottomBar:
-    IconButton(
-        enabled = prevId != null,
-        onClick = { prevId?.let { currentBoulderId = it } }
-    ) {
-        Icon(Icons.Default.NavigateBefore, contentDescription = "Vorheriger Boulder")
-    }
-
-    IconButton(
-        enabled = nextId != null,
-        onClick = { nextId?.let { currentBoulderId = it } }
-    ) {
-        Icon(Icons.Default.NavigateNext, contentDescription = "Nächster Boulder")
-    }
 
 
     // Dialogzustände
