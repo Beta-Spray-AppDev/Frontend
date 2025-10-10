@@ -217,7 +217,7 @@ fun AddGymScreen(
 
                         OutlinedTextField(
                             value = name,
-                            onValueChange = { if (it.length <= 20) name = it },
+                            onValueChange = { if (it.length <= 40) name = it },
                             label = { Text("Name") },
                             placeholder = { Text("Name des Gyms") },
                             leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
@@ -233,7 +233,7 @@ fun AddGymScreen(
 
                         OutlinedTextField(
                             value = location,
-                            onValueChange = { if (it.length <= 20) location = it },
+                            onValueChange = { if (it.length <= 40) location = it },
                             label = { Text("Ort") },
                             placeholder = { Text("Stadt/Adresse") },
                             leadingIcon = { Icon(Icons.Default.LocationOn, contentDescription = null) },

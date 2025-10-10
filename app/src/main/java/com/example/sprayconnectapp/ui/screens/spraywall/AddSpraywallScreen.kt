@@ -252,7 +252,7 @@ fun AddSpraywallScreen(
                         // Name
                         OutlinedTextField(
                             value = name,
-                            onValueChange = { if (it.length <= 20) name = it },
+                            onValueChange = { if (it.length <= 40) name = it },
                             label = { Text("Name") },
                             placeholder = { Text("Name der Spraywall") },
                             leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
