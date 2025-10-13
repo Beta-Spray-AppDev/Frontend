@@ -89,19 +89,58 @@ fun AddSpraywallScreen(
 
 
 
+
+
+
     // Farben
-    val barColor = colorResource(id = R.color.hold_type_bar)
+    val buttonColor = colorResource(R.color.button_normal)
+    val barColor    = colorResource(id = R.color.hold_type_bar)
 
     val tfColors = OutlinedTextFieldDefaults.colors(
-        focusedBorderColor = Color(0xFF00796B),
-        cursorColor = Color(0xFF00796B),
-        focusedLabelColor = Color(0xFF00796B),
+        // Container
+        focusedContainerColor   = Color.White,
         unfocusedContainerColor = Color.White,
-        focusedContainerColor = Color.White
+        disabledContainerColor  = Color.White,
+        errorContainerColor     = Color.White,
+
+        // Border
+        focusedBorderColor   = buttonColor,
+        unfocusedBorderColor = buttonColor,
+        disabledBorderColor  = Color(0x33000000),
+        errorBorderColor     = Color(0xFFD32F2F),
+
+        // Text
+        focusedTextColor   = Color(0xFF000000),
+        unfocusedTextColor = Color(0xFF000000),
+        disabledTextColor  = Color(0x99000000),
+        errorTextColor     = Color(0xFF000000),
+
+        // Label
+        focusedLabelColor   = buttonColor,
+        unfocusedLabelColor = Color(0xFF000000),
+        disabledLabelColor  = Color(0x99000000),
+        errorLabelColor     = Color(0xFF000000),
+
+        // Placeholder
+        focusedPlaceholderColor   = Color(0x99000000),
+        unfocusedPlaceholderColor = Color(0x99000000),
+        disabledPlaceholderColor  = Color(0x66000000),
+        errorPlaceholderColor     = Color(0x99000000),
+
+        // Leading/Trailing Icons
+        focusedLeadingIconColor   = buttonColor,
+        unfocusedLeadingIconColor = buttonColor,
+        disabledLeadingIconColor  = Color(0x66000000),
+        errorLeadingIconColor     = buttonColor,
+
+        focusedTrailingIconColor   = buttonColor,
+        unfocusedTrailingIconColor = buttonColor,
+        disabledTrailingIconColor  = Color(0x66000000),
+        errorTrailingIconColor     = buttonColor,
+
+        // Cursor
+        cursorColor = buttonColor
     )
-
-
-    val buttonColor = colorResource(R.color.button_normal)
 
     val switchColors = SwitchDefaults.colors(
         checkedThumbColor = Color.White,
@@ -206,7 +245,12 @@ fun AddSpraywallScreen(
 
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(6.dp)
+                    elevation = CardDefaults.cardElevation(6.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White,
+                        contentColor = Color(0xFF000000)
+                    ),
+                    shape = RoundedCornerShape(16.dp) // optional
                 ) {
                     Column(
                         modifier = Modifier
@@ -217,6 +261,7 @@ fun AddSpraywallScreen(
                         Text(
                             "Spraywall anlegen",
                             style = MaterialTheme.typography.headlineSmall,
+                            color = Color(0xFF000000),              // Titel schwarz
                             modifier = Modifier.align(Alignment.CenterHorizontally)
                         )
                         Divider()

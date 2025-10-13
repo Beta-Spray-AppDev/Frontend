@@ -131,8 +131,10 @@ fun BoulderCommentsScreen(
                         if (toDelete != null) {
                             AlertDialog(
                                 onDismissRequest = { toDelete = null },
-                                title = { Text("Kommentar löschen?") },
-                                text = { Text("Willst du diesen Kommentar wirklich löschen?") },
+                                containerColor = Color(0xFFE5E5E5),       // Hellgrauer Hintergrund
+                                textContentColor = Color(0xFF000000),     // Schwarzer Text
+                                title = { Text("Kommentar löschen?", color = Color(0xFF000000)) },
+                                text = { Text("Willst du diesen Kommentar wirklich löschen?", color = Color(0xFF000000)) },
                                 confirmButton = {
                                     TextButton(
                                         onClick = {
@@ -148,23 +150,37 @@ fun BoulderCommentsScreen(
                                                     vm.refresh(ctx, boulderId)
                                                 }
                                             )
-                                        }
-                                    ) { Text("Löschen", color = colorResource(R.color.button_normal)) }
+                                        },
+                                        colors = ButtonDefaults.textButtonColors(
+                                            contentColor = colorResource(R.color.button_normal)
+                                        )
+                                    ) {
+                                        Text("Löschen")
+                                    }
                                 },
                                 dismissButton = {
-                                    TextButton(onClick = { toDelete = null }) { Text("Abbrechen", color = Color(0xFFD32F2F)) }
+                                    TextButton(
+                                        onClick = { toDelete = null },
+                                        colors = ButtonDefaults.textButtonColors(
+                                            contentColor = Color(0xFF000000)
+                                        )
+                                    ) {
+                                        Text("Abbrechen", color = Color(0xFFD32F2F))
+                                    }
                                 }
                             )
 
                             // optionales Feedback
                             when {
-                                vm.deleting -> { /* kleiner Loader/Snackbar optional */ }
-                                vm.deleteError != null ->
-                                    android.widget.Toast
-                                        .makeText(ctx, vm.deleteError, android.widget.Toast.LENGTH_SHORT)
-                                        .show()
+                                vm.deleting -> {
+                                    // z. B. Loader anzeigen oder Snackbar
+                                }
+                                vm.deleteError != null -> android.widget.Toast
+                                    .makeText(ctx, vm.deleteError, android.widget.Toast.LENGTH_SHORT)
+                                    .show()
                             }
                         }
+
 
                     }
                 }

@@ -349,7 +349,9 @@ fun BoulderListScreen(
                                                 Spacer(Modifier.height(3.dp))
                                                 Text(
                                                     "Schwierigkeit: ${boulder.difficulty}",
-                                                    style = MaterialTheme.typography.bodyMedium
+
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = Color(0xFF000000)
                                                 )
 
                                                 val avgRounded: Int? = boulder.avgStars
@@ -413,6 +415,8 @@ fun BoulderListScreen(
                 if (showFilter) {
                     AlertDialog(
                         onDismissRequest = { showFilter = false },
+                        containerColor = Color(0xFFE5E5E5), // Hellgrauer Hintergrund
+                        textContentColor = Color(0xFF000000),
                         confirmButton = {
                             TextButton(onClick = { showFilter = false }) {
                                 Text(
@@ -430,12 +434,10 @@ fun BoulderListScreen(
                                 primaryKey = SortKey.GRADE
                                 gradeAsc = true
                                 starsAsc = true
-
-
                             }) {
                                 Text(
                                     "Zurücksetzen",
-                                    color = Color.Black,
+                                    color = Color(0xFF000000), // Schwarz
                                     style = MaterialTheme.typography.titleMedium
                                 )
                             }
@@ -444,12 +446,12 @@ fun BoulderListScreen(
                             Text(
                                 "Filter-Optionen:",
                                 modifier = Modifier.fillMaxWidth(),
-                                textAlign = TextAlign.Center
+                                textAlign = TextAlign.Center,
+                                color = Color(0xFF000000) // Schwarz
                             )
                         },
                         text = {
                             Column {
-
                                 Spacer(Modifier.height(8.dp))
 
                                 SortRow(
@@ -470,22 +472,23 @@ fun BoulderListScreen(
                                     onDesc = { starsAsc = false }
                                 )
 
-
                                 Spacer(Modifier.height(19.dp))
 
                                 Text(
                                     " ${fbGrades[startIndex]} - ${fbGrades[endIndex]}",
                                     style = MaterialTheme.typography.titleMedium,
                                     modifier = Modifier.fillMaxWidth(),
-                                    textAlign = TextAlign.Center
+                                    textAlign = TextAlign.Center,
+                                    color = Color(0xFF000000)
                                 )
+
                                 Spacer(Modifier.height(2.dp))
+
                                 RangeSlider(
                                     value = sliderRange,
                                     onValueChange = { r ->
                                         val s = r.start.roundToInt().coerceIn(0, fbGrades.lastIndex)
-                                        val e = r.endInclusive.roundToInt()
-                                            .coerceIn(0, fbGrades.lastIndex)
+                                        val e = r.endInclusive.roundToInt().coerceIn(0, fbGrades.lastIndex)
                                         val (sIdx, eIdx) = if (s <= e) s to e else e to s
                                         sliderRange = sIdx.toFloat()..eIdx.toFloat()
                                     },
@@ -494,15 +497,14 @@ fun BoulderListScreen(
                                     colors = SliderDefaults.colors(
                                         thumbColor = colorResource(R.color.button_normal),
                                         activeTrackColor = colorResource(R.color.button_normal),
-                                        inactiveTrackColor = colorResource(R.color.button_normal).copy(
-                                            alpha = 0.3f
-                                        ),
+                                        inactiveTrackColor = colorResource(R.color.button_normal).copy(alpha = 0.3f),
                                         activeTickColor = Color.White,
                                         inactiveTickColor = Color.Gray
                                     )
                                 )
 
                                 Spacer(Modifier.height(16.dp))
+
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier.fillMaxWidth()
@@ -510,16 +512,15 @@ fun BoulderListScreen(
                                     Text(
                                         "Exclude my repeats:",
                                         modifier = Modifier.weight(1f),
-                                        style = MaterialTheme.typography.titleMedium
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = Color(0xFF000000)
                                     )
                                     Switch(
                                         checked = excludeTicked,
                                         onCheckedChange = { excludeTicked = it },
                                         colors = SwitchDefaults.colors(
                                             checkedTrackColor = colorResource(R.color.button_normal),
-                                            uncheckedTrackColor = colorResource(R.color.button_normal).copy(
-                                                alpha = 0.35f
-                                            ),
+                                            uncheckedTrackColor = colorResource(R.color.button_normal).copy(alpha = 0.35f),
                                             uncheckedThumbColor = Color.White,
                                             checkedBorderColor = Color.Transparent,
                                             uncheckedBorderColor = Color.Transparent
@@ -530,6 +531,7 @@ fun BoulderListScreen(
                         }
                     )
                 }
+
             }
         }
     }
@@ -594,7 +596,7 @@ private fun TinyStars(ratingRounded: Int, modifier: Modifier = Modifier, max: In
 
 
 @Composable
- fun SortRow(
+fun SortRow(
     title: String,
     isPrimary: Boolean,
     ascSelected: Boolean,
@@ -603,6 +605,7 @@ private fun TinyStars(ratingRounded: Int, modifier: Modifier = Modifier, max: In
     onDesc: () -> Unit
 ) {
     val accent = colorResource(R.color.button_normal)
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -614,33 +617,32 @@ private fun TinyStars(ratingRounded: Int, modifier: Modifier = Modifier, max: In
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
-            color = if (isPrimary) accent else MaterialTheme.colorScheme.onSurface,
+            color = if (isPrimary) accent else Color(0xFF000000), // Schwarz wenn inaktiv
             modifier = Modifier
                 .weight(1f)
                 .padding(end = 8.dp)
-                .let { m ->
-                    // ganze Titel-Zeile klickbar machen
-                    Modifier.then(m).clickable { onSetPrimary() }
-                }
+                .clickable { onSetPrimary() }
         )
 
-        // Pfeile: ↑ / ↓
+        // Pfeile ↑ / ↓ — Schwarz, App-Farbe wenn aktiv
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             IconButton(onClick = onAsc) {
                 Icon(
                     imageVector = Icons.Filled.ArrowUpward,
                     contentDescription = "Aufsteigend",
-                    tint = if (ascSelected) accent else MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = if (ascSelected) accent else Color(0xFF000000)
                 )
             }
             IconButton(onClick = onDesc) {
                 Icon(
                     imageVector = Icons.Filled.ArrowDownward,
                     contentDescription = "Absteigend",
-                    tint = if (!ascSelected) accent else MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = if (!ascSelected) accent else Color(0xFF000000)
                 )
             }
         }
     }
 }
+
+
 

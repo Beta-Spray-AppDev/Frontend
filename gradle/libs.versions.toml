@@ -7,8 +7,12 @@ lifecycle = "2.8.6"
 navigation = "2.8.3"
 ksp = "1.9.25-1.0.20"
 runtime = "1.9.2"
-foundation = "1.9.2"
+animationCore = "1.9.3"
+foundationLayout = "1.9.3"
 material3 = "1.4.0"
+uiGraphics = "1.9.3"
+foundation = "1.9.2"
+
 
 [libraries]
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
@@ -32,6 +36,9 @@ room-compiler = { group = "androidx.room", name = "room-compiler", version = "2.
 androidx-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
 foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
 material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
+androidx-animation-core = { group = "androidx.compose.animation", name = "animation-core", version.ref = "animationCore" }
+androidx-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
+ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics", version.ref = "uiGraphics" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version = "8.12.3" }

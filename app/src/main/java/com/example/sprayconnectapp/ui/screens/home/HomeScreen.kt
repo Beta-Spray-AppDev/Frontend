@@ -185,6 +185,9 @@ fun HomeScreen(navController: NavController) {
                         )
                     }
                     else -> {
+
+                        val cardContainer = Color(0xFFFFFFFF)
+                        val cardOn       = Color(0xFF000000)
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -198,11 +201,23 @@ fun HomeScreen(navController: NavController) {
                                         val name = Uri.encode(gym.name)
                                         navController.navigate("spraywallDetail/$id/$name")
                                     },
-                                    modifier = Modifier.fillMaxWidth()
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = androidx.compose.material3.CardDefaults.cardColors(
+                                        containerColor = cardContainer,
+                                        contentColor = cardOn,                   // <- setzt LocalContentColor für Children
+                                        disabledContainerColor = cardContainer, // optional
+                                        disabledContentColor = cardOn.copy(alpha = 0.6f)
+                                    )
                                 ) {
                                     Column(Modifier.padding(16.dp)) {
-                                        Text(gym.name, style = MaterialTheme.typography.titleMedium)
-                                        Text(gym.location, style = MaterialTheme.typography.bodySmall)
+                                        Text(
+                                            gym.name,
+                                            style = MaterialTheme.typography.titleMedium
+                                        )
+                                        Text(
+                                            gym.location,
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
                                     }
                                 }
                             }
@@ -270,7 +285,13 @@ fun FeedbackDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Wie gefällt dir die Beta?") },
+        containerColor = Color(0xFFFFFFFF), // Weißer Hintergrund
+        title = {
+            Text(
+                "Wie gefällt dir die Beta?",
+                color = Color(0xFF000000) // Schwarzer Titeltext
+            )
+        },
         text = {
             Column {
                 // Sterne-Auswahl
@@ -283,11 +304,13 @@ fun FeedbackDialog(
                             Icon(
                                 imageVector = if (i <= stars) Icons.Filled.Star else Icons.Outlined.Star,
                                 contentDescription = "$i Sterne",
-                                tint = if (i <= stars) Color(0xFFFFC107) else Color(0xFFBDBDBD)
+                                tint = if (i <= stars)
+                                    Color(0xFFFFC107) // Goldgelb für ausgewählte Sterne
+                                else
+                                    Color(0xFFBDBDBD) // Hellgrau für inaktive Sterne
                             )
                         }
                     }
-
                 }
 
                 Spacer(Modifier.height(8.dp))
@@ -296,14 +319,19 @@ fun FeedbackDialog(
                 OutlinedTextField(
                     value = text,
                     onValueChange = { if (it.length <= maxMessageLength) text = it },
-                    label = { Text("Dein Feedback (optional)") },
+                    label = {
+                        Text(
+                            "Dein Feedback (optional)",
+                            color = Color(0xFF000000) // Schwarzes Label
+                        )
+                    },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = colorResource(R.color.button_normal),
                         unfocusedBorderColor = colorResource(R.color.button_normal),
                         focusedLabelColor = colorResource(R.color.button_normal),
                         cursorColor = colorResource(R.color.button_normal),
-                        focusedTextColor = Color.Black,           // optional
-                        unfocusedTextColor = Color.Black          // optional
+                        focusedTextColor = Color(0xFF000000),
+                        unfocusedTextColor = Color(0xFF000000)
                     ),
                     minLines = 3,
                     maxLines = 6,
@@ -315,17 +343,23 @@ fun FeedbackDialog(
                 onClick = { if (isValid) onSubmit(stars, text.trim()) },
                 enabled = isValid,
                 colors = ButtonDefaults.textButtonColors(
-                    contentColor = colorResource(R.color.button_normal),
-                    disabledContentColor = Color.LightGray
+                    contentColor = colorResource(R.color.button_normal), // App-Farbe
+                    disabledContentColor = Color(0xFFBDBDBD)
                 )
             ) {
-                Text("Senden")
+                Text("Senden", color = colorResource(R.color.button_normal))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Später", color = Color.Black) }
+            TextButton(onClick = onDismiss) {
+                Text(
+                    "Später",
+                    color = Color(0xFF000000) // Schwarzer Text
+                )
+            }
         }
     )
+
 }
 
 

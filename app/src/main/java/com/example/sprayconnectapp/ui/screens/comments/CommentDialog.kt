@@ -23,32 +23,51 @@ fun CommentDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Kommentar schreiben") },
+        containerColor = Color(0xFFE5E5E5), // hellgrauer Hintergrund
+        textContentColor = Color(0xFF000000), // schwarzer Text überall
+        title = { Text("Kommentar schreiben", color = Color(0xFF000000)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = text,
                     onValueChange = { if (it.length <= maxLength) text = it },
-                    label = { Text("Kommentar") },
+                    label = { Text("Kommentar", color = Color(0xFF000000)) },
                     minLines = 3,
                     maxLines = 6,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = colorResource(R.color.button_normal),
                         unfocusedBorderColor = colorResource(R.color.button_normal),
                         focusedLabelColor = colorResource(R.color.button_normal),
-                        cursorColor = colorResource(R.color.button_normal)
+                        cursorColor = colorResource(R.color.button_normal),
+                        focusedTextColor = Color(0xFF000000),
+                        unfocusedTextColor = Color(0xFF000000)
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
-                Text("Verbleibend: $remaining", style = MaterialTheme.typography.bodySmall, color = Color.Black)
+                Text(
+                    "Verbleibend: $remaining",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF000000)
+                )
             }
         },
         confirmButton = {
             TextButton(
                 enabled = valid,
-                onClick = { if (valid) onSubmit(text.trim()) }
-            ) { Text("Senden", color = colorResource(R.color.button_normal)) }
+                onClick = { if (valid) onSubmit(text.trim()) },
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = colorResource(R.color.button_normal),
+                    disabledContentColor = Color.LightGray
+                )
+            ) {
+                Text("Senden")
+            }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Abbrechen", color = Color(0xFFD32F2F)) } }
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Abbrechen", color = Color(0xFF000000)) // Schwarz
+            }
+        }
     )
 }
+

@@ -62,29 +62,19 @@ fun EditProfileScreen(navController: NavController) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
-
     // UI-Meldungen
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var infoMessage by remember { mutableStateOf<String?>(null) }
 
-
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
-
     val focusManager = LocalFocusManager.current
 
-    fun isValidEmail(s: String): Boolean =
-        Patterns.EMAIL_ADDRESS.matcher(s).matches()
-
+    fun isValidEmail(s: String): Boolean = Patterns.EMAIL_ADDRESS.matcher(s).matches()
     var emailError by remember { mutableStateOf<String?>(null) }
 
+    LaunchedEffect(Unit) { viewModel.loadProfile(context) }
 
-
-
-    LaunchedEffect(Unit) {
-        viewModel.loadProfile(context)
-    }
-
-    // Nur beim ersten Mal mit aktuellen Werten befüllen
+    // Prefill
     LaunchedEffect(profile) {
         profile?.let {
             username = it.username
@@ -93,8 +83,6 @@ fun EditProfileScreen(navController: NavController) {
     }
 
     val BarColor = colorResource(id = R.color.hold_type_bar)
-
-
 
     //Farbverlauf
     val screenBg = Brush.verticalGradient(
@@ -109,10 +97,7 @@ fun EditProfileScreen(navController: NavController) {
         modifier = Modifier
             .fillMaxSize()
             .background(screenBg)
-    ){
-
-
-
+    ) {
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
@@ -123,7 +108,6 @@ fun EditProfileScreen(navController: NavController) {
                         titleContentColor = Color.White,
                         navigationIconContentColor = Color.White,
                         actionIconContentColor = Color.White
-
                     ),
                     title = { Text("Profil bearbeiten") },
                     navigationIcon = {
@@ -134,7 +118,6 @@ fun EditProfileScreen(navController: NavController) {
                 )
             }
         ) { innerPadding ->
-
 
             Column(
                 modifier = Modifier
@@ -147,7 +130,11 @@ fun EditProfileScreen(navController: NavController) {
 
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(6.dp)
+                    elevation = CardDefaults.cardElevation(6.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFFE5E5E5), // Grau-Hintergrund für die Card
+                        contentColor   = Color(0xFF000000)  // schwarzer Content
+                    )
                 ) {
                     Column(
                         modifier = Modifier
@@ -155,33 +142,57 @@ fun EditProfileScreen(navController: NavController) {
                             .fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Text("Nutzerdaten bearbeiten", style = MaterialTheme.typography.headlineSmall)
-                        Divider()
+                        Text(
+                            "Nutzerdaten bearbeiten",
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = Color(0xFF000000)
+                        )
+                        Divider(color = Color(0x1F000000)) // 12% Schwarz
 
-                        // Einheitliche Farben für Textfelder
+                        // Einheitliche Farben für Textfelder (weiß + Akzent = button_normal, Text/Icon = schwarz)
                         val tfColors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF00796B),
-                            cursorColor = Color(0xFF00796B),
-                            focusedLabelColor = Color(0xFF00796B),
-                            unfocusedContainerColor = Color.White,
-                            focusedContainerColor = Color.White
+                            // Container (Hintergrund der Textfelder)
+                            focusedContainerColor   = Color(0xFFFFFFFF),
+                            unfocusedContainerColor = Color(0xFFFFFFFF),
+                            disabledContainerColor  = Color(0xFFFFFFFF),
+
+                            // Rahmen/Label/Cursor mit App-Akzent
+                            focusedBorderColor = colorResource(R.color.button_normal),
+                            unfocusedBorderColor = colorResource(R.color.button_normal),
+                            disabledBorderColor = colorResource(R.color.button_normal),
+                            focusedLabelColor = colorResource(R.color.button_normal),
+                            cursorColor = colorResource(R.color.button_normal),
+
+                            // Textfarben
+                            focusedTextColor   = Color(0xFF000000),
+                            unfocusedTextColor = Color(0xFF000000),
+                            disabledTextColor  = Color(0xFF000000),
+
+                            // Icon-Farben (Leading/Trailing)
+                            focusedLeadingIconColor   = Color(0xFF000000),
+                            unfocusedLeadingIconColor = Color(0xFF000000),
+                            disabledLeadingIconColor  = Color(0xFF000000),
+
+                            focusedTrailingIconColor   = Color(0xFF000000),
+                            unfocusedTrailingIconColor = Color(0xFF000000),
+                            disabledTrailingIconColor  = Color(0xFF000000),
+
+                            // Placeholder/Supporting
+                            focusedPlaceholderColor   = Color(0xFF000000),
+                            unfocusedPlaceholderColor = Color(0xFF000000),
+                            disabledPlaceholderColor  = Color(0xFF000000)
                         )
 
-
-                        // lokaler Helper: verhindert Doppel-Klicks und ruft VM-Update
-                        fun saveProfile (){
-                            if (isLoading) return // doppelte Klicks vermeiden
-
+                        fun saveProfile() {
+                            if (isLoading) return
                             if (email.isNotBlank() && !isValidEmail(email)) {
                                 emailError = "Bitte gib eine gültige E-Mail-Adresse ein."
                                 return
                             }
-
                             viewModel.updateProfile(
                                 context = context,
                                 username = username.trim(),
                                 email = email.trim(),
-                                // leeres Passwort bedeutet "nicht ändern"
                                 password = password.takeIf { it.isNotBlank() } ?: "",
                                 onSuccess = {
                                     password = ""
@@ -192,13 +203,12 @@ fun EditProfileScreen(navController: NavController) {
                             )
                         }
 
-
-                        // Username Eingabe
+                        // Username
                         OutlinedTextField(
                             value = username,
                             onValueChange = { username = it },
-                            label = { Text("Benutzername") },
-                            placeholder = { Text("Benutzername") },
+                            label = { Text("Benutzername", color = Color(0xFF000000)) },
+                            placeholder = { Text("Benutzername", color = Color(0xFF000000)) },
                             leadingIcon = { Icon(Icons.Filled.Person, contentDescription = null) },
                             colors = tfColors,
                             modifier = Modifier.fillMaxWidth(),
@@ -210,20 +220,24 @@ fun EditProfileScreen(navController: NavController) {
                             )
                         )
 
-                        // Email Eingabe
+                        // Email
                         OutlinedTextField(
                             value = email,
                             onValueChange = {
                                 email = it
-                                emailError = if (it.isNotBlank() && !isValidEmail(it)) "Bitte gib eine gültige E-Mail-Adresse ein." else null
+                                emailError = if (it.isNotBlank() && !isValidEmail(it))
+                                    "Bitte gib eine gültige E-Mail-Adresse ein."
+                                else null
                             },
-                            label = { Text("E-Mail") },
-                            placeholder = { Text("E-Mail") },
+                            label = { Text("E-Mail", color = Color(0xFF000000)) },
+                            placeholder = { Text("E-Mail", color = Color(0xFF000000)) },
                             leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null) },
                             colors = tfColors,
                             isError = emailError != null,
                             supportingText = {
-                                if (emailError != null) Text(emailError!!, color = MaterialTheme.colorScheme.error)
+                                if (emailError != null) {
+                                    Text(emailError!!, color = Color(0xFFD32F2F))
+                                }
                             },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(50),
@@ -237,31 +251,25 @@ fun EditProfileScreen(navController: NavController) {
                             )
                         )
 
-
-                        // Passwort Eingabe
+                        // Passwort
                         OutlinedTextField(
                             shape = RoundedCornerShape(50),
                             value = password,
-                            colors = tfColors,
                             onValueChange = { password = it },
-                            label = { Text("Neues Passwort") },
-                            placeholder = { Text("Neues Passwort") },
+                            label = { Text("Neues Passwort", color = Color(0xFF000000)) },
+                            placeholder = { Text("Neues Passwort", color = Color(0xFF000000)) },
                             leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = null) },
+                            colors = tfColors,
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
-                            visualTransformation = if (passwordVisible)
-                                VisualTransformation.None
-                            else PasswordVisualTransformation(),
+                            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                             trailingIcon = {
                                 val (icon, desc) =
-                                    if (passwordVisible) {
-                                        Icons.Default.VisibilityOff to "Passwort verbergen"
-                                    } else {
-                                        Icons.Default.Visibility to "Passwort anzeigen"
-                                    }
+                                    if (passwordVisible) Icons.Default.VisibilityOff to "Passwort verbergen"
+                                    else Icons.Default.Visibility to "Passwort anzeigen"
 
                                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                    Icon(icon, contentDescription = desc)
+                                    Icon(icon, contentDescription = desc, tint = Color(0xFF000000))
                                 }
                             },
                             keyboardOptions = KeyboardOptions(
@@ -276,57 +284,40 @@ fun EditProfileScreen(navController: NavController) {
                             )
                         )
 
-                        // Speichern-Button
+                        // Speichern
                         Button(
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = colorResource(R.color.button_normal),
-                                contentColor = Color.White
+                                contentColor = Color(0xFFFFFFFF)
                             ),
-                            onClick = {
-                                saveProfile()
-                            },
+                            onClick = { saveProfile() },
                             enabled = !isLoading,
                             modifier = Modifier
                                 .align(Alignment.CenterHorizontally)
                                 .wrapContentWidth()
-                        ) {
-                            Text("Speichern")
-                        }
+                        ) { Text("Speichern") }
 
-
-                        // wie Profil aktualisiert
+                        // Info/Fehler
                         infoMessage?.let {
-                            Text(it, color = MaterialTheme.colorScheme.primary)
+                            Text(it, color = Color(0xFF000000))
                         }
-
-                        // Fehlertext
                         errorMessage?.let {
-                            Text(it, color = MaterialTheme.colorScheme.error)
+                            Text(it, color = Color(0xFFD32F2F))
                         }
 
                         if (isLoading) {
-                            CircularProgressIndicator(color = colorResource(R.color.button_normal), modifier = Modifier.align(Alignment.CenterHorizontally))
+                            CircularProgressIndicator(
+                                color = colorResource(R.color.button_normal),
+                                modifier = Modifier.align(Alignment.CenterHorizontally)
+                            )
                         }
 
                         error?.let {
-                            Text("Fehler: $it", color = MaterialTheme.colorScheme.error)
+                            Text("Fehler: $it", color = Color(0xFFD32F2F))
                         }
-
                     }
-
                 }
-
             }
-
-
-
         }
-
-
-
-
     }
-
-
-
 }

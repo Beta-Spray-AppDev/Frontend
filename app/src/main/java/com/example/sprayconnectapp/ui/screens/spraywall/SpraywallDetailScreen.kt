@@ -250,27 +250,37 @@ private fun SpraywallCard(
                     onClick = onClick,
                     onLongClick = { menuOpen = true }
                 ),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color(0xFFFFFFFF), // weißer Hintergrund
+                contentColor = Color(0xFF000000)    // schwarze Schrift/Iconfarbe
+            )
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text(text = spraywall.name, style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            text = spraywall.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color(0xFF000000) // explizit schwarz
+                        )
                         Spacer(Modifier.height(4.dp))
-                        Text(text = spraywall.description, style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            text = spraywall.description,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color(0xFF000000) // explizit schwarz
+                        )
                         if (spraywall.isArchived) {
                             Spacer(Modifier.height(6.dp))
-                            AssistChip(onClick = {}, label = { Text("Archiviert") })
+                            AssistChip(
+                                onClick = {},
+                                label = { Text("Archiviert", color = Color(0xFF000000)) }
+                            )
                         }
                     }
-                    // Optional: Drei-Punkte als Alternativ-Trigger
-                    // IconButton(onClick = { menuOpen = true }) {
-                    //     Icon(Icons.Default.MoreVert, contentDescription = "Menü")
-                    // }
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -285,6 +295,7 @@ private fun SpraywallCard(
                 )
             }
         }
+
 
         // Kontextmenü (öffnet sich am Card-Anker)
         DropdownMenu(

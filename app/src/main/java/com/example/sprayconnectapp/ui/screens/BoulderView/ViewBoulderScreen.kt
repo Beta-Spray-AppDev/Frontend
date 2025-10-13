@@ -6,6 +6,7 @@ import android.net.Uri
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
@@ -89,8 +90,10 @@ import com.example.sprayconnectapp.util.TokenStore
 import java.text.DateFormat
 import java.util.Date
 import kotlin.math.roundToInt
-
-
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.EditNote
+import androidx.compose.ui.draw.clip
+import androidx.core.content.edit
 
 
 /**
@@ -140,8 +143,15 @@ fun ViewBoulderScreen(
     val uiState by viewModel.uiState
     val boulder = uiState.boulder
     val density = LocalDensity.current
-    val markerSizeDp = 32.dp
+    val markerSizeDp = 20.dp
     val markerRadiusPx = with(density) { (markerSizeDp / 2).toPx() }
+
+    var showOnboarding by remember {
+        mutableStateOf(
+            context.getSharedPreferences("prefs", android.content.Context.MODE_PRIVATE)
+                .getBoolean("showOnboarding_view", true)
+        )
+    }
 
     // Wählt Liste nach Quelle
     val fromProfile = source == "mine" || source == "ticked"
@@ -446,7 +456,8 @@ fun ViewBoulderScreen(
             gymName = boulder?.gymName ?: "-",
             spraywallName = boulder?.spraywallName ?: "-",
             created = created,
-            updated = updated
+            updated = updated,
+            setterNote = boulder?.setterNote
         )
     }
 
@@ -497,6 +508,65 @@ fun ViewBoulderScreen(
             dismissButton = { TextButton(onClick = { showTickDialog = false }) { Text("Abbrechen", color = Color(0xFFD32F2F)) } }
         )
     }
+
+    if (showOnboarding) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xAA000000))
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Text(
+                    "Farblegende der Griffe",
+                    color = Color.White,
+                    style = MaterialTheme.typography.headlineSmall,
+                    textAlign = TextAlign.Center
+                )
+
+                // kurze Erklärung
+                Text(
+                    "Die Farben zeigen den Griff-Typ an.",
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                // Legende – generisch über alle HoldType-Einträge
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    HoldType.entries.forEach { type ->
+                        HoldLegendRow(type)
+                    }
+                }
+
+                Spacer(Modifier.height(18.dp))
+
+                TextButton(
+                    onClick = {
+                        showOnboarding = false
+                        context.getSharedPreferences("prefs", android.content.Context.MODE_PRIVATE)
+                            .edit { putBoolean("showOnboarding_view", false) }
+                    },
+                    modifier = Modifier
+                        .background(Color.White, shape = CircleShape)
+                        .padding(horizontal = 22.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        "Verstanden",
+                        color = Color.Black,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+            }
+        }
+    }
+
 
 }
 
@@ -616,39 +686,74 @@ private fun readImageSizeRespectingExif(
 }
 
 
+private fun HoldType.prettyName(): String =
+    name.lowercase().replace('_', ' ').replaceFirstChar { it.titlecase() }
+
+
+
+@Composable
+private fun HoldLegendRow(type: HoldType) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(18.dp)
+                .border(width = 2.dp, color = type.color, shape = CircleShape) // nur Umrandung
+        )
+        Spacer(Modifier.width(10.dp))
+        Text(
+            text = type.prettyName(),
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+            color = Color.White
+        )
+    }
+}
+
+
+
+
 /** einheitliche Zeile mit optionalem Icon, Label links & Wert rechts umgebrochen */
 @Composable
-private fun InfoLineStyled(
+fun InfoLineStyled(
     label: String,
-    value: String,
-    leadingIcon: ImageVector?
+    value: String?,
+    icon: ImageVector
 ) {
+    if (value.isNullOrBlank()) return
+
+    val accent = colorResource(R.color.button_normal)
+
     Row(
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        if (leadingIcon != null) {
-            Icon(
-                imageVector = leadingIcon,
-                contentDescription = null,
-                tint = colorResource(R.color.button_normal)
-            )
-        }
-        Column(modifier = Modifier.weight(1f)) {
+        // Icon in App-Farbe
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = accent,
+            modifier = Modifier.size(20.dp)
+        )
+
+        // Label (in App-Farbe) + Wert (in Schwarz)
+        Column {
             Text(
                 text = label,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = MaterialTheme.typography.bodySmall,
+                color = accent // App-Farbe für Labels
             )
             Text(
                 text = value,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                color = Color(0xFF000000) // Schwarz für Werte
             )
         }
     }
 }
+
 
 
 
@@ -666,7 +771,8 @@ fun BoulderInfoDialog(
     gymName: String,
     spraywallName: String,
     created: String,
-    updated: String
+    updated: String,
+    setterNote: String? = null
 ) {
     if (!show) return
 
@@ -713,6 +819,10 @@ fun BoulderInfoDialog(
                     modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)
                 )
                 InfoLineStyled("Setter", setter, Icons.Default.Person)
+                if (!setterNote.isNullOrBlank()) {
+                    
+                    InfoLineStyled("Setter Notes", setterNote, Icons.Default.EditNote)
+                }
                 InfoLineStyled("Schwierigkeit", difficulty, Icons.Default.BarChart)
                 InfoLineStyled("Gym", gymName, Icons.Default.Place)
                 InfoLineStyled("Spraywall", spraywallName, Icons.Default.GridOn)
