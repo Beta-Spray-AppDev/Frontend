@@ -18,20 +18,27 @@ import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.NavigateBefore
 import androidx.compose.material.icons.filled.NavigateNext
+import androidx.compose.material.icons.outlined.ImageSearch
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -73,9 +80,14 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import androidx.core.content.edit
+import coil.compose.AsyncImagePainter
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.rememberAsyncImagePainter
 
 
 // Modus: Erstellen und Bearbeiten
@@ -355,34 +367,47 @@ fun CreateBoulderScreen(
                     // Bildrahmen mit korrekter Aspect Ratio
                     Box(
                         modifier = Modifier
+                            .fillMaxWidth()
                             .aspectRatio(aspect)
-                            .fillMaxHeight()
                             .onGloballyPositioned { laidOut = it.size }
                     ) {
 
-                        // Bild laden
-                        if (resolvedImageUri.isNotBlank()) {
-                            AsyncImage(
-                                model = ImageRequest.Builder(context)
-                                    .data(resolvedImageUri)
-                                    .size(Size.ORIGINAL)
-                                    .build(),
-                                contentDescription = "Spraywall",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Fit,
-                                onSuccess = { s ->
-                                    if (resolvedImageUri.startsWith("http", ignoreCase = true)) {
-                                        val d = s.result.drawable
-                                        imgW = d.intrinsicWidth.coerceAtLeast(1)
-                                        imgH = d.intrinsicHeight.coerceAtLeast(1)
-                                    }
+                        val req = ImageRequest.Builder(context)
+                            .data(resolvedImageUri)
+                            .size(Size.ORIGINAL)
+                            .build()
+
+
+                        SubcomposeAsyncImage(
+                            model = req,
+                            contentDescription = "Spraywall",
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier.fillMaxSize(),
+                            loading = {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator(
+                                        color = colorResource(R.color.button_normal),
+                                        strokeWidth = 3.dp,
+                                        modifier = Modifier.size(28.dp)
+                                    )
                                 }
-                            )
-                        } else {
-                            Text(
-                                "Kein Bild verfügbar",
-                                modifier = Modifier.align(Alignment.Center)
-                            )
+                            },
+                            error = {
+                                ImageLoadErrorState()
+                            }
+                        )
+
+                        val painter = rememberAsyncImagePainter(model = req)
+                        val state = painter.state
+                        if (state is AsyncImagePainter.State.Success) {
+                            val d = state.result.drawable
+                            LaunchedEffect(d) {
+                                imgW = d.intrinsicWidth.coerceAtLeast(1)
+                                imgH = d.intrinsicHeight.coerceAtLeast(1)
+                            }
                         }
 
                         // Holds zeichnen + Draggen
@@ -517,6 +542,110 @@ fun CreateBoulderScreen(
         if (showDialog) {
             AlertDialog(
                 onDismissRequest = { showDialog = false },
+                shape = RoundedCornerShape(24.dp),
+                containerColor = Color.White.copy(alpha = 0.7f),
+                tonalElevation = 6.dp,
+
+
+                title = {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = if (mode is BoulderScreenMode.Edit) "Boulder bearbeiten" else "Boulder erstellen",
+                            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        // kleiner „Accent“-Strich in button_normal für visuelles Highlight
+                        Box(
+                            modifier = Modifier
+                                .width(70.dp)
+                                .height(4.dp)
+                                .background(colorResource(R.color.button_normal), RoundedCornerShape(2.dp))
+                        )
+                    }
+                },
+
+                text = {
+                    // Feld-Style wie in deinen Screens
+                    val tfColors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color.White.copy(alpha = 0.8f),
+                        unfocusedContainerColor = Color.White.copy(alpha = 0.7f),
+                        focusedBorderColor = colorResource(R.color.button_normal),
+                        cursorColor = colorResource(R.color.button_normal),
+                        focusedLabelColor = colorResource(R.color.button_normal)
+                    )
+
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+
+                        // Name
+                        OutlinedTextField(
+                            value = boulderName,
+                            onValueChange = { new ->
+                                if (new.length <= MAX_NAME) boulderName = new
+                            },
+                            label = { Text("Name") },
+                            isError = triedSave && !isNameValid,
+                            supportingText = {
+                                if (triedSave && !isNameValid) Text("Bitte einen Namen eingeben")
+                            },
+                            singleLine = true,
+                            leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null,
+                                tint = colorResource(R.color.button_normal)) },
+                            shape = RoundedCornerShape(50),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                // internen Container ausschalten
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                // (rest wie gehabt)
+                                focusedBorderColor = Color(0xFF00796B),
+                                cursorColor = Color(0xFF00796B),
+                                focusedLabelColor = Color(0xFF00796B)
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        // Schwierigkeits-Stepper
+                        val fbGrades = listOf(
+                            "3","4","5A","5B","5C",
+                            "6A","6A+","6B","6B+","6C","6C+",
+                            "7A","7A+","7B","7B+","7C","7C+",
+                            "8A","8A+","8B","8B+","8C","8C+","9A"
+                        )
+
+                        DifficultyStepper(
+                            options = fbGrades,
+                            value = boulderDifficulty.ifEmpty { fbGrades.first() },
+                            onValueChange = { boulderDifficulty = it }
+                        )
+
+                        // Setter-Notiz
+                        OutlinedTextField(
+                            value = setterNote,
+                            onValueChange = { new -> if (new.length <= MAX_NOTE) setterNote = new },
+                            label = { Text("Setter-Notiz (optional)") },
+                            supportingText = { Text("${setterNote.length} / $MAX_NOTE") },
+                            minLines = 2,
+                            maxLines = 5,
+                            leadingIcon = { Icon(Icons.Default.Info, contentDescription = null,
+                                tint = colorResource(R.color.button_normal)) },
+                            shape = RoundedCornerShape(20),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                // internen Container ausschalten
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                // (rest wie gehabt)
+                                focusedBorderColor = Color(0xFF00796B),
+                                cursorColor = Color(0xFF00796B),
+                                focusedLabelColor = Color(0xFF00796B)
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+
                 containerColor = Color(0xFFE5E5E5), // Dialog-Hintergrund hellgrau
                 confirmButton = {
                     TextButton(
@@ -567,6 +696,17 @@ fun CreateBoulderScreen(
                             contentColor = colorResource(R.color.button_normal), // App-Akzent
                             disabledContentColor = Color(0xFFBDBDBD)
                         )
+                    ) {
+                        showDialog = false
+                        onSave()
+                        onBack() // Einen Screen zurück
+                        if (fromPicker) onBack() // Nur wenn wir vom Picker kommen noch einen Schritt zurück
+
+                    },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = colorResource(R.color.button_normal)
+                        )
+
                     ) {
                         Text(if (mode is BoulderScreenMode.Edit) "Speichern" else "Anlegen")
                     }
@@ -655,6 +795,9 @@ fun CreateBoulderScreen(
                         )
                     }
                 }
+                    TextButton(onClick = { showDialog = false }) {
+                        Text("Abbrechen", color = Color(0xFFD32F2F))
+                    }                },
             )
         }
 
@@ -859,5 +1002,44 @@ fun DifficultyStepper(
         }
     }
 }
+
+
+
+
+@Composable
+private fun ImageLoadErrorState(
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.ImageSearch,
+                contentDescription = null,
+                tint = colorResource(R.color.button_normal_dark),
+                modifier = Modifier.size(72.dp)
+            )
+            Text(
+                "Bild konnte nicht geladen werden",
+                style = MaterialTheme.typography.titleLarge,
+                color = Color.White
+            )
+            Text(
+                "Bitte überprüfe deine Internetverbindung oder versuche es später erneut.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White.copy(alpha = 0.85f),
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
 
 

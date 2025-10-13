@@ -9,23 +9,34 @@ import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Label
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -40,6 +51,7 @@ import java.util.*
 import androidx.compose.ui.text.input.ImeAction
 import okio.BufferedSink
 import okio.source
+import com.example.sprayconnectapp.R
 
 
 /**
@@ -70,140 +82,254 @@ fun AddSpraywallScreen(
     var description by remember { mutableStateOf("") }
     var isPublic by remember { mutableStateOf(true) }
 
+    // UI State
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var infoMessage by remember { mutableStateOf<String?>(null) }
+
+
+
+    // Farben
+    val barColor = colorResource(id = R.color.hold_type_bar)
+
+    val tfColors = OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = Color(0xFF00796B),
+        cursorColor = Color(0xFF00796B),
+        focusedLabelColor = Color(0xFF00796B),
+        unfocusedContainerColor = Color.White,
+        focusedContainerColor = Color.White
+    )
+
+
+    val buttonColor = colorResource(R.color.button_normal)
+
+    val switchColors = SwitchDefaults.colors(
+        checkedThumbColor = Color.White,
+        checkedTrackColor = buttonColor,
+        uncheckedThumbColor = Color.White,
+        uncheckedTrackColor = Color(0xFFE0E0E0)
+    )
+    val screenBg = Brush.verticalGradient(
+        colors = listOf(Color(0xFF53535B), Color(0xFF767981), Color(0xFFA8ABB2))
+    )
+
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
         onResult = { uri -> imageUri = uri }
     )
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Neue Spraywall – $gymName") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Zurück")
+    fun canSave(): Boolean = !isLoading && imageUri != null && name.isNotBlank()
+
+
+    fun saveSpraywall() {
+        if (!canSave()) return
+        isLoading = true
+        errorMessage = null
+        infoMessage = null
+
+        val uri = imageUri!!
+        uploadToNextcloudViaWebDAV(
+            context = context,
+            uri = uri,
+            onSuccess = { uploadedUrl ->
+                val dto = SpraywallDTO(
+                    name = name.trim(),
+                    description = description.trim(),
+                    photoUrl = uploadedUrl,
+                    isPublic = isPublic,
+                    gymId = UUID.fromString(gymId),
+                    isArchived = false
+                )
+
+                viewModel.createSpraywall(
+                    context = context,
+                    dto = dto,
+                    onSuccess = {
+                        isLoading = false
+                        Toast.makeText(context, "Spraywall erfolgreich erstellt!", Toast.LENGTH_LONG).show()
+                        navController.popBackStack()
+                    },
+                    onError = { err ->
+                        isLoading = false
+                        errorMessage = err
                     }
-                }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .clickable(
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() }
-                ) {
-                    focusManager.clearFocus()
-                }
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-
-            imageUri?.let {
-                AsyncImage(
-                    model = it,
-                    contentDescription = "Gewähltes Bild",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop
                 )
+            },
+            onError = { err ->
+                isLoading = false
+                errorMessage = "Upload-Fehler: $err"
             }
+        )
+    }
 
-            Button(onClick = {
-                launcher.launch("image/*")
-            }) {
-                Text("Bild auswählen")
-            }
 
-            OutlinedTextField(
-                value = name,
-                onValueChange = { if (it.length <= 20) name = it },
-                label = { Text("Name") },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
-                keyboardActions = KeyboardActions(
-                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                )
-            )
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(screenBg)
+    ){
 
-            OutlinedTextField(
-                value = description,
-                onValueChange = { if (it.length <= 20) description = it },
-                label = { Text("Beschreibung") },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(
-                    onDone = { focusManager.clearFocus() }
-                )
-            )
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Switch(checked = isPublic, onCheckedChange = { isPublic = it })
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Öffentlich sichtbar")
-            }
 
-            Button(
-                onClick = {
-                    imageUri?.let { uri ->
-                        uploadToNextcloudViaWebDAV(
-                            context = context,
-                            uri = uri,
-                            onSuccess = { uploadedUrl ->
-                                uploadedImageUrl = uploadedUrl
-                                Log.d("UPLOAD", "Erfolgreich: $uploadedUrl")
-
-                                val spraywallDto = SpraywallDTO(
-                                    name = name,
-                                    description = description,
-                                    photoUrl = uploadedUrl,
-                                    isPublic = isPublic,
-                                    gymId = UUID.fromString(gymId),
-                                    isArchived = false
-                                )
-
-                                viewModel.createSpraywall(
-                                    context = context,
-                                    dto = spraywallDto,
-                                    onSuccess = {
-                                        Toast.makeText(
-                                            context,
-                                            "Spraywall erfolgreich erstellt!",
-                                            Toast.LENGTH_LONG
-                                        ).show()
-                                        navController.popBackStack()
-                                    },
-                                    onError = {
-                                        Toast.makeText(
-                                            context,
-                                            "Fehler: $it",
-                                            Toast.LENGTH_LONG
-                                        ).show()
-                                    }
-                                )
-                            },
-                            onError = { error ->
-                                Toast.makeText(
-                                    context,
-                                    "Upload-Fehler: $error",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            }
-                        )
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                CenterAlignedTopAppBar(
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = barColor,
+                        scrolledContainerColor = barColor,
+                        titleContentColor = Color.White,
+                        navigationIconContentColor = Color.White,
+                        actionIconContentColor = Color.White
+                    ),
+                    title = { Text("Neue Spraywall – $gymName") },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Zurück")
+                        }
                     }
-                },
-                enabled = imageUri != null && name.isNotBlank(),
-                modifier = Modifier.fillMaxWidth()
+                )
+            }
+        ) { inner ->
+            Column(
+                modifier = Modifier
+                    .padding(inner)
+                    .padding(16.dp)
+                    .widthIn(max = 560.dp)
+                    .fillMaxSize()
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    ) { focusManager.clearFocus() },
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text("Spraywall hochladen")
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(6.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(24.dp)
+                            .fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(
+                            "Spraywall anlegen",
+                            style = MaterialTheme.typography.headlineSmall,
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
+                        Divider()
+
+                        // Bild
+                        Button(
+                            onClick = { launcher.launch("image/*") },
+                            shape = RoundedCornerShape(50),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = colorResource(R.color.button_normal),
+                                contentColor = Color.White
+                            ),
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        ) {
+                            Icon(Icons.Default.Upload, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                if (imageUri == null) "Bild auswählen" else "Bild ändern"
+                            )                        }
+
+                        imageUri?.let { uri ->
+                            AsyncImage(
+                                model = uri,
+                                contentDescription = "Gewähltes Bild",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(180.dp)
+                                    .clip(RoundedCornerShape(12.dp)),
+                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                            )
+                        }
+
+                        // Name
+                        OutlinedTextField(
+                            value = name,
+                            onValueChange = { if (it.length <= 40) name = it },
+                            label = { Text("Name") },
+                            placeholder = { Text("Name der Spraywall") },
+                            leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                            colors = tfColors,
+                            shape = RoundedCornerShape(50),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                            keyboardActions = KeyboardActions(
+                                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                            )
+                        )
+
+                        // Beschreibung
+                        OutlinedTextField(
+                            value = description,
+                            onValueChange = { if (it.length <= 20) description = it },
+                            label = { Text("Beschreibung") },
+                            placeholder = { Text("Kurzbeschreibung") },
+                            leadingIcon = { Icon(Icons.Default.Info, contentDescription = null) },
+                            colors = tfColors,
+                            shape = RoundedCornerShape(50),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(
+                                onDone = {
+                                    focusManager.clearFocus()
+                                    saveSpraywall()
+                                }
+                            )
+                        )
+
+                        // Sichtbarkeit
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Switch(checked = isPublic, onCheckedChange = { isPublic = it }, colors = switchColors)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Öffentlich sichtbar")
+                        }
+
+                        // Speichern
+                        Button(
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = colorResource(R.color.button_normal),
+                                contentColor = Color.White
+                            ),
+                            onClick = { saveSpraywall() },
+                            enabled = canSave(),
+                            modifier = Modifier
+                                .align(Alignment.CenterHorizontally)
+                                .wrapContentWidth()
+                        ) {
+                            Text("Spraywall hochladen")
+                        }
+
+                        // Info/Fehler
+                        infoMessage?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
+                        errorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                color = colorResource(R.color.button_normal),
+                                modifier = Modifier.align(Alignment.CenterHorizontally)
+                            )
+                        }
+                    }
+                }
             }
         }
     }
+
+
+
 }
 
 

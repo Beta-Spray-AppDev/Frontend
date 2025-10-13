@@ -10,8 +10,12 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Divider
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.BarChart
 
@@ -30,8 +34,9 @@ import androidx.compose.material.icons.outlined.Star
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -74,6 +79,7 @@ import com.example.sprayconnectapp.ui.screens.Profile.ProfileViewModel
 
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.saveable.rememberSaveable
 
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -131,15 +137,6 @@ fun ViewBoulderScreen(
     var currentBoulderId by rememberSaveable { mutableStateOf(boulderId) }
 
 
-    // Wählt Liste nach Quelle
-    val fromProfile = source == "mine" || source == "ticked"
-
-    val list: List<BoulderDTO> = when {
-        !fromProfile -> gymList
-        source == "mine" -> myList
-        else -> tickedBoulders // <- das ist unsere echte Liste der getickten Boulder
-    }
-
     //Ui-State holen
     val context = LocalContext.current
     val uiState by viewModel.uiState
@@ -155,12 +152,39 @@ fun ViewBoulderScreen(
         )
     }
 
-    // Prev & Next
-    // IDs der aktiven Liste (egal ob aus Profil oder Gym-Liste)
-    val idList = remember(list) { list.map { it.id } }
+    // Wählt Liste nach Quelle
+    val fromProfile = source == "mine" || source == "ticked"
 
-// aktuelle ID = Boulder aus dem UI oder Fallback auf currentBoulderId
-    val visibleId = boulder?.id ?: currentBoulderId
+    // IDs aus dem SavedStateHandle der vorherigen BackStack-Entry holen
+    val visibleIdsFromList: List<String> =
+        if (!fromProfile && source == "list") {
+            navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.get<ArrayList<String>>("visibleIds")
+                ?.toList()
+                ?: emptyList()
+        } else emptyList()
+
+    // Aktuelle ID (aus dem geladenen Boulder oder Fallback)
+    val visibleId = (uiState.boulder?.id ?: currentBoulderId)
+
+
+    // Die ID-Liste, durch die geswiped werden darf:
+    val idList: List<String> = when {
+        // wenn aus der BoulderList gekommen: NUR gefilterte IDs verwenden
+        source == "list" && visibleIdsFromList.isNotEmpty() -> visibleIdsFromList
+
+        // aus dem Profil: bestehende Logik behalten
+        fromProfile -> when (source) {
+            "mine"   -> myList.mapNotNull { it.id }
+            "ticked" -> tickedBoulders.mapNotNull { it.id }
+            else     -> emptyList()
+        }
+
+        // Fallback (sollte kaum noch gebraucht werden)
+        else -> gymList.mapNotNull { it.id }
+    }
+
 
 // Index des aktuell sichtbaren Boulders
     val currentIndex = idList.indexOf(visibleId)
@@ -168,21 +192,6 @@ fun ViewBoulderScreen(
 // Vorheriger & nächster Boulder
     val prevId = if (currentIndex > 0) idList[currentIndex - 1] else null
     val nextId = if (currentIndex >= 0 && currentIndex + 1 < idList.size) idList[currentIndex + 1] else null
-
-// Buttons im BottomBar:
-    IconButton(
-        enabled = prevId != null,
-        onClick = { prevId?.let { currentBoulderId = it } }
-    ) {
-        Icon(Icons.Default.NavigateBefore, contentDescription = "Vorheriger Boulder")
-    }
-
-    IconButton(
-        enabled = nextId != null,
-        onClick = { nextId?.let { currentBoulderId = it } }
-    ) {
-        Icon(Icons.Default.NavigateNext, contentDescription = "Nächster Boulder")
-    }
 
 
     // Dialogzustände
@@ -285,7 +294,7 @@ fun ViewBoulderScreen(
 
                 if (canEdit) {
                     FloatingActionButton(
-                        containerColor = Color(0xFF7FBABF),
+                        containerColor =colorResource(R.color.button_normal) ,//Color(0xFF7FBABF),
                         onClick = {
                             val encodedUri = Uri.encode(imageUri)
                             val editTargetId = boulder?.id ?: currentBoulderId
@@ -431,47 +440,22 @@ fun ViewBoulderScreen(
         val encodedName = Uri.encode(nameForRoute)
         val targetId = boulder?.id // String?
 
-        AlertDialog(
-            onDismissRequest = { showInfo = false },
 
 
-            confirmButton = {
-                Row {
-                    // Mehr Infos
-                    TextButton(
-                        enabled = targetId != null,
-                        onClick = {
-                            showInfo = false
-                            if (targetId != null) {
-                                navController.navigate("boulderComments/$targetId?boulderName=$encodedName")
-                            }
-                        }
-                    ) { Text("Mehr Infos", color = colorResource(R.color.button_normal)) }
-
-                    // OK
-                    Spacer(Modifier.width(8.dp))
-                    TextButton(onClick = { showInfo = false }) {
-                        Text("OK", color = colorResource(R.color.button_normal))
-                    }
-                }
+        BoulderInfoDialog(
+            show = showInfo,
+            onDismiss = { showInfo = false },
+            onMoreInfo = targetId?.let {
+                { navController.navigate("boulderComments/$targetId?boulderName=$encodedName") }
             },
-
-
-            title = { Text(uiState.boulder?.name ?: "Boulder") },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    InfoLine("Setter", uiState.boulder?.createdByUsername
-                        ?: uiState.boulder?.createdBy?.take(8) ?: "-", Icons.Default.Person)
-                    InfoLine("Schwierigkeit", difficulty, Icons.Default.BarChart)
-                    InfoLine("Gym", boulder?.gymName ?: "-", Icons.Filled.Place)
-                    InfoLine("Spraywall", boulder?.spraywallName ?: "-", Icons.Default.GridOn)
-
-                    Spacer(Modifier.height(4.dp))
-                    Divider()
-                    InfoLine("Erstellt am", created)
-                    InfoLine("Zuletzt aktualisiert", updated)
-                }
-            }
+            title = uiState.boulder?.name ?: "Boulder",
+            setter = uiState.boulder?.createdByUsername
+                ?: uiState.boulder?.createdBy?.take(8) ?: "-",
+            difficulty = difficulty,
+            gymName = boulder?.gymName ?: "-",
+            spraywallName = boulder?.spraywallName ?: "-",
+            created = created,
+            updated = updated
         )
     }
 
@@ -593,7 +577,8 @@ private fun InfoLine(label: String, value: String, icon: ImageVector? = null) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(
+            containerColor = colorResource(R.color.button_normal).copy(alpha = 0.08f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         shape = RoundedCornerShape(12.dp)
 
@@ -725,3 +710,147 @@ private fun HoldLegendRow(type: HoldType) {
 }
 
 
+
+
+/** einheitliche Zeile mit optionalem Icon, Label links & Wert rechts umgebrochen */
+@Composable
+private fun InfoLineStyled(
+    label: String,
+    value: String,
+    leadingIcon: ImageVector?
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        if (leadingIcon != null) {
+            Icon(
+                imageVector = leadingIcon,
+                contentDescription = null,
+                tint = colorResource(R.color.button_normal)
+            )
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BoulderInfoDialog(
+    show: Boolean,
+    onDismiss: () -> Unit,
+    onMoreInfo: (() -> Unit)? = null,
+    // Daten:
+    title: String,
+    setter: String,
+    difficulty: String,
+    gymName: String,
+    spraywallName: String,
+    created: String,
+    updated: String
+) {
+    if (!show) return
+
+    val barColor = colorResource(id = R.color.hold_type_bar)
+    val buttonColor = colorResource(id = R.color.button_normal)
+
+
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(24.dp),
+        containerColor = Color.White.copy(alpha = 0.75f),
+        tonalElevation = 6.dp,
+
+
+        title = {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                    textAlign = TextAlign.Center
+                )
+                Spacer(Modifier.height(4.dp))
+                Box(
+                    modifier = Modifier
+                        .width(60.dp)
+                        .height(4.dp)
+                        .background(colorResource(R.color.button_normal), RoundedCornerShape(2.dp))
+                )
+            }
+        }
+
+        ,
+
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                // dünne Trennlinie wie im Card-Layout
+                Divider(
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                    modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)
+                )
+                InfoLineStyled("Setter", setter, Icons.Default.Person)
+                InfoLineStyled("Schwierigkeit", difficulty, Icons.Default.BarChart)
+                InfoLineStyled("Gym", gymName, Icons.Default.Place)
+                InfoLineStyled("Spraywall", spraywallName, Icons.Default.GridOn)
+
+                Divider(
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                    modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)
+                )
+                InfoLineStyled("Erstellt am:", created, Icons.Default.Add)
+                InfoLineStyled("Zuletzt aktualisiert:", updated, Icons.Default.AccessTime)
+            }
+        },
+
+        // Buttons im App-Style (button_normal), sauber ausgerichtet
+        confirmButton = {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Mehr Infos (wenn verfügbar)
+                if (onMoreInfo != null) {
+                    TextButton(
+                        onClick = {
+                            onDismiss()
+                            onMoreInfo()
+                        },
+                        colors = ButtonDefaults.textButtonColors(contentColor = buttonColor),
+                        shape = RoundedCornerShape(50)
+                    ) {
+                        Text("Mehr Infos")
+                    }
+                }
+
+                TextButton(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.textButtonColors(contentColor = buttonColor),
+                    shape = RoundedCornerShape(50)
+                ) {
+                    Text("OK")
+                }
+            }
+        }
+    )
+}

@@ -91,6 +91,8 @@ dependencies {
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     implementation(libs.androidx.runtime)
+    implementation(libs.foundation)
+    implementation(libs.material3)
     implementation(libs.androidx.animation.core)
     implementation(libs.androidx.foundation.layout)
     implementation(libs.material3)
