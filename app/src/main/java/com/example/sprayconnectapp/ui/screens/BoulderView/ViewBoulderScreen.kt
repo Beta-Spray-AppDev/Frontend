@@ -480,11 +480,11 @@ fun ViewBoulderScreen(
         val name = boulder?.name ?: "diesen Boulder"
         AlertDialog(
             onDismissRequest = { showTickDialog = false },
-            title = { Text(title) },
+            title = { Text(title, color = Color.Black) },
             text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 StarRating(value = stars, onChange = { stars = it })
 
-                Divider()
+                Divider(color = Color.Black.copy(alpha = 0.12f))
 
                 DifficultyStepper(
                     options = fbGrades,
@@ -505,7 +505,8 @@ fun ViewBoulderScreen(
                     }
                 ) { Text("Ja, eintragen",color = colorResource(R.color.button_normal)) }
             },
-            dismissButton = { TextButton(onClick = { showTickDialog = false }) { Text("Abbrechen", color = Color(0xFFD32F2F)) } }
+            dismissButton = { TextButton(onClick = { showTickDialog = false }) { Text("Abbrechen", color = Color(0xFFD32F2F)) } },
+            containerColor = Color.White
         )
     }
 
@@ -796,7 +797,8 @@ fun BoulderInfoDialog(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    color = Color.Black
                 )
                 Spacer(Modifier.height(4.dp))
                 Box(
