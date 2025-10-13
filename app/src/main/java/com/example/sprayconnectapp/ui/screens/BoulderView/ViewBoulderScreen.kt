@@ -6,6 +6,7 @@ import android.net.Uri
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
@@ -83,8 +84,9 @@ import com.example.sprayconnectapp.util.TokenStore
 import java.text.DateFormat
 import java.util.Date
 import kotlin.math.roundToInt
-
-
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.core.content.edit
 
 
 /**
@@ -143,8 +145,15 @@ fun ViewBoulderScreen(
     val uiState by viewModel.uiState
     val boulder = uiState.boulder
     val density = LocalDensity.current
-    val markerSizeDp = 32.dp
+    val markerSizeDp = 20.dp
     val markerRadiusPx = with(density) { (markerSizeDp / 2).toPx() }
+
+    var showOnboarding by remember {
+        mutableStateOf(
+            context.getSharedPreferences("prefs", android.content.Context.MODE_PRIVATE)
+                .getBoolean("showOnboarding_view", true)
+        )
+    }
 
     // Prev & Next
     // IDs der aktiven Liste (egal ob aus Profil oder Gym-Liste)
@@ -514,6 +523,65 @@ fun ViewBoulderScreen(
         )
     }
 
+    if (showOnboarding) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xAA000000))
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Text(
+                    "Farblegende der Griffe",
+                    color = Color.White,
+                    style = MaterialTheme.typography.headlineSmall,
+                    textAlign = TextAlign.Center
+                )
+
+                // kurze Erklärung
+                Text(
+                    "Die Farben zeigen den Griff-Typ an.",
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                // Legende – generisch über alle HoldType-Einträge
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    HoldType.entries.forEach { type ->
+                        HoldLegendRow(type)
+                    }
+                }
+
+                Spacer(Modifier.height(18.dp))
+
+                TextButton(
+                    onClick = {
+                        showOnboarding = false
+                        context.getSharedPreferences("prefs", android.content.Context.MODE_PRIVATE)
+                            .edit { putBoolean("showOnboarding_view", false) }
+                    },
+                    modifier = Modifier
+                        .background(Color.White, shape = CircleShape)
+                        .padding(horizontal = 22.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        "Verstanden",
+                        color = Color.Black,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+            }
+        }
+    }
+
+
 }
 
 
@@ -629,3 +697,31 @@ private fun readImageSizeRespectingExif(
 
     return w to h
 }
+
+
+private fun HoldType.prettyName(): String =
+    name.lowercase().replace('_', ' ').replaceFirstChar { it.titlecase() }
+
+
+
+@Composable
+private fun HoldLegendRow(type: HoldType) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(18.dp)
+                .border(width = 2.dp, color = type.color, shape = CircleShape) // nur Umrandung
+        )
+        Spacer(Modifier.width(10.dp))
+        Text(
+            text = type.prettyName(),
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+            color = Color.White
+        )
+    }
+}
+
+

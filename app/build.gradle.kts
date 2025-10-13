@@ -19,7 +19,7 @@ android {
         buildConfigField(
             "String",
             "LATEST_JSON_URL",
-            "\"http://10.0.2.2:8080/latest.json\""
+            "\"http://leitln.at:8090/latest.json\""
         )
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -91,6 +91,10 @@ dependencies {
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     implementation(libs.androidx.runtime)
+    implementation(libs.androidx.animation.core)
+    implementation(libs.androidx.foundation.layout)
+    implementation(libs.material3)
+    implementation(libs.ui.graphics)
     ksp("androidx.room:room-compiler:2.6.1")
 
     // Tests & Debug

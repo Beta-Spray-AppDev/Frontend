@@ -8,6 +8,6 @@ import com.example.sprayconnectapp.data.dto.HoldType
 fun HoldType.iconRes(): Int = when (this) {
     HoldType.TRITT -> R.drawable.tritt
     HoldType.GRIFF -> R.drawable.griff
-    HoldType.START -> R.drawable.start
+    HoldType.START -> R.drawable.logoalpha
     HoldType.TOP   -> R.drawable.top
 }

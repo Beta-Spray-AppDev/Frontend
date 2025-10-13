@@ -25,12 +25,16 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.NavigateBefore
 import androidx.compose.material.icons.filled.NavigateNext
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -110,7 +114,7 @@ fun CreateBoulderScreen(
 
     // Markergröße/-radius für die Hold-Zeichnung
     val density = LocalDensity.current
-    val markerSizeDp = 32.dp
+    val markerSizeDp = 20.dp
     val markerRadiusPx = with(density) { (markerSizeDp / 2).toPx() }
 
 
@@ -513,99 +517,111 @@ fun CreateBoulderScreen(
         if (showDialog) {
             AlertDialog(
                 onDismissRequest = { showDialog = false },
+                containerColor = Color(0xFFE5E5E5), // Dialog-Hintergrund hellgrau
                 confirmButton = {
-                    TextButton( onClick = {
-                        Log.d(
-                            "BoulderUpdate",
-                            "Confirm clicked. mode=$mode  name=$boulderName  diff=$boulderDifficulty"
-                        )
+                    TextButton(
+                        onClick = {
+                            Log.d("BoulderUpdate", "Confirm clicked. mode=$mode  name=$boulderName  diff=$boulderDifficulty")
 
-                        // falls User keinen Namen eingegeben hat
-                        if (boulderName.isBlank()) {
-                            triedSave = true              // Fehler anzeigen
-                            return@TextButton
-                        }
+                            if (boulderName.isBlank()) {
+                                triedSave = true
+                                return@TextButton
+                            }
 
-                        if (!com.example.sprayconnectapp.ui.screens.isOnline(context)) {
-                            Toast.makeText(
-                                context,
-                                "Boulder können nur online gespeichert/bearbeitet werden.",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            return@TextButton
-                        }
+                            if (!com.example.sprayconnectapp.ui.screens.isOnline(context)) {
+                                Toast.makeText(
+                                    context,
+                                    "Boulder können nur online gespeichert/bearbeitet werden.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                return@TextButton
+                            }
 
-                        if (mode is BoulderScreenMode.Edit) {
-                            viewModel.updateBoulder(
-                                context = context,
-                                name = boulderName,
-                                difficulty = boulderDifficulty,
-                                spraywallId = spraywallId,
-                                boulderIdOverride = mode.boulderId,
-                                setterNote = setterNote
+                            if (mode is BoulderScreenMode.Edit) {
+                                viewModel.updateBoulder(
+                                    context = context,
+                                    name = boulderName,
+                                    difficulty = boulderDifficulty,
+                                    spraywallId = spraywallId,
+                                    boulderIdOverride = mode.boulderId,
+                                    setterNote = setterNote
+                                )
+                                Toast.makeText(context, "Boulder aktualisiert", Toast.LENGTH_SHORT).show()
+                            } else {
+                                viewModel.saveBoulder(
+                                    context = context,
+                                    name = boulderName,
+                                    difficulty = boulderDifficulty,
+                                    spraywallId = spraywallId,
+                                    setterNote = setterNote
+                                )
+                                Toast.makeText(context, "Boulder erstellt", Toast.LENGTH_SHORT).show()
+                            }
 
-                            )
-                            Toast
-                                .makeText(context, "Boulder aktualisiert", Toast.LENGTH_SHORT)
-                                .show()
-                        } else {
-                            viewModel.saveBoulder(
-                                context = context,
-                                name = boulderName,
-                                difficulty = boulderDifficulty,
-                                spraywallId = spraywallId,
-                                setterNote = setterNote
-                            )
-                            Toast
-                                .makeText(context, "Boulder erstellt", Toast.LENGTH_SHORT)
-                                .show()
-                        }
-
-                        showDialog = false
-                        onSave()
-                        onBack() // Einen Screen zurück
-                        if (fromPicker) { // Nur wenn wir vom Picker kommen noch einen Schritt zurück
+                            showDialog = false
+                            onSave()
                             onBack()
-                        }
-                    }) {
+                            if (fromPicker) onBack()
+                        },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = colorResource(R.color.button_normal), // App-Akzent
+                            disabledContentColor = Color(0xFFBDBDBD)
+                        )
+                    ) {
                         Text(if (mode is BoulderScreenMode.Edit) "Speichern" else "Anlegen")
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showDialog = false }) { Text("Abbrechen") }
+                    TextButton(
+                        onClick = { showDialog = false },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = Color(0xFF000000) // Schwarz
+                        )
+                    ) { Text("Abbrechen") }
                 },
                 title = {
                     Text(
-                        if (mode is BoulderScreenMode.Edit) "Boulder speichern"
-                        else "Boulder anlegen"
+                        if (mode is BoulderScreenMode.Edit) "Boulder speichern" else "Boulder anlegen",
+                        color = Color(0xFF000000) // Schwarz
                     )
                 },
                 text = {
                     Column {
+                        // Name
                         OutlinedTextField(
                             value = boulderName,
                             onValueChange = { new ->
-                                if (new.length <= MAX_NAME) {
-                                    boulderName = new
-                                }
+                                if (new.length <= MAX_NAME) boulderName = new
                             },
-                            label = { Text("Name") },
+                            label = { Text("Name", color = Color(0xFF000000)) },
                             isError = triedSave && !isNameValid,
                             supportingText = {
-                                if (triedSave && !isNameValid) Text("Bitte einen Namen eingeben")
+                                if (triedSave && !isNameValid)
+                                    Text("Bitte einen Namen eingeben", color = Color(0xFF000000))
                             },
-                            singleLine = true
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = colorResource(R.color.button_normal),
+                                unfocusedBorderColor = colorResource(R.color.button_normal),
+                                focusedLabelColor = colorResource(R.color.button_normal),
+                                cursorColor = colorResource(R.color.button_normal),
+                                focusedTextColor = Color(0xFF000000),
+                                unfocusedTextColor = Color(0xFF000000),
+                                focusedContainerColor = Color(0xFFFFFFFF),
+                                unfocusedContainerColor = Color(0xFFFFFFFF)
+                            )
                         )
+
                         Spacer(Modifier.height(8.dp))
 
-                        // Schwierigkeitsauswahl als Stepper
+                        // Schwierigkeitsauswahl (Stepper bleibt, Text kommt schwarz vom Theme/ContentColor)
                         val fbGrades = listOf(
                             "3", "4", "5A", "5B", "5C",
                             "6A", "6A+", "6B", "6B+", "6C", "6C+",
                             "7A", "7A+", "7B", "7B+", "7C", "7C+",
                             "8A", "8A+", "8B", "8B+", "8C", "8C+", "9A"
                         )
-
 
                         DifficultyStepper(
                             options = fbGrades,
@@ -615,22 +631,33 @@ fun CreateBoulderScreen(
 
                         Spacer(Modifier.height(12.dp))
 
+                        // Setter-Notiz
                         OutlinedTextField(
                             value = setterNote,
-                            onValueChange = { new ->
-                                if (new.length <= MAX_NOTE) setterNote = new
-                            },
-                            label = { Text("Setter-Notiz (optional)") },
+                            onValueChange = { new -> if (new.length <= MAX_NOTE) setterNote = new },
+                            label = { Text("Setter-Notiz (optional)", color = Color(0xFF000000)) },
                             supportingText = {
-                                Text("${setterNote.length} / $MAX_NOTE")
+                                Text("${setterNote.length} / $MAX_NOTE", color = Color(0xFF000000))
                             },
                             minLines = 2,
-                            maxLines = 5
+                            maxLines = 5,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = colorResource(R.color.button_normal),
+                                unfocusedBorderColor = colorResource(R.color.button_normal),
+                                focusedLabelColor = colorResource(R.color.button_normal),
+                                cursorColor = colorResource(R.color.button_normal),
+                                focusedTextColor = Color(0xFF000000),
+                                unfocusedTextColor = Color(0xFF000000),
+                                focusedContainerColor = Color(0xFFFFFFFF),
+                                unfocusedContainerColor = Color(0xFFFFFFFF)
+                            )
                         )
                     }
                 }
             )
         }
+
 
         // Löschen-Dialog (nur im Edit)
         if (showDeleteDialog && mode is BoulderScreenMode.Edit) {
@@ -769,11 +796,14 @@ fun DifficultyStepper(
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // falls value noch leer/ungültig - erstes Element
+    val buttonColor = colorResource(R.color.button_normal) // App-Farbe
     val currentIndex = options.indexOf(value).let { if (it >= 0) it else 0 }
 
     Column(modifier) {
-        Text(label)
+        Text(
+            label,
+            color = Color(0xFF000000) // Schwarz
+        )
         Spacer(Modifier.height(4.dp))
         Row(
             modifier = Modifier
@@ -784,31 +814,50 @@ fun DifficultyStepper(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            // Pfeil zurück
             IconButton(
                 onClick = {
                     val newIndex = (currentIndex - 1).coerceAtLeast(0)
                     onValueChange(options[newIndex])
                 },
-                enabled = currentIndex > 0
+                enabled = currentIndex > 0,
+                colors = IconButtonDefaults.iconButtonColors(
+                    contentColor = if (currentIndex > 0) buttonColor else Color(0x66000000)
+                )
             ) {
-                Icon(Icons.Default.NavigateBefore, contentDescription = "Niedriger")
+                Icon(
+                    imageVector = Icons.Default.NavigateBefore,
+                    contentDescription = "Niedriger",
+                    tint = if (currentIndex > 0) buttonColor else Color(0x66000000)
+                )
             }
 
+            // Aktueller Wert
             Text(
                 text = options.getOrElse(currentIndex) { options.firstOrNull().orEmpty() },
-                style = androidx.compose.material3.MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
+                color = Color(0xFF000000) // Schwarz
             )
 
+            // Pfeil vor
             IconButton(
                 onClick = {
                     val newIndex = (currentIndex + 1).coerceAtMost(options.lastIndex)
                     onValueChange(options[newIndex])
                 },
-                enabled = currentIndex < options.lastIndex
+                enabled = currentIndex < options.lastIndex,
+                colors = IconButtonDefaults.iconButtonColors(
+                    contentColor = if (currentIndex < options.lastIndex) buttonColor else Color(0x66000000)
+                )
             ) {
-                Icon(Icons.Default.NavigateNext, contentDescription = "Höher")
+                Icon(
+                    imageVector = Icons.Default.NavigateNext,
+                    contentDescription = "Höher",
+                    tint = if (currentIndex < options.lastIndex) buttonColor else Color(0x66000000)
+                )
             }
         }
     }
 }
+
 

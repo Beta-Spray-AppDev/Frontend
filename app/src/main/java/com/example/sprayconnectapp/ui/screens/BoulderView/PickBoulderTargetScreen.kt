@@ -164,7 +164,11 @@ fun PickBoulderTargetScreen(
                                             }
                                         }
                                     },
-                                elevation = CardDefaults.cardElevation(6.dp)
+                                elevation = CardDefaults.cardElevation(6.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFFFFFFFF), // Weiß
+                                    contentColor = Color(0xFF000000)    // Schwarz
+                                )
                             ) {
                                 Column(Modifier.padding(16.dp)) {
                                     Text(gym.name, style = MaterialTheme.typography.titleMedium)
@@ -196,7 +200,11 @@ fun PickBoulderTargetScreen(
                                             "create_boulder/${wall.id}?imageUri=&mode=create&boulderId=&fromPicker=true"
                                         )
                                     },
-                                elevation = CardDefaults.cardElevation(6.dp)
+                                elevation = CardDefaults.cardElevation(6.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFFFFFFFF), // Weiß
+                                    contentColor = Color(0xFF000000)    // Schwarz
+                                )
                             ) {
                                 Column(Modifier.padding(16.dp)) {
                                     Text(wall.name, style = MaterialTheme.typography.titleMedium)

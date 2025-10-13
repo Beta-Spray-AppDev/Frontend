@@ -13,50 +13,40 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
-import com.example.sprayconnectapp.data.dto.BoulderDTO
-import com.example.sprayconnectapp.data.dto.UserProfile
-import com.example.sprayconnectapp.ui.screens.BottomNavigationBar
-
-import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.unit.Dp
-import com.example.sprayconnectapp.R
-import com.example.sprayconnectapp.util.getPrivateImageFileByName
-import com.example.sprayconnectapp.util.localOutputNameFromPreview
-
-import androidx.compose.foundation.lazy.items
-
-import com.example.sprayconnectapp.BuildConfig
-import com.example.sprayconnectapp.util.UpdateChecker
-import kotlinx.coroutines.launch
-
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import com.example.sprayconnectapp.BuildConfig
+import com.example.sprayconnectapp.R
+import com.example.sprayconnectapp.data.dto.BoulderDTO
+import com.example.sprayconnectapp.data.dto.UserProfile
+import com.example.sprayconnectapp.ui.screens.BottomNavigationBar
+import com.example.sprayconnectapp.util.UpdateChecker
 import com.example.sprayconnectapp.util.UpdateInstaller
+import com.example.sprayconnectapp.util.getPrivateImageFileByName
+import com.example.sprayconnectapp.util.localOutputNameFromPreview
 import kotlinx.coroutines.launch
 import kotlin.text.contains
-
-
 
 /**
  * Profilübersicht:
@@ -64,7 +54,6 @@ import kotlin.text.contains
  * - Logout, Profil bearbeiten
  * - Navigiert zu Boulder-Details (mit optionaler lokaler Bild-URI)
  */
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,8 +69,6 @@ fun ProfileScreen(navController: NavController) {
 
     val tickedIds = remember(ticked) { ticked.mapNotNull { it.id }.toSet() }
 
-
-
     // Beim ersten Compose Daten laden
     LaunchedEffect(Unit) {
         viewModel.loadProfile(context)
@@ -91,8 +78,7 @@ fun ProfileScreen(navController: NavController) {
 
     val BarColor = colorResource(id = R.color.hold_type_bar)
 
-
-    // Farbverlauf Hintergrund
+    // Farbverlauf Hintergrund (hart)
     val screenBg = Brush.verticalGradient(
         colors = listOf(
             Color(0xFF53535B),
@@ -101,17 +87,11 @@ fun ProfileScreen(navController: NavController) {
         )
     )
 
-
-
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(screenBg)
-    ){
-
-
-
-
+    ) {
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
@@ -122,19 +102,13 @@ fun ProfileScreen(navController: NavController) {
                         titleContentColor = Color.White,
                         navigationIconContentColor = Color.White,
                         actionIconContentColor = Color.White
-
                     ),
-                    //Titel
                     title = { Text("Mein Profil") },
-
-                    //Back Button
                     navigationIcon = {
-                        IconButton(onClick = { navController.popBackStack() }, ) {
+                        IconButton(onClick = { navController.popBackStack() }) {
                             Icon(Icons.Default.ArrowBack, contentDescription = "Zurück")
                         }
                     },
-
-                    // Logout Button
                     actions = {
                         IconButton(onClick = {
                             viewModel.logout(context)
@@ -142,12 +116,14 @@ fun ProfileScreen(navController: NavController) {
                                 popUpTo("home") { inclusive = true }
                             }
                         }) {
-                            Icon(Icons.Default.ExitToApp, contentDescription = "Logout", modifier = Modifier.size(28.dp) )
+                            Icon(
+                                Icons.Default.ExitToApp,
+                                contentDescription = "Logout",
+                                modifier = Modifier.size(28.dp)
+                            )
                         }
                     }
-
                 )
-
             },
             bottomBar = { BottomNavigationBar(navController) }
         ) { innerPadding ->
@@ -161,7 +137,6 @@ fun ProfileScreen(navController: NavController) {
                 item {
                     when {
                         isLoading -> {
-                            // Spinner mittig anzeigen
                             Box(
                                 modifier = Modifier.fillMaxWidth(),
                                 contentAlignment = Alignment.Center
@@ -169,47 +144,49 @@ fun ProfileScreen(navController: NavController) {
                                 CircularProgressIndicator(color = colorResource(R.color.button_normal))
                             }
                         }
-
-                        // Fehlermeldung anzeigen
                         error != null -> {
+                            // Fehlerfarbe kann gerne systemisch bleiben; sonst eigen hartes Rot setzen.
                             Text("Fehler: $error", color = MaterialTheme.colorScheme.error)
                         }
-
-                        //Erfolgszustand: Profil + Listenbereiche anzeigen
                         profile != null -> {
-
                             ProfileCard(profile = profile!!, navController = navController)
                             Spacer(modifier = Modifier.height(17.dp))
 
-                            BoulderListCard(title = "Meine Boulder", boulders = boulders, navController = navController, source = "mine", tickedIds = tickedIds, onDeleteSelected =
-                                { ids ->
-                                viewModel.deleteBoulders(context, ids) {
-                                    Toast.makeText(context, "Boulder gelöscht", Toast.LENGTH_SHORT).show()
-                                }
-                            },
-                                onAfterDelete = {})
+                            BoulderListCard(
+                                title = "Meine Boulder",
+                                boulders = boulders,
+                                navController = navController,
+                                source = "mine",
+                                tickedIds = tickedIds,
+                                onDeleteSelected = { ids ->
+                                    viewModel.deleteBoulders(context, ids) {
+                                        Toast.makeText(context, "Boulder gelöscht", Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                                onAfterDelete = {}
+                            )
 
                             Spacer(Modifier.height(17.dp))
 
                             val tickGrades by viewModel.myTickGrades.collectAsState()
 
-
-                            BoulderListCard(title = "Getickte Boulder", boulders = ticked, navController = navController, source = "ticked", tickedIds = tickedIds, userGrades = tickGrades,  onDeleteSelected =
-                                { ids ->
-                                viewModel.deleteTicks(context, ids) {
-                                    Toast.makeText(context, "Tick(s) entfernt", Toast.LENGTH_SHORT).show()
-                                }
-                            },
-                                onAfterDelete = {})
-
+                            BoulderListCard(
+                                title = "Getickte Boulder",
+                                boulders = ticked,
+                                navController = navController,
+                                source = "ticked",
+                                tickedIds = tickedIds,
+                                userGrades = tickGrades,
+                                onDeleteSelected = { ids ->
+                                    viewModel.deleteTicks(context, ids) {
+                                        Toast.makeText(context, "Tick(s) entfernt", Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                                onAfterDelete = {}
+                            )
                         }
-
-
-
-
-                        // Kein Zustand
                         else -> {
-                            Text("Keine Profildaten vorhanden.")
+                            Text("Keine Profildaten vorhanden.", color = Color(0xFF000000))
                         }
                     }
                 }
@@ -219,55 +196,49 @@ fun ProfileScreen(navController: NavController) {
                 }
             }
         }
-
-
-
     }
-
 }
-
 
 /** Zweispaltige Infozeile (Label links, Wert rechts). */
 @Composable
 fun ProfileInfoRow(label: String, value: String) {
-
-    //zweispaltige Zeile
     Row(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = "$label:",
-            style = MaterialTheme.typography.titleMedium
+            style = MaterialTheme.typography.titleMedium,
+            color = Color(0xFF000000)
         )
         Text(
             text = value,
-            style = MaterialTheme.typography.titleMedium
+            style = MaterialTheme.typography.titleMedium,
+            color = Color(0xFF000000)
         )
     }
 }
 
-
-
-
-
-// Karte mit den Profildaten + Button
+// Karte mit den Profildaten + Button (weiß/schwarz, Akzent = button_normal)
 @Composable
 fun ProfileCard(profile: UserProfile, navController: NavController) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(6.dp)
+        elevation = CardDefaults.cardElevation(6.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFE5E5E5),
+            contentColor = Color(0xFF000000)
+        )
     ) {
         Column(
-            modifier = Modifier
+            Modifier
                 .padding(24.dp)
                 .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Nutzerdaten", style = MaterialTheme.typography.headlineSmall)
-            Divider()
+            Text("Nutzerdaten", style = MaterialTheme.typography.headlineSmall, color = Color(0xFF000000))
+            Divider(color = Color(0x1F000000)) // 12% Schwarz
             ProfileInfoRow(label = "Benutzername", value = profile.username)
             ProfileInfoRow(label = "E-Mail", value = profile.email ?: "Keine E-Mail hinterlegt")
 
@@ -275,10 +246,11 @@ fun ProfileCard(profile: UserProfile, navController: NavController) {
             Button(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = colorResource(R.color.button_normal),
-                    contentColor = Color.White
+                    contentColor = Color(0xFFF5F5F5)
                 ),
                 onClick = { navController.navigate("editProfile") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .wrapContentWidth()
             ) {
                 Text("Profil bearbeiten")
@@ -287,9 +259,7 @@ fun ProfileCard(profile: UserProfile, navController: NavController) {
     }
 }
 
-
-
-// Karte für einzelnen Boulder
+// Karte für einzelnen Boulder (weiß/schwarz, Akzent = button_normal)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun BoulderCard(
@@ -302,21 +272,20 @@ fun BoulderCard(
     onLongPressStartSelection: () -> Unit,
     onClick: (() -> Unit)? = null
 ) {
-
-    val tickArea = 28.dp      // Icon-Größe
-    val tickSpacing = 2.dp   // Abstand vor dem Icon
+    val tickArea = 28.dp
+    val tickSpacing = 2.dp
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .combinedClickable(
-                onClick = {
-                    if (selectionMode) onToggleSelect() else onClick?.invoke()
-                },
+                onClick = { if (selectionMode) onToggleSelect() else onClick?.invoke() },
                 onLongClick = { if (!selectionMode) onLongPressStartSelection() }
             ),
-
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFFFFFFF),
+            contentColor = Color(0xFF000000)
+        ),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Column(Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
@@ -327,27 +296,36 @@ fun BoulderCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-
                 if (selectionMode) {
-                    Checkbox(checked = isSelected, onCheckedChange = { onToggleSelect() },
+                    Checkbox(
+                        checked = isSelected,
+                        onCheckedChange = { onToggleSelect() },
                         colors = CheckboxDefaults.colors(
-                        checkedColor = colorResource(R.color.button_normal),   // Füllung wenn angehakt
-                        uncheckedColor = Color.Gray,                          // Rahmen wenn nicht angehakt
-                        checkmarkColor = Color.White                          // Häkchen-Farbe
-                    ))
+                            checkedColor = colorResource(R.color.button_normal),
+                            uncheckedColor = Color(0x66000000), // 40% Schwarz
+                            checkmarkColor = Color(0xFFFFFFFF)
+                        )
+                    )
                     Spacer(Modifier.width(8.dp))
                 }
 
-                Column(Modifier.weight(1f) .padding(end = tickSpacing + tickArea)) {
-                    Text(boulder.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis, softWrap = false)
+                Column(Modifier.weight(1f).padding(end = tickSpacing + tickArea)) {
+                    Text(
+                        boulder.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        softWrap = false,
+                        color = Color(0xFF000000)
+                    )
                     Spacer(Modifier.height(3.dp))
                     Text(
                         "Schwierigkeit: ${displayedDifficulty ?: boulder.difficulty}",
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFF000000)
                     )
                 }
 
-                // Fester Iconbereich (immer da, auch wenn leer)
                 Box(Modifier.size(tickArea), contentAlignment = Alignment.Center) {
                     if (isTicked) {
                         Icon(
@@ -363,20 +341,24 @@ fun BoulderCard(
     }
 }
 
-
-
 /**
  * Karte mit einer Liste von Bouldern (scrollbar, begrenzte Höhe).
  * - Erzeugt bei Klick die Route zur Detailansicht
  * - Wenn lokales Bild gefunden wird, wird dessen URI als Query-Arg mitgegeben
  */
-
-
 @Composable
-fun BoulderListCard( title: String, boulders: List<BoulderDTO>, source: String,  navController: NavController, maxHeight: Dp = 240.dp, tickedIds: Set<String> = emptySet(), onDeleteSelected: suspend (List<String>) -> Unit,
-                     onAfterDelete: () -> Unit, isDeleting: Boolean = false, userGrades: Map<String, String> = emptyMap()) {
-
-
+fun BoulderListCard(
+    title: String,
+    boulders: List<BoulderDTO>,
+    source: String,
+    navController: NavController,
+    maxHeight: Dp = 240.dp,
+    tickedIds: Set<String> = emptySet(),
+    onDeleteSelected: suspend (List<String>) -> Unit,
+    onAfterDelete: () -> Unit,
+    isDeleting: Boolean = false,
+    userGrades: Map<String, String> = emptyMap()
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -384,44 +366,40 @@ fun BoulderListCard( title: String, boulders: List<BoulderDTO>, source: String, 
     var selected by remember { mutableStateOf<Set<String>>(emptySet()) }
     var showConfirm by remember { mutableStateOf(false) }
 
-
-
     fun toggleSelection(id: String) {
         selected = if (id in selected) selected - id else selected + id
-        // nicht automatisch selectionMode = false setzen
     }
-
 
     fun clearSelection() {
         selectionMode = false
         selected = emptySet()
     }
 
-
     fun startSelectionWith(id: String) {
         selectionMode = true
         selected = setOf(id)
     }
 
-
-
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(6.dp)
+        elevation = CardDefaults.cardElevation(6.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFE5E5E5),
+            contentColor = Color(0xFF000000)
+        )
     ) {
         Column(
-            modifier = Modifier.padding(24.dp).fillMaxWidth(),
+            modifier = Modifier
+                .padding(24.dp)
+                .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-
             ListHeader(
                 title = title,
                 selectionMode = selectionMode,
                 selectedCount = selected.size,
                 onCloseSelection = { clearSelection() },
-                onDeleteClick = {
-                    showConfirm = true
-                },
+                onDeleteClick = { showConfirm = true },
                 onSelectAll = {
                     val allIds = boulders.mapNotNull { it.id }.toSet()
                     selected = if (selected.size == allIds.size) emptySet() else allIds
@@ -429,13 +407,11 @@ fun BoulderListCard( title: String, boulders: List<BoulderDTO>, source: String, 
                 }
             )
 
-            Divider()
+            Divider(color = Color(0x1F000000)) // 12% Schwarz
 
             if (boulders.isEmpty()) {
-                Text("Keine Einträge gefunden.")
+                Text("Keine Einträge gefunden.", color = Color(0xFF000000))
             } else {
-
-                // Scrollbare Liste innerhalb der Karte
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -443,16 +419,11 @@ fun BoulderListCard( title: String, boulders: List<BoulderDTO>, source: String, 
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(bottom = 4.dp)
                 ) {
-
-                    // key für feste identität statt nur position - kann sich sonst verändern bei Änderungen
                     items(
                         boulders,
-                        key = {
-                            it.id ?: "fallback-${it.spraywallId}-${it.createdAt}"
-                        }) { boulder ->
-
+                        key = { it.id ?: "fallback-${it.spraywallId}-${it.createdAt}" }
+                    ) { boulder ->
                         val id = boulder.id ?: return@items
-
                         val isTicked = boulder.id?.let { tickedIds.contains(it) } == true
                         val isSelected = selected.contains(id)
 
@@ -462,33 +433,21 @@ fun BoulderListCard( title: String, boulders: List<BoulderDTO>, source: String, 
                             boulder.difficulty
                         }
 
-
-
-
                         BoulderCard(
-                            boulder = boulder, isTicked = isTicked,
+                            boulder = boulder,
+                            isTicked = isTicked,
                             selectionMode = selectionMode,
                             isSelected = isSelected,
                             onToggleSelect = { toggleSelection(id) },
                             onLongPressStartSelection = { startSelectionWith(id) },
                             displayedDifficulty = displayDifficulty
-
                         ) {
                             if (!selectionMode) {
-
-
-                                // OnClick eines Boulder-Items -> zur Detailansicht navigieren
-
-                                // 1) Preview-URL -> lokalen Dateinamen bestimmen
                                 val preview = (boulder.spraywallImageUrl ?: "").trim()
                                 val token = Regex("/s/([^/]+)/").find(preview)?.groupValues?.get(1)
-
-                                // Basis-Route mit leerem imageUri-Segment am Ende
                                 val base = "view_boulder/${boulder.id}/${boulder.spraywallId}"
 
-                                // Wenn wir keine valide Preview haben, brech ab (kein Download hier!)
                                 if (preview.isEmpty() || token.isNullOrEmpty()) {
-
                                     Toast.makeText(
                                         context,
                                         "Kein lokales Bild gefunden",
@@ -498,41 +457,22 @@ fun BoulderListCard( title: String, boulders: List<BoulderDTO>, source: String, 
                                     return@BoulderCard
                                 }
 
-                                // 2) Lokale Datei wie in SpraywallDetail benennen und nachschauen
                                 val outName = localOutputNameFromPreview(preview, token)
                                 val file = getPrivateImageFileByName(context, outName)
 
-
-                                // versucht lokal vorhandene BildUri zu bauen für den ZielScreen
                                 val encodedImage =
-                                    if (!preview.isNullOrEmpty() && !token.isNullOrEmpty()) {
-                                        val outName = localOutputNameFromPreview(
-                                            preview,
-                                            token
-                                        ) // Dateiname ableiten
-                                        val file = getPrivateImageFileByName(
-                                            context,
-                                            outName
-                                        ) //Datei Object im App Speicher ermitteln
-                                        // falls datei existiert in uri umwandeln
-                                        if (file.exists()) Uri.encode(
-                                            Uri.fromFile(file).toString()
-                                        ) else ""
+                                    if (preview.isNotEmpty() && token.isNotEmpty()) {
+                                        val f = getPrivateImageFileByName(context, outName)
+                                        if (f.exists()) Uri.encode(Uri.fromFile(f).toString()) else ""
                                     } else ""
 
-
-                                // Route für Detailansicht
                                 val route = buildString {
                                     append("$base?src=$source")
-                                    // wenn lokale URi dann mitgeben
                                     if (encodedImage.isNotEmpty()) append("&imageUri=$encodedImage")
                                 }
 
                                 navController.navigate(route)
-
                             }
-
-
                         }
                     }
                 }
@@ -541,12 +481,10 @@ fun BoulderListCard( title: String, boulders: List<BoulderDTO>, source: String, 
                     val count = selected.size
                     val isTickDelete = source == "ticked"
 
-                    // Nomen + Verb
                     val nounSingular = if (isTickDelete) "Tick" else "Boulder"
-                    val nounPlural   = if (isTickDelete) "Ticks" else "Boulder"
-                    val verbInf      = if (isTickDelete) "entfernen" else "löschen"
+                    val nounPlural = if (isTickDelete) "Ticks" else "Boulder"
+                    val verbInf = if (isTickDelete) "entfernen" else "löschen"
 
-                    // Titel & Body sauber formulieren
                     val titleText = if (count == 1)
                         "$nounSingular ${verbInf.replaceFirstChar { it.uppercase() }}?"
                     else
@@ -556,6 +494,7 @@ fun BoulderListCard( title: String, boulders: List<BoulderDTO>, source: String, 
 
                     AlertDialog(
                         onDismissRequest = { if (!isDeleting) showConfirm = false },
+                        containerColor = Color(0xFFE5E5E5),
                         icon = {
                             Icon(
                                 imageVector = Icons.Default.Delete,
@@ -573,7 +512,8 @@ fun BoulderListCard( title: String, boulders: List<BoulderDTO>, source: String, 
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(bottom = 4.dp),
-                                textAlign = TextAlign.Center
+                                textAlign = TextAlign.Center,
+                                color = Color(0xFF000000)
                             )
                         },
                         text = {
@@ -583,7 +523,8 @@ fun BoulderListCard( title: String, boulders: List<BoulderDTO>, source: String, 
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 8.dp),
-                                textAlign = TextAlign.Center
+                                textAlign = TextAlign.Center,
+                                color = Color(0xFF000000)
                             )
                         },
                         dismissButton = {
@@ -617,18 +558,13 @@ fun BoulderListCard( title: String, boulders: List<BoulderDTO>, source: String, 
                                 )
                             ) { Text(if (isTickDelete) "Entfernen" else "Löschen") }
                         },
-                        modifier = Modifier.widthIn(min = 300.dp) // etwas breiter, sieht runder aus
+                        modifier = Modifier.widthIn(min = 300.dp)
                     )
                 }
-
-
-
-
             }
         }
     }
 }
-
 
 @Composable
 private fun ListHeader(
@@ -639,57 +575,53 @@ private fun ListHeader(
     onDeleteClick: () -> Unit,
     onSelectAll: (() -> Unit)? = null
 ) {
-    // weicher Wechsel zwischen beiden Zuständen
     AnimatedContent(targetState = selectionMode, label = "headerAnim") { selecting ->
         if (!selecting) {
-            // Normalzustand
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(title, style = MaterialTheme.typography.headlineSmall)
+                Text(title, style = MaterialTheme.typography.headlineSmall, color = Color(0xFF000000))
             }
         } else {
-            // Auswahlmodus
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 48.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // links: X (Auswahl beenden)
                 IconButton(onClick = onCloseSelection) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Auswahl beenden"
+                        contentDescription = "Auswahl beenden",
+                        tint = Color(0xFF000000)
                     )
                 }
 
-                // Mitte: "n ausgewählt"
                 Text(
                     "$selectedCount ausgewählt",
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color(0xFF000000)
                 )
 
                 Spacer(Modifier.weight(1f))
 
-                // optional: Alle auswählen
                 if (onSelectAll != null) {
                     IconButton(onClick = onSelectAll) {
                         Icon(
-                            imageVector = Icons.Default.Checklist, // oder Icons.Outlined.DoneAll
-                            contentDescription = "Alle auswählen"
+                            imageVector = Icons.Default.Checklist,
+                            contentDescription = "Alle auswählen",
+                            tint = Color(0xFF000000)
                         )
                     }
                 }
 
-                // rechts: Löschen
                 FilledTonalIconButton(onClick = onDeleteClick, enabled = selectedCount > 0) {
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = "Löschen",
-                        tint = if (selectedCount > 0) Color(0xFFD32F2F) else Color.Gray
+                        tint = if (selectedCount > 0) Color(0xFFD32F2F) else Color(0x66000000) // Rot oder 40% Schwarz
                     )
                 }
             }
@@ -700,9 +632,8 @@ private fun ListHeader(
 @Composable
 fun ProfileUpdateCard() {
     val ctx = LocalContext.current
-    var latest by remember { mutableStateOf(UpdatePrefs.readLatest(ctx)) } // Triple<Int, String, Pair<url, log>?>?
+    var latest by remember { mutableStateOf(UpdatePrefs.readLatest(ctx)) }
     var checking by remember { mutableStateOf(false) }
-    // ⬇️ NEU: Download-Status merken (überlebt Recompose durch Prefs-Seed)
     var downloadId by remember {
         mutableStateOf<Long?>(
             UpdatePrefs.getDownloadId(ctx).takeIf { it > 0L }
@@ -713,37 +644,43 @@ fun ProfileUpdateCard() {
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(6.dp)
+        elevation = CardDefaults.cardElevation(6.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFE5E5E5),
+            contentColor = Color(0xFF000000)
+        )
     ) {
         Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("App-Update", style = MaterialTheme.typography.headlineSmall)
-            Divider()
+            Text("App-Update", style = MaterialTheme.typography.headlineSmall, color = Color(0xFF000000))
+            Divider(color = Color(0x1F000000))
 
             val appCode = BuildConfig.VERSION_CODE
             val info = latest
             if (info == null) {
-                Text("Keine Update-Information gespeichert.")
+                Text("Keine Update-Information gespeichert.", color = Color(0xFF000000))
             } else {
                 val (code, name, pair) = info
                 val (url, log) = pair
                 val newer = code > appCode
 
-                Text("Aktuelle App-Version: ${BuildConfig.VERSION_NAME} (code $appCode)")
-                Text("Verfügbare Version: $name (code $code)")
-                if (!log.isNullOrBlank()) Text(log)
+                Text("Aktuelle App-Version: ${BuildConfig.VERSION_NAME} (code $appCode)", color = Color(0xFF000000))
+                Text("Verfügbare Version: $name (code $code)", color = Color(0xFF000000))
+                if (!log.isNullOrBlank()) Text(log, color = Color(0xFF000000))
 
-                // ⬇️ Fortschrittsanzeige, wenn Download läuft
                 if (downloadId != null) {
                     DownloadProgress(
                         downloadId = downloadId!!,
                         onFinished = { uri ->
                             UpdateInstaller.startPackageInstaller(ctx, uri)
-                            // Download als „verbraucht“ markieren, damit die Progress-UI verschwindet
                             UpdatePrefs.saveDownloadId(ctx, -1)
                             downloadId = null
                         },
                         onFailed = {
-                            android.widget.Toast.makeText(ctx, "Download fehlgeschlagen.", android.widget.Toast.LENGTH_LONG).show()
+                            android.widget.Toast.makeText(
+                                ctx,
+                                "Download fehlgeschlagen.",
+                                android.widget.Toast.LENGTH_LONG
+                            ).show()
                             UpdatePrefs.saveDownloadId(ctx, -1)
                             downloadId = null
                         }
@@ -753,7 +690,7 @@ fun ProfileUpdateCard() {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (newer) {
                         Button(
-                            enabled = downloadId == null, // während des Downloads deaktiviert
+                            enabled = downloadId == null,
                             onClick = {
                                 val id = UpdateInstaller.enqueueDownload(ctx, url)
                                 if (id != null) {
@@ -762,12 +699,16 @@ fun ProfileUpdateCard() {
                                         .makeText(ctx, "Download gestartet …", android.widget.Toast.LENGTH_SHORT)
                                         .show()
                                 }
-                            }
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = colorResource(R.color.button_normal),
+                                contentColor = Color(0xFFFFFFFF)
+                            )
                         ) {
                             Text(if (downloadId == null) "Download & installieren" else "Lädt …")
                         }
                     } else {
-                        Text("Du bist auf dem neuesten Stand.")
+                        Text("Du bist auf dem neuesten Stand.", color = Color(0xFF000000))
                     }
                 }
             }
@@ -778,47 +719,37 @@ fun ProfileUpdateCard() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (checking) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp))
-                    Text("Prüfe…")
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), color = colorResource(R.color.button_normal))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Prüfe…", color = Color(0xFF000000))
                 } else {
-                    OutlinedButton(onClick = {
-                        checking = true
-                        scope.launch {
-                            val l = UpdateChecker.fetchLatest(BuildConfig.LATEST_JSON_URL)
-                            checking = false
-                            if (l != null && !l.apkUrl.isNullOrBlank()) {
-                                UpdatePrefs.saveLatest(ctx, l.versionCode, l.versionName, l.apkUrl!!, l.changelog)
-                                latest = UpdatePrefs.readLatest(ctx)
-                                val newer = l.versionCode > BuildConfig.VERSION_CODE
-                                android.widget.Toast.makeText(
-                                    ctx,
-                                    if (newer) "Update gefunden: ${l.versionName}" else "Kein Update verfügbar",
-                                    android.widget.Toast.LENGTH_SHORT
-                                ).show()
-                            } else {
-                                android.widget.Toast.makeText(ctx, "Fehler beim Prüfen", android.widget.Toast.LENGTH_SHORT).show()
+                    OutlinedButton(
+                        onClick = {
+                            checking = true
+                            scope.launch {
+                                val l = UpdateChecker.fetchLatest(BuildConfig.LATEST_JSON_URL)
+                                checking = false
+                                if (l != null && !l.apkUrl.isNullOrBlank()) {
+                                    UpdatePrefs.saveLatest(ctx, l.versionCode, l.versionName, l.apkUrl!!, l.changelog)
+                                    latest = UpdatePrefs.readLatest(ctx)
+                                    val newer = l.versionCode > BuildConfig.VERSION_CODE
+                                    android.widget.Toast.makeText(
+                                        ctx,
+                                        if (newer) "Update gefunden: ${l.versionName}" else "Kein Update verfügbar",
+                                        android.widget.Toast.LENGTH_SHORT
+                                    ).show()
+                                } else {
+                                    android.widget.Toast.makeText(ctx, "Fehler beim Prüfen", android.widget.Toast.LENGTH_SHORT).show()
+                                }
                             }
-                        }
-                    },
+                        },
                         colors = ButtonDefaults.outlinedButtonColors(
                             contentColor = colorResource(id = R.color.button_normal)
                         ),
                         border = BorderStroke(1.dp, colorResource(id = R.color.button_normal))
-
                     ) { Text("Jetzt prüfen") }
                 }
             }
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
