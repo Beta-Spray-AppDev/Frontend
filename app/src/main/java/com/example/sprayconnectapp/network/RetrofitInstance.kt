@@ -34,6 +34,9 @@ import retrofit2.http.GET
 object RetrofitInstance {
 
 
+    private const val BASE_URL = "http://leitln.at:8090/"
+
+
     private var retrofit: Retrofit? = null
 
     /** Setzt die gecachte Retrofit-Instanz zurück (nach Logout) */
@@ -54,7 +57,7 @@ object RetrofitInstance {
 
 
         val logger = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            level = HttpLoggingInterceptor.Level.NONE
         }
 
         val store = TokenStore.create(context)
@@ -65,7 +68,7 @@ object RetrofitInstance {
 
         // Client konfigurieren
         val client = OkHttpClient.Builder()
-            .addInterceptor(logger)
+          //  .addInterceptor(logger) war zum loggen
             // Eigener Interceptor für Auth:
             // entscheidet, ob ein Authorization-Header angehängt wird
             // liest den Token pro Request frisch aus SharedPreferences
@@ -75,7 +78,7 @@ object RetrofitInstance {
 
 
         val built = Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:8080/")
+            .baseUrl(BASE_URL)
             .addConverterFactory(ScalarsConverterFactory.create()) // falls einige Endpoints String liefern
             .addConverterFactory(GsonConverterFactory.create())
             .client(client)
@@ -115,11 +118,11 @@ object RetrofitInstance {
 
     private fun buildAuthOnlyRetrofit(logger: HttpLoggingInterceptor): Retrofit {
         val client = OkHttpClient.Builder()
-            .addInterceptor(logger)
+          //  .addInterceptor(logger)
             .build()
 
         return Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:8080/")
+            .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .client(client)
             .build()
