@@ -91,6 +91,7 @@ import java.text.DateFormat
 import java.util.Date
 import kotlin.math.roundToInt
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.ui.draw.clip
 import androidx.core.content.edit
 
@@ -455,7 +456,8 @@ fun ViewBoulderScreen(
             gymName = boulder?.gymName ?: "-",
             spraywallName = boulder?.spraywallName ?: "-",
             created = created,
-            updated = updated
+            updated = updated,
+            setterNote = boulder?.setterNote
         )
     }
 
@@ -714,37 +716,44 @@ private fun HoldLegendRow(type: HoldType) {
 
 /** einheitliche Zeile mit optionalem Icon, Label links & Wert rechts umgebrochen */
 @Composable
-private fun InfoLineStyled(
+fun InfoLineStyled(
     label: String,
-    value: String,
-    leadingIcon: ImageVector?
+    value: String?,
+    icon: ImageVector
 ) {
+    if (value.isNullOrBlank()) return
+
+    val accent = colorResource(R.color.button_normal)
+
     Row(
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        if (leadingIcon != null) {
-            Icon(
-                imageVector = leadingIcon,
-                contentDescription = null,
-                tint = colorResource(R.color.button_normal)
-            )
-        }
-        Column(modifier = Modifier.weight(1f)) {
+        // Icon in App-Farbe
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = accent,
+            modifier = Modifier.size(20.dp)
+        )
+
+        // Label (in App-Farbe) + Wert (in Schwarz)
+        Column {
             Text(
                 text = label,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = MaterialTheme.typography.bodySmall,
+                color = accent // App-Farbe für Labels
             )
             Text(
                 text = value,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                color = Color(0xFF000000) // Schwarz für Werte
             )
         }
     }
 }
+
 
 
 
@@ -762,7 +771,8 @@ fun BoulderInfoDialog(
     gymName: String,
     spraywallName: String,
     created: String,
-    updated: String
+    updated: String,
+    setterNote: String? = null
 ) {
     if (!show) return
 
@@ -809,6 +819,10 @@ fun BoulderInfoDialog(
                     modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)
                 )
                 InfoLineStyled("Setter", setter, Icons.Default.Person)
+                if (!setterNote.isNullOrBlank()) {
+                    
+                    InfoLineStyled("Setter Notes", setterNote, Icons.Default.EditNote)
+                }
                 InfoLineStyled("Schwierigkeit", difficulty, Icons.Default.BarChart)
                 InfoLineStyled("Gym", gymName, Icons.Default.Place)
                 InfoLineStyled("Spraywall", spraywallName, Icons.Default.GridOn)

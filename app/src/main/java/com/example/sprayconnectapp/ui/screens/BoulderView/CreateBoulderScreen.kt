@@ -39,7 +39,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -538,14 +537,11 @@ fun CreateBoulderScreen(
 
         }
 
-        // Speichern-Dialog
         if (showDialog) {
             AlertDialog(
                 onDismissRequest = { showDialog = false },
                 shape = RoundedCornerShape(24.dp),
-                containerColor = Color.White.copy(alpha = 0.7f),
-                tonalElevation = 6.dp,
-
+                containerColor = Color.White.copy(alpha = 0.9f),
 
                 title = {
                     Column(
@@ -555,10 +551,9 @@ fun CreateBoulderScreen(
                         Text(
                             text = if (mode is BoulderScreenMode.Edit) "Boulder bearbeiten" else "Boulder erstellen",
                             style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                            textAlign = TextAlign.Center
+                            color = Color.Black
                         )
                         Spacer(Modifier.height(6.dp))
-                        // kleiner „Accent“-Strich in button_normal für visuelles Highlight
                         Box(
                             modifier = Modifier
                                 .width(70.dp)
@@ -569,41 +564,90 @@ fun CreateBoulderScreen(
                 },
 
                 text = {
-                    // Feld-Style wie in deinen Screens
                     val tfColors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color.White.copy(alpha = 0.8f),
-                        unfocusedContainerColor = Color.White.copy(alpha = 0.7f),
-                        focusedBorderColor = colorResource(R.color.button_normal),
+                        // text
+                        focusedTextColor = Color(0xFF000000),
+                        unfocusedTextColor = Color(0xFF000000),
+                        disabledTextColor = Color(0xFF000000).copy(alpha = 0.4f),
+                        errorTextColor = Color(0xFF000000),
+
+                        // container
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        disabledContainerColor = Color.Transparent,
+                        errorContainerColor = Color.Transparent,
+
+                        // cursor & selection
                         cursorColor = colorResource(R.color.button_normal),
-                        focusedLabelColor = colorResource(R.color.button_normal)
+                        errorCursorColor = colorResource(R.color.button_normal),
+
+                        // outline/border
+                        focusedBorderColor = colorResource(R.color.button_normal),
+                        unfocusedBorderColor = colorResource(R.color.button_normal),
+                        disabledBorderColor = colorResource(R.color.button_normal).copy(alpha = 0.3f),
+                        errorBorderColor = Color(0xFFFF4444),
+
+                        // leading/trailing icons
+                        focusedLeadingIconColor = colorResource(R.color.button_normal),
+                        unfocusedLeadingIconColor = colorResource(R.color.button_normal),
+                        disabledLeadingIconColor = colorResource(R.color.button_normal).copy(alpha = 0.3f),
+                        errorLeadingIconColor = colorResource(R.color.button_normal),
+
+                        focusedTrailingIconColor = colorResource(R.color.button_normal),
+                        unfocusedTrailingIconColor = colorResource(R.color.button_normal),
+                        disabledTrailingIconColor = colorResource(R.color.button_normal).copy(alpha = 0.3f),
+                        errorTrailingIconColor = colorResource(R.color.button_normal),
+
+                        // label
+                        focusedLabelColor = colorResource(R.color.button_normal),
+                        unfocusedLabelColor = colorResource(R.color.button_normal),
+                        disabledLabelColor = colorResource(R.color.button_normal).copy(alpha = 0.3f),
+                        errorLabelColor = Color(0xFFFF4444),
+
+                        // placeholder
+                        focusedPlaceholderColor = Color(0xFF000000).copy(alpha = 0.5f),
+                        unfocusedPlaceholderColor = Color(0xFF000000).copy(alpha = 0.5f),
+                        disabledPlaceholderColor = Color(0xFF000000).copy(alpha = 0.3f),
+                        errorPlaceholderColor = Color(0xFF000000).copy(alpha = 0.5f),
+
+                        // supporting text (helper/error below field)
+                        focusedSupportingTextColor = Color(0xFF000000),
+                        unfocusedSupportingTextColor = Color(0xFF000000),
+                        disabledSupportingTextColor = Color(0xFF000000).copy(alpha = 0.4f),
+                        errorSupportingTextColor = Color(0xFFFF4444),
+
+                        // prefix/suffix (if you ever use them)
+                        focusedPrefixColor = Color(0xFF000000),
+                        unfocusedPrefixColor = Color(0xFF000000),
+                        disabledPrefixColor = Color(0xFF000000).copy(alpha = 0.4f),
+                        errorPrefixColor = Color(0xFF000000),
+
+                        focusedSuffixColor = Color(0xFF000000),
+                        unfocusedSuffixColor = Color(0xFF000000),
+                        disabledSuffixColor = Color(0xFF000000).copy(alpha = 0.4f),
+                        errorSuffixColor = Color(0xFF000000)
                     )
 
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
+
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         // Name
                         OutlinedTextField(
                             value = boulderName,
-                            onValueChange = { new ->
-                                if (new.length <= MAX_NAME) boulderName = new
-                            },
+                            onValueChange = { new -> if (new.length <= MAX_NAME) boulderName = new },
                             label = { Text("Name") },
-                            isError = triedSave && !isNameValid,
+                            isError = triedSave && boulderName.trim().isEmpty(),
                             supportingText = {
-                                if (triedSave && !isNameValid) Text("Bitte einen Namen eingeben")
+                                if (triedSave && boulderName.trim().isEmpty())
+                                    Text("Bitte einen Namen eingeben")
                             },
                             singleLine = true,
-                            leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null,
-                                tint = colorResource(R.color.button_normal)) },
+                            leadingIcon = {
+                                Icon(Icons.Default.Edit, contentDescription = null,
+                                    tint = colorResource(R.color.button_normal))
+                            },
                             shape = RoundedCornerShape(50),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                // internen Container ausschalten
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent,
-                                // (rest wie gehabt)
-                                focusedBorderColor = Color(0xFF00796B),
-                                cursorColor = Color(0xFF00796B),
-                                focusedLabelColor = Color(0xFF00796B)
-                            ),
+                            colors = tfColors,
                             modifier = Modifier.fillMaxWidth()
                         )
 
@@ -629,29 +673,20 @@ fun CreateBoulderScreen(
                             supportingText = { Text("${setterNote.length} / $MAX_NOTE") },
                             minLines = 2,
                             maxLines = 5,
-                            leadingIcon = { Icon(Icons.Default.Info, contentDescription = null,
-                                tint = colorResource(R.color.button_normal)) },
+                            leadingIcon = {
+                                Icon(Icons.Default.Info, contentDescription = null,
+                                    tint = colorResource(R.color.button_normal))
+                            },
                             shape = RoundedCornerShape(20),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                // internen Container ausschalten
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent,
-                                // (rest wie gehabt)
-                                focusedBorderColor = Color(0xFF00796B),
-                                cursorColor = Color(0xFF00796B),
-                                focusedLabelColor = Color(0xFF00796B)
-                            ),
+                            colors = tfColors,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
                 },
 
-                containerColor = Color(0xFFE5E5E5), // Dialog-Hintergrund hellgrau
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            Log.d("BoulderUpdate", "Confirm clicked. mode=$mode  name=$boulderName  diff=$boulderDifficulty")
-
                             if (boulderName.isBlank()) {
                                 triedSave = true
                                 return@TextButton
@@ -693,126 +728,66 @@ fun CreateBoulderScreen(
                             if (fromPicker) onBack()
                         },
                         colors = ButtonDefaults.textButtonColors(
-                            contentColor = colorResource(R.color.button_normal), // App-Akzent
-                            disabledContentColor = Color(0xFFBDBDBD)
-                        )
-                    ) {
-                        showDialog = false
-                        onSave()
-                        onBack() // Einen Screen zurück
-                        if (fromPicker) onBack() // Nur wenn wir vom Picker kommen noch einen Schritt zurück
-
-                    },
-                        colors = ButtonDefaults.textButtonColors(
                             contentColor = colorResource(R.color.button_normal)
                         )
-
                     ) {
                         Text(if (mode is BoulderScreenMode.Edit) "Speichern" else "Anlegen")
                     }
                 },
+
                 dismissButton = {
                     TextButton(
                         onClick = { showDialog = false },
-                        colors = ButtonDefaults.textButtonColors(
-                            contentColor = Color(0xFF000000) // Schwarz
-                        )
+                        colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF000000))
                     ) { Text("Abbrechen") }
-                },
-                title = {
-                    Text(
-                        if (mode is BoulderScreenMode.Edit) "Boulder speichern" else "Boulder anlegen",
-                        color = Color(0xFF000000) // Schwarz
-                    )
-                },
-                text = {
-                    Column {
-                        // Name
-                        OutlinedTextField(
-                            value = boulderName,
-                            onValueChange = { new ->
-                                if (new.length <= MAX_NAME) boulderName = new
-                            },
-                            label = { Text("Name", color = Color(0xFF000000)) },
-                            isError = triedSave && !isNameValid,
-                            supportingText = {
-                                if (triedSave && !isNameValid)
-                                    Text("Bitte einen Namen eingeben", color = Color(0xFF000000))
-                            },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = colorResource(R.color.button_normal),
-                                unfocusedBorderColor = colorResource(R.color.button_normal),
-                                focusedLabelColor = colorResource(R.color.button_normal),
-                                cursorColor = colorResource(R.color.button_normal),
-                                focusedTextColor = Color(0xFF000000),
-                                unfocusedTextColor = Color(0xFF000000),
-                                focusedContainerColor = Color(0xFFFFFFFF),
-                                unfocusedContainerColor = Color(0xFFFFFFFF)
-                            )
-                        )
-
-                        Spacer(Modifier.height(8.dp))
-
-                        // Schwierigkeitsauswahl (Stepper bleibt, Text kommt schwarz vom Theme/ContentColor)
-                        val fbGrades = listOf(
-                            "3", "4", "5A", "5B", "5C",
-                            "6A", "6A+", "6B", "6B+", "6C", "6C+",
-                            "7A", "7A+", "7B", "7B+", "7C", "7C+",
-                            "8A", "8A+", "8B", "8B+", "8C", "8C+", "9A"
-                        )
-
-                        DifficultyStepper(
-                            options = fbGrades,
-                            value = boulderDifficulty.ifEmpty { fbGrades.first() },
-                            onValueChange = { boulderDifficulty = it }
-                        )
-
-                        Spacer(Modifier.height(12.dp))
-
-                        // Setter-Notiz
-                        OutlinedTextField(
-                            value = setterNote,
-                            onValueChange = { new -> if (new.length <= MAX_NOTE) setterNote = new },
-                            label = { Text("Setter-Notiz (optional)", color = Color(0xFF000000)) },
-                            supportingText = {
-                                Text("${setterNote.length} / $MAX_NOTE", color = Color(0xFF000000))
-                            },
-                            minLines = 2,
-                            maxLines = 5,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = colorResource(R.color.button_normal),
-                                unfocusedBorderColor = colorResource(R.color.button_normal),
-                                focusedLabelColor = colorResource(R.color.button_normal),
-                                cursorColor = colorResource(R.color.button_normal),
-                                focusedTextColor = Color(0xFF000000),
-                                unfocusedTextColor = Color(0xFF000000),
-                                focusedContainerColor = Color(0xFFFFFFFF),
-                                unfocusedContainerColor = Color(0xFFFFFFFF)
-                            )
-                        )
-                    }
                 }
-                    TextButton(onClick = { showDialog = false }) {
-                        Text("Abbrechen", color = Color(0xFFD32F2F))
-                    }                },
             )
         }
+
 
 
         // Löschen-Dialog (nur im Edit)
         if (showDeleteDialog && mode is BoulderScreenMode.Edit) {
             AlertDialog(
                 onDismissRequest = { showDeleteDialog = false },
-                title = { Text("Boulder löschen?") },
-                text = { Text("Dieser Vorgang kann nicht rückgängig gemacht werden.") },
+                shape = RoundedCornerShape(24.dp),
+                containerColor = Color.White.copy(alpha = 0.9f),
+                tonalElevation = 6.dp,
+
+                title = {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "Boulder löschen?",
+                            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                            color = Color.Black,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        Box(
+                            modifier = Modifier
+                                .width(70.dp)
+                                .height(4.dp)
+                                .background(colorResource(R.color.button_normal), RoundedCornerShape(2.dp))
+                        )
+                    }
+                },
+
+                text = {
+                    Text(
+                        "Dieser Vorgang kann nicht rückgängig gemacht werden.",
+                        color = Color.Black,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center
+                    )
+                },
+
                 confirmButton = {
-                    TextButton(onClick = {
-                        showDeleteDialog = false
-
-
+                    TextButton(
+                        onClick = {
+                            showDeleteDialog = false
                             viewModel.deleteBoulder(
                                 context = context,
                                 boulderId = mode.boulderId
@@ -821,15 +796,28 @@ fun CreateBoulderScreen(
                                 onBack()   // zurück von Edit/View
                                 onBack()   // weiter zurück zur Liste
                             }
+                        },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = colorResource(R.color.button_normal)
+                        )
+                    ) {
+                        Text("Löschen")
+                    }
+                },
 
-                    }) { Text("Löschen") }
-                }
-                ,
                 dismissButton = {
-                    TextButton(onClick = { showDeleteDialog = false }) { Text("Abbrechen") }
+                    TextButton(
+                        onClick = { showDeleteDialog = false },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = Color.Black
+                        )
+                    ) {
+                        Text("Abbrechen")
+                    }
                 }
             )
         }
+
 
         if (showOnboarding) {
             Box(
