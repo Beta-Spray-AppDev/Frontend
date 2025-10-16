@@ -6,6 +6,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import com.example.sprayconnectapp.ui.screens.BoulderList.BoulderListScreen
 import com.example.sprayconnectapp.ui.screens.BoulderView.BoulderScreenMode
 import com.example.sprayconnectapp.ui.screens.BoulderView.CreateBoulderScreen
@@ -23,6 +24,8 @@ import com.example.sprayconnectapp.ui.screens.spraywall.SpraywallDetailScreen
 import com.example.sprayconnectapp.ui.screens.BoulderView.ViewBoulderScreen
 import com.example.sprayconnectapp.ui.screens.SplashScreen
 import com.example.sprayconnectapp.ui.screens.comments.BoulderCommentsScreen
+import com.example.sprayconnectapp.ui.screens.login.ForgotPasswordScreen
+import com.example.sprayconnectapp.ui.screens.login.ResetPasswordScreen
 
 @Composable
 fun NavGraph (navController: NavHostController){
@@ -35,6 +38,7 @@ fun NavGraph (navController: NavHostController){
         composable("start"){ StartScreen(navController) }
         composable("login"){ LoginScreen(navController) }
         composable("register"){ RegisterScreen(navController) }
+        composable("forgot") { ForgotPasswordScreen(navController) }
         composable("home") { HomeScreen(navController) }
 
         // Gym-Detail mit Path-Parametern
@@ -44,6 +48,20 @@ fun NavGraph (navController: NavHostController){
             GymDetailScreen(navController = navController, gymId = gymId, gymName = gymName)
 
         }
+
+        composable(
+            route = "reset?token={token}",
+            arguments = listOf(
+                navArgument("token") { type = NavType.StringType; defaultValue = "" }
+            ),
+            deepLinks = listOf(
+                navDeepLink { uriPattern = "https://sprayconnect.at/reset?token={token}" }
+            )
+        ) { backStackEntry ->
+            val token = backStackEntry.arguments?.getString("token")
+            ResetPasswordScreen(navController, tokenArg = token)
+        }
+
         /**
          * Boulder-Liste über eine Spraywall.
          */
