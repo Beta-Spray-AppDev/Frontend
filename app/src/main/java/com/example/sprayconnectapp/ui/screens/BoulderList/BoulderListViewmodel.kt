@@ -55,11 +55,11 @@ class BoulderListViewModel : ViewModel() {
             if (resp.isSuccessful) {
                 val list = resp.body().orEmpty()
 
-                tickedBoulderIds.value = list.mapNotNull { it.boulder.id }.toSet()
+                tickedBoulderIds.value = list.mapNotNull { it.boulder?.id }.toSet()
 
 
                 tickStars.value = list.mapNotNull { twb ->
-                    val id = twb.boulder.id ?: return@mapNotNull null
+                    val id = twb.boulder?.id ?: return@mapNotNull null
                     val s  = twb.tick.stars ?: return@mapNotNull null
                     id to s
                 }.toMap()

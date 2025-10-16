@@ -40,6 +40,7 @@ import androidx.navigation.NavController
 import com.example.sprayconnectapp.BuildConfig
 import com.example.sprayconnectapp.R
 import com.example.sprayconnectapp.data.dto.BoulderDTO
+import com.example.sprayconnectapp.data.dto.TickedItem
 import com.example.sprayconnectapp.data.dto.UserProfile
 import com.example.sprayconnectapp.ui.screens.BottomNavigationBar
 import com.example.sprayconnectapp.util.UpdateChecker
@@ -67,8 +68,10 @@ fun ProfileScreen(navController: NavController) {
     val error by viewModel.error.collectAsState()
     val boulders by viewModel.myBoulders.collectAsState()
     val ticked by viewModel.myTicks.collectAsState()
+    val tickedBoulderIds = remember(ticked) { ticked.mapNotNull { it.boulderId }.toSet() }
 
-    val tickedIds = remember(ticked) { ticked.mapNotNull { it.id }.toSet() }
+
+
 
     // Beim ersten Compose Daten laden
     LaunchedEffect(Unit) {
@@ -184,7 +187,7 @@ fun ProfileScreen(navController: NavController) {
                                 boulders = boulders,
                                 navController = navController,
                                 source = "mine",
-                                tickedIds = tickedIds,
+                                tickedIds = tickedBoulderIds,
                                 onDeleteSelected = { ids ->
                                     viewModel.deleteBoulders(context, ids) {
                                         Toast.makeText(context, "Boulder gelöscht", Toast.LENGTH_SHORT).show()
@@ -195,22 +198,18 @@ fun ProfileScreen(navController: NavController) {
 
                             Spacer(Modifier.height(17.dp))
 
-                            val tickGrades by viewModel.myTickGrades.collectAsState()
 
-                            BoulderListCard(
-                                title = "Getickte Boulder",
-                                boulders = ticked,
+                            TickedListCard(
+                                items = ticked,                      // List<TickedItem>
                                 navController = navController,
-                                source = "ticked",
-                                tickedIds = tickedIds,
-                                userGrades = tickGrades,
-                                onDeleteSelected = { ids ->
-                                    viewModel.deleteTicks(context, ids) {
+                                onDeleteSelected = { tickIds ->      // erwartet Tick-IDs
+                                    viewModel.deleteTicksByTickIds(context, tickIds) {
                                         Toast.makeText(context, "Tick(s) entfernt", Toast.LENGTH_SHORT).show()
                                     }
-                                },
-                                onAfterDelete = {}
+                                }
                             )
+
+
                         }
                         else -> {
                             Text("Keine Profildaten vorhanden.", color = Color(0xFF000000))
@@ -793,3 +792,141 @@ fun ProfileUpdateCard() {
         }
     }
 }
+
+
+@Composable
+fun TickedListCard(
+    title: String = "Getickte Boulder",
+    items: List<TickedItem>,
+    navController: NavController,
+    maxHeight: Dp = 240.dp,
+    onDeleteSelected: suspend (List<String>) -> Unit // nimmt Tick-IDs!
+) {
+    val context = LocalContext.current
+    var selectionMode by remember { mutableStateOf(false) }
+    var selected by remember { mutableStateOf<Set<String>>(emptySet()) } // tickIds
+    var showConfirm by remember { mutableStateOf(false) }
+
+    fun toggle(id: String) { selected = if (id in selected) selected - id else selected + id }
+    fun startSel(id: String) { selectionMode = true; selected = setOf(id) }
+    fun clearSel() { selectionMode = false; selected = emptySet() }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(6.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFE5E5E5),
+            contentColor = Color(0xFF000000)
+        )
+    ) {
+        val scope = rememberCoroutineScope()
+        Column(Modifier.padding(24.dp)) {
+            ListHeader(
+                title = title,
+                selectionMode = selectionMode,
+                selectedCount = selected.size,
+                onCloseSelection = { clearSel() },
+                onDeleteClick = { showConfirm = true },
+                onSelectAll = {
+                    val all = items.map { it.tickId }.toSet()
+                    selected = if (selected.size == all.size) emptySet() else all
+                    selectionMode = selected.isNotEmpty()
+                }
+            )
+
+            Divider(color = Color(0x1F000000))
+
+            if (items.isEmpty()) {
+                Text("Keine Einträge gefunden.", color = Color(0xFF000000))
+                return@Column
+            }
+
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = maxHeight),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(items, key = { it.tickId }) { it ->
+                    // Für die Card basteln wir ein leichtes Anzeigeobjekt
+                    val display = BoulderDTO(
+                        id = it.tickId, // nur für Auswahl/Keys – NICHT Boulder-ID!
+                        name = it.name,
+                        difficulty = it.displayedDifficulty ?: "-"
+                    )
+
+                    BoulderCard(
+                        displayedDifficulty = it.displayedDifficulty ?: "-",
+                        boulder = display,
+                        isTicked = true,
+                        selectionMode = selectionMode,
+                        isSelected = it.tickId in selected,
+                        onToggleSelect = { toggle(it.tickId) },
+                        onLongPressStartSelection = { startSel(it.tickId) }
+                    ) {
+
+                        // Navigation: nur wenn Boulder noch existiert
+                        if (it.boulderId == null) {
+                            Toast.makeText(context, "Boulder wurde vom Ersteller gelöscht.", Toast.LENGTH_LONG).show()
+                        } else {
+
+                            // Versuch, lokales Bild aus spraywallImageUrl zu finden (wie in BoulderListCard)
+                            val preview = (it.spraywallImageUrl ?: "").trim()
+                            val token = Regex("/s/([^/]+)/").find(preview)?.groupValues?.get(1)
+
+                            val encodedImage =
+                                if (preview.isNotEmpty() && !token.isNullOrEmpty()) {
+                                    val outName = localOutputNameFromPreview(preview, token)
+                                    val f = getPrivateImageFileByName(context, outName)
+                                    if (f.exists()) Uri.encode(Uri.fromFile(f).toString()) else ""
+                                } else ""
+
+                            val spraywallId = it.spraywallId ?: ""  // leeren String nur wenn unbedingt nötig
+                            val base = "view_boulder/${it.boulderId}/$spraywallId"
+
+                            val route = buildString {
+                                append("$base?src=ticked")
+                                if (encodedImage.isNotEmpty()) append("&imageUri=$encodedImage")
+                            }
+
+
+                            navController.navigate(route)
+                        }
+                    }
+                }
+            }
+
+            if (showConfirm) {
+                AlertDialog(
+                    onDismissRequest = { showConfirm = false },
+                    title = { Text("Ticks entfernen?") },
+                    text = { Text("Dieser Vorgang kann nicht rückgängig gemacht werden.") },
+                    confirmButton = {
+                        Button(onClick = {
+                            val ids = selected.toList()
+                            scope.launch {
+                                onDeleteSelected(ids)  // suspend-Funktion
+                                clearSel()
+                                showConfirm = false
+                            }
+                        }) { Text("Entfernen") }
+                    },
+                    dismissButton = {
+                        OutlinedButton(onClick = { showConfirm = false }) { Text("Abbrechen") }
+                    }
+                )
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+

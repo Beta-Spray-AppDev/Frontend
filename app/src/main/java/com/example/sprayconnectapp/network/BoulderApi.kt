@@ -50,6 +50,16 @@ interface BoulderApi {
 
 
 
+    /**
+     * Untick per TICK-ID – funktioniert auch, wenn der Boulder gelöscht wurde
+     * (boulder_id in der DB ist dann NULL).
+     */
+
+    @DELETE("boulders/ticks/{tickId}")
+    suspend fun deleteTickById(@Path("tickId") tickId: String): Response<Unit>
+
+
+
     @POST("boulders/{boulderId}/ticks")
     suspend fun tickBoulder(
         @Path("boulderId") boulderId: String,

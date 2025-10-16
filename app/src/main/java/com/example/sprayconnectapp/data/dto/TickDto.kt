@@ -2,11 +2,12 @@ package com.example.sprayconnectapp.data.dto
 
 data class TickDto(
     val id: String? = null,
-    val boulderId: String,
+    val boulderId: String? = null,
     val userId: String? = null,
     val createdAt: Long? = null,
     val stars: Int? = null,
-    val proposedGrade: String? = null
+    val proposedGrade: String? = null,
+    val boulderNameSnapshot: String? = null
 )
 
 data class TickCreateRequest(
@@ -16,5 +17,5 @@ data class TickCreateRequest(
 
 data class TickWithBoulderDto(
     val tick: TickDto,
-    val boulder: BoulderDTO
+    val boulder: BoulderDTO?
 )

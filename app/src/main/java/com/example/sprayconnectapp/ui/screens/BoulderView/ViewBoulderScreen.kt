@@ -94,6 +94,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.ui.draw.clip
 import androidx.core.content.edit
+import com.example.sprayconnectapp.util.getPrivateImageFileByName
+import com.example.sprayconnectapp.util.localOutputNameFromPreview
 
 
 /**
@@ -130,10 +132,14 @@ fun ViewBoulderScreen(
     // eigene Boulder
     val myList = profileVm?.myBoulders?.collectAsState()?.value ?: emptyList()
 
-    // Getickte Boulder (einfach als BoulderDTO-Liste vom ViewModel)
-    val tickedBoulders = profileVm?.myTicks?.collectAsState()?.value ?: emptyList()
-    val tickedIds: Set<String> = remember(tickedBoulders) { tickedBoulders.mapNotNull { it.id }.toSet() }
+    //  – myTicks ist List<TickedItem>
+    val tickedItems = profileVm?.myTicks?.collectAsState()?.value ?: emptyList()
 
+
+    // Set der Boulder-IDs zum Markieren
+    val tickedIds: Set<String> = remember(tickedItems) {
+        tickedItems.mapNotNull { it.boulderId?.takeIf { it.isNotBlank() } }.toSet()
+    }
 
     var currentBoulderId by rememberSaveable { mutableStateOf(boulderId) }
 
@@ -178,7 +184,7 @@ fun ViewBoulderScreen(
         // aus dem Profil: bestehende Logik behalten
         fromProfile -> when (source) {
             "mine"   -> myList.mapNotNull { it.id }
-            "ticked" -> tickedBoulders.mapNotNull { it.id }
+            "ticked" -> tickedItems.mapNotNull { it.boulderId?.takeIf { it.isNotBlank() } }
             else     -> emptyList()
         }
 
@@ -390,10 +396,29 @@ fun ViewBoulderScreen(
                             .fillMaxHeight()
                             .onGloballyPositioned { laidOut = it.size }
                     ) {
-                        if (imageUri.isNotBlank()) {
+
+                        val effectiveImageUri by remember(imageUri, uiState.boulder?.spraywallImageUrl) {
+                            mutableStateOf(
+                                when {
+                                    imageUri.isNotBlank() -> imageUri
+                                    !uiState.boulder?.spraywallImageUrl.isNullOrBlank() -> {
+                                        val preview = uiState.boulder!!.spraywallImageUrl!!
+                                        val token = Regex("/s/([^/]+)/").find(preview)?.groupValues?.get(1)
+                                        if (token != null) {
+                                            val outName = localOutputNameFromPreview(preview, token)
+                                            val file = getPrivateImageFileByName(context, outName)
+                                            if (file.exists()) Uri.fromFile(file).toString() else preview // Remote-URL fallback
+                                        } else preview
+                                    }
+                                    else -> "" // kein Bild
+                                }
+                            )
+                        }
+
+                        if (effectiveImageUri.isNotBlank()) {
                             AsyncImage(
                                 model = ImageRequest.Builder(context)
-                                    .data(imageUri)
+                                    .data(effectiveImageUri)
                                     .size(Size.ORIGINAL)
                                     .build(),
                                 contentDescription = "Boulder",

@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sprayconnectapp.data.dto.BoulderDTO
+import com.example.sprayconnectapp.data.dto.TickedItem
 import com.example.sprayconnectapp.data.dto.UpdateProfileRequest
 import com.example.sprayconnectapp.data.dto.UserProfile
 import com.example.sprayconnectapp.network.RetrofitInstance
@@ -181,31 +182,76 @@ class ProfileViewModel : ViewModel() {
     }
 
 
-    private val _myTicks = MutableStateFlow<List<BoulderDTO>>(emptyList())
-    val myTicks: StateFlow<List<BoulderDTO>> = _myTicks
+
 
     private val _myTickGrades = MutableStateFlow<Map<String, String>>(emptyMap())
     val myTickGrades: StateFlow<Map<String, String>> = _myTickGrades
+
+
+
+    private val _myTicks = MutableStateFlow<List<TickedItem>>(emptyList())
+    val myTicks: StateFlow<List<TickedItem>> = _myTicks
 
 
     /** Lädt getickte Boulder. */
     fun loadMyTicks(context: Context) {
         viewModelScope.launch {
             try {
-                val res = RetrofitInstance.getBoulderApi(context).getMyTickedBoulders()
+                val api = RetrofitInstance.getBoulderApi(context)
+                val res = api.getMyTickedBoulders()
+                Log.d("ProfileVM", "ticks http=${res.code()} ok=${res.isSuccessful}")
+                val body = res.body().orEmpty()
+                Log.d("ProfileVM", "ticks serverSize=${body.size}")
+
                 if (res.isSuccessful) {
-                    val list = res.body().orEmpty()
-                    _myTicks.value = list.map { it.boulder }
-                    _myTickGrades.value = list.mapNotNull { twb ->
-                        val bId = twb.boulder.id ?: return@mapNotNull null
-                        val grade = twb.tick.proposedGrade ?: return@mapNotNull null
-                        bId to grade
-                    }.toMap()
+
+
+                    val items = res.body().orEmpty().mapNotNull { twb ->
+                        val tick = twb.tick
+                        val b = twb.boulder
+
+                        val tickId = tick.id ?: return@mapNotNull null
+
+                        TickedItem(
+                            tickId = tickId,
+                            boulderId = b?.id, // null wenn gelöscht
+                            name = tick.boulderNameSnapshot
+                                ?: b?.name
+                                ?: "Gelöschter Boulder",
+                            displayedDifficulty = tick.proposedGrade ?: b?.avgGradeLabel ?: b?.difficulty,
+                            spraywallId = b?.spraywallId,
+                            spraywallImageUrl = b?.spraywallImageUrl
+                        )
+                    }
+                    Log.d("ProfileVM", "ticks uiSize=${items.size}")
+                    _myTicks.value = items
                 }
 
-            } catch (_: Exception) { }
+            } catch (e: Exception) {
+                Log.e("ProfileVM", "ticks error=${e.localizedMessage}")
+                _myTicks.value = emptyList()
+
+            }
         }
     }
+
+    /** Untick mit Tick-IDs (funktioniert auch wenn Boulder gelöscht). */
+    fun deleteTicksByTickIds(context: Context, tickIds: List<String>, onDone: () -> Unit = {}) {
+        viewModelScope.launch {
+            _isDeletingTicks.value = true
+            try {
+                val api = RetrofitInstance.getBoulderApi(context)
+                tickIds.forEach { id ->
+                    try { api.deleteTickById(id) } catch (_: Exception) {}
+                }
+                loadMyTicks(context)
+            } finally {
+                _isDeletingTicks.value = false
+                onDone()
+            }
+        }
+    }
+
 
 
 
