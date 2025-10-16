@@ -855,6 +855,9 @@ fun TickedListCard(
                         difficulty = it.displayedDifficulty ?: "-"
                     )
 
+                    var lastToastTime by remember { mutableStateOf(0L) }
+
+
                     BoulderCard(
                         displayedDifficulty = it.displayedDifficulty ?: "-",
                         boulder = display,
@@ -867,7 +870,12 @@ fun TickedListCard(
 
                         // Navigation: nur wenn Boulder noch existiert
                         if (it.boulderId == null) {
-                            Toast.makeText(context, "Boulder wurde vom Ersteller gelöscht.", Toast.LENGTH_LONG).show()
+
+                            val now = System.currentTimeMillis()
+                            if (now - lastToastTime > 2000) { // 1 Sekunde Sperre
+                                Toast.makeText(context, "Boulder wurde vom Ersteller gelöscht.", Toast.LENGTH_SHORT).show()
+                                lastToastTime = now
+                            }
                         } else {
 
                             // Versuch, lokales Bild aus spraywallImageUrl zu finden (wie in BoulderListCard)
@@ -897,23 +905,71 @@ fun TickedListCard(
             }
 
             if (showConfirm) {
+                val count = selected.size
+                val titleText = if (count == 1) "Tick Entfernen?" else "Ticks Entfernen?"
+                val bodyText = "Dieser Vorgang kann nicht rückgängig gemacht werden."
+
                 AlertDialog(
                     onDismissRequest = { showConfirm = false },
-                    title = { Text("Ticks entfernen?") },
-                    text = { Text("Dieser Vorgang kann nicht rückgängig gemacht werden.") },
-                    confirmButton = {
-                        Button(onClick = {
-                            val ids = selected.toList()
-                            scope.launch {
-                                onDeleteSelected(ids)  // suspend-Funktion
-                                clearSel()
-                                showConfirm = false
-                            }
-                        }) { Text("Entfernen") }
+                    containerColor = Color(0xFFE5E5E5),
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .padding(bottom = 8.dp)
+                        )
+                    },
+                    title = {
+                        Text(
+                            text = titleText,
+                            style = MaterialTheme.typography.headlineSmall,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 4.dp),
+                            textAlign = TextAlign.Center,
+                            color = Color(0xFF000000)
+                        )
+                    },
+                    text = {
+                        Text(
+                            text = bodyText,
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp),
+                            textAlign = TextAlign.Center,
+                            color = Color(0xFF000000)
+                        )
                     },
                     dismissButton = {
-                        OutlinedButton(onClick = { showConfirm = false }) { Text("Abbrechen") }
-                    }
+                        OutlinedButton(
+                            onClick = { showConfirm = false },
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = colorResource(R.color.button_normal)
+                            ),
+                            border = BorderStroke(1.dp, colorResource(R.color.button_normal))
+                        ) { Text("Abbrechen") }
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                val ids = selected.toList()
+                                scope.launch {
+                                    onDeleteSelected(ids)   // suspend-Funktion
+                                    clearSel()
+                                    showConfirm = false
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.error,
+                                contentColor = MaterialTheme.colorScheme.onError
+                            )
+                        ) { Text("Entfernen") }
+                    },
+                    modifier = Modifier.widthIn(min = 300.dp)
                 )
             }
         }
