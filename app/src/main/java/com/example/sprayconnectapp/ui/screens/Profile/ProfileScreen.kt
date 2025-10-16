@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -110,6 +111,30 @@ fun ProfileScreen(navController: NavController) {
                         }
                     },
                     actions = {
+                        // 🔹 Share-Button
+                        IconButton(onClick = {
+                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(
+                                    Intent.EXTRA_TEXT,
+                                    "Schau dir SprayConnect an! 💪\nHier kannst du die App herunterladen:\nhttps://sprayconnect.at34"
+                                )
+                            }
+                            val chooser = Intent.createChooser(shareIntent, "App teilen")
+                            try {
+                                context.startActivity(chooser)
+                            } catch (e: Exception) {
+                                Toast.makeText(context, "Konnte Teilen nicht öffnen", Toast.LENGTH_SHORT).show()
+                            }
+                        }) {
+                            Icon(
+                                Icons.Default.Share,
+                                contentDescription = "App teilen",
+                                tint = Color.White
+                            )
+                        }
+
+                        // 🔹 Logout-Button
                         IconButton(onClick = {
                             viewModel.logout(context)
                             navController.navigate("login") {
@@ -119,10 +144,12 @@ fun ProfileScreen(navController: NavController) {
                             Icon(
                                 Icons.Default.ExitToApp,
                                 contentDescription = "Logout",
+                                tint = Color.White,
                                 modifier = Modifier.size(28.dp)
                             )
                         }
                     }
+
                 )
             },
             bottomBar = { BottomNavigationBar(navController) }
@@ -617,13 +644,26 @@ private fun ListHeader(
                     }
                 }
 
-                FilledTonalIconButton(onClick = onDeleteClick, enabled = selectedCount > 0) {
+                FilledTonalIconButton(
+                    onClick = onDeleteClick,
+                    enabled = selectedCount > 0,
+                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                        containerColor = Color(0xFFE5E5E5),                 // neutral wie deine Cards
+                        contentColor = if (selectedCount > 0)
+                            Color(0xFFD32F2F)                               // dein Rot
+                        else
+                            Color(0x66000000),                              // 40% Schwarz
+                        disabledContainerColor = Color(0xFFE5E5E5),
+                        disabledContentColor = Color(0x66000000)
+                    )
+                ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = "Löschen",
-                        tint = if (selectedCount > 0) Color(0xFFD32F2F) else Color(0x66000000) // Rot oder 40% Schwarz
+                        contentDescription = "Löschen"
+                        // kein tint nötig, kommt jetzt vom Button-ContentColor
                     )
                 }
+
             }
         }
     }

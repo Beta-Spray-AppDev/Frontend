@@ -94,6 +94,7 @@ fun RegisterScreen(
     val labelUnfocused  = Color(0xFF606060)
     val placeholderCol  = Color(0xFF7A7A7A)
     val iconUnfocused   = Color(0xFF6A6A6A)
+    val errorRed = Color(0xFFD32F2F)
 
     // Screen-Hintergrund (gleich wie Login)
     val screenBg = Brush.verticalGradient(
@@ -212,7 +213,8 @@ fun RegisterScreen(
 
                 focusedContainerColor = Color.White,
                 unfocusedContainerColor = Color.White,
-                disabledContainerColor = Color.White
+                disabledContainerColor = Color.White,
+                errorContainerColor     = Color.White
             )
 
             // Falls deine Compose-Version selectionColors hier nicht kennt, nutze den Provider
@@ -255,7 +257,7 @@ fun RegisterScreen(
                     if (viewModel.usernameError != null) {
                         Text(
                             text = viewModel.usernameError ?: "",
-                            color = MaterialTheme.colorScheme.error,
+                            color = errorRed,
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier
                                 .align(Alignment.Start)
@@ -284,7 +286,7 @@ fun RegisterScreen(
                     if (viewModel.emailError != null) {
                         Text(
                             text = viewModel.emailError ?: "",
-                            color = MaterialTheme.colorScheme.error,
+                            color = errorRed,
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier
                                 .align(Alignment.Start)
@@ -333,7 +335,7 @@ fun RegisterScreen(
                     if (viewModel.passwordError != null) {
                         Text(
                             text = viewModel.passwordError ?: "",
-                            color = MaterialTheme.colorScheme.error,
+                            color = errorRed,
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier
                                 .align(Alignment.CenterHorizontally)

@@ -7,10 +7,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sprayconnectapp.data.dto.BoulderDTO
+import com.example.sprayconnectapp.data.dto.TickCreateRequest
 import com.example.sprayconnectapp.data.local.AppDatabase
 import com.example.sprayconnectapp.data.repository.BoulderRepository
 import com.example.sprayconnectapp.network.RetrofitInstance
 import com.example.sprayconnectapp.ui.screens.isOnline
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -122,6 +124,34 @@ class BoulderListViewModel : ViewModel() {
         isLoading.value = false
         Log.d(TAG_VM, "load() done")
     }
+
+
+
+
+    fun deleteBoulder(
+        context: Context,
+        boulderId: String,
+        onDone: (Boolean) -> Unit = {}
+    ) = viewModelScope.launch {
+        isLoading.value = true
+        var ok = false
+        try {
+            val res = RetrofitInstance.getBoulderApi(context).deleteBoulder(boulderId)
+            ok = res.isSuccessful
+            if (ok) {
+                // UI sofort aktualisieren: gelöschten Eintrag lokal entfernen
+                boulders.value = boulders.value.filterNot { it.id == boulderId }
+            } else {
+                errorMessage.value = "Löschen fehlgeschlagen (${res.code()})"
+            }
+        } catch (t: Throwable) {
+            errorMessage.value = t.message
+        } finally {
+            isLoading.value = false
+            onDone(ok)
+        }
+    }
+
 
 
 

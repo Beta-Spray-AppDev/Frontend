@@ -10,6 +10,7 @@ object Superusers {
         UUID.fromString("9d6305c6-0052-48da-8fa9-3ee162260812"),
         UUID.fromString("0b6ae861-1f72-4cc4-861b-aa9ff8421e45"),
         UUID.fromString("842a8734-4125-4d25-9a88-48ba0520ac91"),
+        UUID.fromString("384f2dc0-6588-47f5-bd46-7ad65caa6dae")
 
 
     )

@@ -117,6 +117,7 @@ fun CreateBoulderScreen(
     var loadingImage by remember { mutableStateOf(false) }
     var imageError by remember { mutableStateOf<String?>(null) }
 
+
     val uiState by viewModel.uiState
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current

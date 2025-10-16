@@ -2,7 +2,9 @@
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">10.0.2.2</domain>
-        <domain includeSubdomains="true">192.168.0.241</domain>
+        <domain includeSubdomains="true">sprayconnect.at</domain>
         <domain includeSubdomains="true">leitln.at</domain>
+        <domain includeSubdomains="true">192.168.0.241</domain>
+
     </domain-config>
 </network-security-config>

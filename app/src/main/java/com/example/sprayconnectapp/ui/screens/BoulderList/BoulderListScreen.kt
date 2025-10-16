@@ -1,9 +1,11 @@
 package com.example.sprayconnectapp.ui.screens.BoulderList
 
 import android.net.Uri
+import android.widget.Toast
 import kotlin.math.roundToInt
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,6 +16,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
@@ -42,8 +45,9 @@ import androidx.compose.material.icons.outlined.ImageSearch
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.outlined.Star
+import androidx.compose.ui.text.font.FontWeight
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.sprayconnectapp.data.dto.BoulderDTO
-
 
 
 enum class SortKey { GRADE, STARS }
@@ -62,13 +66,24 @@ fun BoulderListScreen(
 
     // minimal gewünschte Sterne (0 = egal)
 
-    var minStars by rememberSaveable { mutableStateOf(0) }
+    var contextMenuForId by remember { mutableStateOf<String?>(null) }
+
+    val tokenStore = remember { com.example.sprayconnectapp.util.TokenStore.create(context) }
+    val myUserId = remember { tokenStore.getUserId() }
+    val isSuper = remember { tokenStore.isSuperUser() }
+    fun canDelete(b: BoulderDTO): Boolean = isSuper || (myUserId != null && myUserId == b.createdBy)
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var boulderToDelete by remember { mutableStateOf<String?>(null) }
+
 
     // UI-State aus dem ViewModel
     val boulders by viewModel.boulders
     val vmLoading by viewModel.isLoading
     val errorMessage by viewModel.errorMessage
     val tickedBoulderIds by viewModel.tickedBoulderIds
+
+
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     // --- eigenes UI-Refreshing-Flag für mind. Sichtdauer des Spinners
     var isRefreshing by remember { mutableStateOf(false) }
@@ -294,256 +309,372 @@ fun BoulderListScreen(
                         LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             items(listToShow) { boulder ->
 
-                                val isTicked =
-                                    boulder.id != null && tickedBoulderIds.contains(boulder.id)
 
+                                // ⬇️ direkt in deinem items(listToShow) { boulder -> ... } einsetzen
+                                val id = boulder.id ?: return@items
+                                val isTicked = tickedBoulderIds.contains(id)
                                 val accent = colorResource(R.color.button_normal)
-                                val tickedBg = Color(0xFFE6FAF7)
-
-
-                                // vor dem navigate() – die aktuell sichtbare Reihenfolge festhalten
                                 val visibleIds: List<String> = listToShow.mapNotNull { it.id }
 
+                                var menuOpen by remember { mutableStateOf(false) }
 
+// Ownership/Superuser
+                                val tokenStore = remember {
+                                    com.example.sprayconnectapp.util.TokenStore.create(context)
+                                }
+                                val canDelete = remember(boulder.createdBy) {
+                                    tokenStore.isSuperUser() || tokenStore.getUserId() == boulder.createdBy
+                                }
 
+                                val openBoulder: () -> Unit = {
+                                    navController.currentBackStackEntry?.savedStateHandle
+                                        ?.set("visibleIds", ArrayList(visibleIds))
+                                    val encoded = Uri.encode(imageUri ?: "")
+                                    navController.navigate("view_boulder/$id/$spraywallId?src=list&imageUri=$encoded")
+                                }
 
-                                Card(
-                                    // Detailansicht öffnen
-                                    onClick = {
-                                        // in den SavedStateHandle der aktuellen Destination schreiben
-                                        navController.currentBackStackEntry
-                                            ?.savedStateHandle
-                                            ?.set("visibleIds", ArrayList(visibleIds)) // ArrayList für SafeArgs
-
-                                        val id = boulder.id ?: return@Card
-                                        val encoded = Uri.encode(imageUri ?: "")
-                                        navController.navigate("view_boulder/$id/$spraywallId?src=list&imageUri=$encoded")
-                                    },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 4.dp),
-                                    shape = RoundedCornerShape(12.dp),
-                                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = Color.White//if (isTicked) Color(0xFFDFF5F5) else MaterialTheme.colorScheme.surface
-                                    )
-                                ) {
-                                    Column(Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
-                                        Row(
-                                            Modifier
-                                                .fillMaxWidth()
-                                                .padding(horizontal = 12.dp, vertical = 8.dp),
-                                            verticalAlignment = Alignment.CenterVertically
+                                Box { // Anker für das Dropdown
+                                    Card(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 4.dp)
+                                            .combinedClickable(
+                                                onClick = { openBoulder() },
+                                                onLongClick = { menuOpen = true }
+                                            ),
+                                        shape = RoundedCornerShape(12.dp),
+                                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                                        colors = CardDefaults.cardColors(containerColor = Color.White)
+                                    ) {
+                                        Column(
+                                            Modifier.padding(
+                                                horizontal = 12.dp,
+                                                vertical = 6.dp
+                                            )
                                         ) {
-                                            Column(
-                                                Modifier.weight(1f)
-                                                    .padding(end = tickSpacing + tickArea)
+                                            Row(
+                                                Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                                verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                                Text(
-                                                    boulder.name,
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis,
-                                                    softWrap = false
-                                                )
-                                                Spacer(Modifier.height(3.dp))
-                                                Text(
-                                                    "Schwierigkeit: ${boulder.difficulty}",
-
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    color = Color(0xFF000000)
-                                                )
-
-                                                val avgRounded: Int? = boulder.avgStars
-                                                    ?.takeIf { it.isFinite() && it > 0.0 }
-                                                    ?.roundToInt()
-                                                    ?.coerceIn(0, 5)
-                                                // 1) Community-Durchschnitt zeigen (mit Count)
-                                                Spacer(Modifier.height(2.dp))
-                                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                                    TinyStars(avgRounded ?: 0)
+                                                Column(
+                                                    Modifier
+                                                        .weight(1f)
+                                                        .padding(end = tickSpacing + tickArea)
+                                                ) {
                                                     Text(
-                                                        "(${boulder.starsCount ?: 0})",
-                                                        style = MaterialTheme.typography.bodySmall,
-                                                        color = Color.Gray
+                                                        boulder.name,
+                                                        style = MaterialTheme.typography.titleMedium,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis,
+                                                        softWrap = false
                                                     )
-                                                }
-
-
-                                            }
-
-                                            // Fester Bereich für den Haken – immer gleich breit
-                                            Spacer(Modifier.width(tickSpacing))
-
-
-                                            // Fester Iconbereich – immer vorhanden
-                                            Box(
-                                                Modifier.size(tickArea),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                if (isTicked) {
-                                                    Icon(
-                                                        imageVector = Icons.Default.CheckCircle,
-                                                        contentDescription = "Getickt",
-                                                        tint = colorResource(R.color.button_normal),
-                                                        modifier = Modifier.size(tickArea)
+                                                    Spacer(Modifier.height(3.dp))
+                                                    Text(
+                                                        "Schwierigkeit: ${boulder.difficulty}",
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        color = Color(0xFF000000)
                                                     )
 
+                                                    val avgRounded: Int? = boulder.avgStars
+                                                        ?.takeIf { it.isFinite() && it > 0.0 }
+                                                        ?.roundToInt()
+                                                        ?.coerceIn(0, 5)
+
+                                                    Spacer(Modifier.height(2.dp))
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        TinyStars(avgRounded ?: 0)
+                                                        Text(
+                                                            "(${boulder.starsCount ?: 0})",
+                                                            style = MaterialTheme.typography.bodySmall,
+                                                            color = Color.Gray
+                                                        )
+                                                    }
                                                 }
 
+                                                Spacer(Modifier.width(tickSpacing))
+
+                                                Box(
+                                                    Modifier.size(tickArea),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    if (isTicked) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.CheckCircle,
+                                                            contentDescription = "Getickt",
+                                                            tint = colorResource(R.color.button_normal),
+                                                            modifier = Modifier.size(tickArea)
+                                                        )
+                                                    }
+                                                }
                                             }
                                         }
                                     }
+
+                                    // Kontextmenü (Long-Press)
+                                    DropdownMenu(
+                                        expanded = menuOpen,
+                                        onDismissRequest = { menuOpen = false },
+                                        containerColor = Color.White,          // <-- macht die "Dropdown-Card" weiß
+                                        tonalElevation = 6.dp                  // optional
+                                    ) {
+                                        DropdownMenuItem(
+                                            text = { Text("Öffnen") },
+                                            onClick = { menuOpen = false; openBoulder() },
+                                            leadingIcon = {
+                                                Icon(
+                                                    Icons.Default.ArrowUpward,
+                                                    null,
+                                                    tint = Color(0xFF000000)
+                                                )
+                                            },
+                                            colors = MenuDefaults.itemColors(       // optional: Text/Icon-Farben setzen
+                                                textColor = Color(0xFF000000),
+                                                leadingIconColor = Color(0xFF000000)
+                                            )
+                                        )
+
+                                        if (canDelete) {
+                                            DropdownMenuItem(
+                                                text = { Text("Löschen") },
+                                                onClick = {
+                                                    menuOpen = false
+                                                    boulderToDelete = id
+                                                    showDeleteDialog = true
+                                                },
+                                                colors = MenuDefaults.itemColors(       // optional: Text/Icon-Farben setzen
+                                                    textColor = Color(0xFF000000),
+                                                    leadingIconColor = Color(0xFF000000)
+                                                ),
+                                                leadingIcon = {
+                                                    Icon(Icons.Default.Delete, contentDescription = null, tint = Color(0xFFD32F2F))
+                                                }
+                                            )
+                                        }
+
+                                    }
                                 }
+                            }
+
+                        }
+                    }
+                }
+
+
+            }
+
+            // Sichtbarer Pull-to-Refresh-Indikator (dreht, solange isRefreshing=true)
+            PullRefreshIndicator(
+                refreshing = isRefreshing,
+                state = refreshState,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 8.dp)
+            )
+
+            // --- Filter-Dialog
+            if (showFilter) {
+                AlertDialog(
+                    onDismissRequest = { showFilter = false },
+                    containerColor = Color(0xFFE5E5E5), // Hellgrauer Hintergrund
+                    textContentColor = Color(0xFF000000),
+                    confirmButton = {
+                        TextButton(onClick = { showFilter = false }) {
+                            Text(
+                                "Fertig",
+                                color = colorResource(R.color.button_normal),
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = {
+                            sliderRange = 0f..fbGrades.lastIndex.toFloat()
+                            excludeTicked = false
+                            showFilter = false
+                            primaryKey = SortKey.GRADE
+                            gradeAsc = true
+                            starsAsc = true
+                        }) {
+                            Text(
+                                "Zurücksetzen",
+                                color = Color(0xFF000000), // Schwarz
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        }
+                    },
+                    title = {
+                        Text(
+                            "Filter-Optionen:",
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center,
+                            color = Color(0xFF000000) // Schwarz
+                        )
+                    },
+                    text = {
+                        Column {
+                            Spacer(Modifier.height(8.dp))
+
+                            SortRow(
+                                title = "Schwierigkeit",
+                                isPrimary = primaryKey == SortKey.GRADE,
+                                ascSelected = gradeAsc,
+                                onSetPrimary = { primaryKey = SortKey.GRADE },
+                                onAsc = { gradeAsc = true },
+                                onDesc = { gradeAsc = false }
+                            )
+
+                            SortRow(
+                                title = "Sterne",
+                                isPrimary = primaryKey == SortKey.STARS,
+                                ascSelected = starsAsc,
+                                onSetPrimary = { primaryKey = SortKey.STARS },
+                                onAsc = { starsAsc = true },
+                                onDesc = { starsAsc = false }
+                            )
+
+                            Spacer(Modifier.height(19.dp))
+
+                            Text(
+                                " ${fbGrades[startIndex]} - ${fbGrades[endIndex]}",
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Center,
+                                color = Color(0xFF000000)
+                            )
+
+                            Spacer(Modifier.height(2.dp))
+
+                            RangeSlider(
+                                value = sliderRange,
+                                onValueChange = { r ->
+                                    val s = r.start.roundToInt().coerceIn(0, fbGrades.lastIndex)
+                                    val e =
+                                        r.endInclusive.roundToInt().coerceIn(0, fbGrades.lastIndex)
+                                    val (sIdx, eIdx) = if (s <= e) s to e else e to s
+                                    sliderRange = sIdx.toFloat()..eIdx.toFloat()
+                                },
+                                valueRange = 0f..fbGrades.lastIndex.toFloat(),
+                                steps = fbGrades.size - 2,
+                                colors = SliderDefaults.colors(
+                                    thumbColor = colorResource(R.color.button_normal),
+                                    activeTrackColor = colorResource(R.color.button_normal),
+                                    inactiveTrackColor = colorResource(R.color.button_normal).copy(
+                                        alpha = 0.3f
+                                    ),
+                                    activeTickColor = Color.White,
+                                    inactiveTickColor = Color.Gray
+                                )
+                            )
+
+                            Spacer(Modifier.height(16.dp))
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    "Exclude my repeats:",
+                                    modifier = Modifier.weight(1f),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Color(0xFF000000)
+                                )
+                                Switch(
+                                    checked = excludeTicked,
+                                    onCheckedChange = { excludeTicked = it },
+                                    colors = SwitchDefaults.colors(
+                                        checkedTrackColor = colorResource(R.color.button_normal),
+                                        uncheckedTrackColor = colorResource(R.color.button_normal).copy(
+                                            alpha = 0.35f
+                                        ),
+                                        uncheckedThumbColor = Color.White,
+                                        checkedBorderColor = Color.Transparent,
+                                        uncheckedBorderColor = Color.Transparent
+                                    )
+                                )
                             }
                         }
                     }
-
-
-                }
-
-                // Sichtbarer Pull-to-Refresh-Indikator (dreht, solange isRefreshing=true)
-                PullRefreshIndicator(
-                    refreshing = isRefreshing,
-                    state = refreshState,
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(top = 8.dp)
                 )
+            }
+            if (showDeleteDialog && boulderToDelete != null) {
+            AlertDialog(
+                onDismissRequest = { showDeleteDialog = false },
+                shape = RoundedCornerShape(24.dp),
+                containerColor = Color.White.copy(alpha = 0.95f),
+                tonalElevation = 6.dp,
 
-                // --- Filter-Dialog
-                if (showFilter) {
-                    AlertDialog(
-                        onDismissRequest = { showFilter = false },
-                        containerColor = Color(0xFFE5E5E5), // Hellgrauer Hintergrund
-                        textContentColor = Color(0xFF000000),
-                        confirmButton = {
-                            TextButton(onClick = { showFilter = false }) {
-                                Text(
-                                    "Fertig",
-                                    color = colorResource(R.color.button_normal),
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = {
-                                sliderRange = 0f..fbGrades.lastIndex.toFloat()
-                                excludeTicked = false
-                                showFilter = false
-                                primaryKey = SortKey.GRADE
-                                gradeAsc = true
-                                starsAsc = true
-                            }) {
-                                Text(
-                                    "Zurücksetzen",
-                                    color = Color(0xFF000000), // Schwarz
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                            }
-                        },
-                        title = {
-                            Text(
-                                "Filter-Optionen:",
-                                modifier = Modifier.fillMaxWidth(),
-                                textAlign = TextAlign.Center,
-                                color = Color(0xFF000000) // Schwarz
-                            )
-                        },
-                        text = {
-                            Column {
-                                Spacer(Modifier.height(8.dp))
+                title = {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "Boulder löschen?",
+                            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                            color = Color.Black,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        Box(
+                            modifier = Modifier
+                                .width(70.dp)
+                                .height(4.dp)
+                                .background(colorResource(R.color.button_normal), RoundedCornerShape(2.dp))
+                        )
+                    }
+                },
 
-                                SortRow(
-                                    title = "Schwierigkeit",
-                                    isPrimary = primaryKey == SortKey.GRADE,
-                                    ascSelected = gradeAsc,
-                                    onSetPrimary = { primaryKey = SortKey.GRADE },
-                                    onAsc = { gradeAsc = true },
-                                    onDesc = { gradeAsc = false }
-                                )
+                text = {
+                    Text(
+                        "Dieser Vorgang kann nicht rückgängig gemacht werden.",
+                        color = Color.Black,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center
+                    )
+                },
 
-                                SortRow(
-                                    title = "Sterne",
-                                    isPrimary = primaryKey == SortKey.STARS,
-                                    ascSelected = starsAsc,
-                                    onSetPrimary = { primaryKey = SortKey.STARS },
-                                    onAsc = { starsAsc = true },
-                                    onDesc = { starsAsc = false }
-                                )
-
-                                Spacer(Modifier.height(19.dp))
-
-                                Text(
-                                    " ${fbGrades[startIndex]} - ${fbGrades[endIndex]}",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    textAlign = TextAlign.Center,
-                                    color = Color(0xFF000000)
-                                )
-
-                                Spacer(Modifier.height(2.dp))
-
-                                RangeSlider(
-                                    value = sliderRange,
-                                    onValueChange = { r ->
-                                        val s = r.start.roundToInt().coerceIn(0, fbGrades.lastIndex)
-                                        val e = r.endInclusive.roundToInt().coerceIn(0, fbGrades.lastIndex)
-                                        val (sIdx, eIdx) = if (s <= e) s to e else e to s
-                                        sliderRange = sIdx.toFloat()..eIdx.toFloat()
-                                    },
-                                    valueRange = 0f..fbGrades.lastIndex.toFloat(),
-                                    steps = fbGrades.size - 2,
-                                    colors = SliderDefaults.colors(
-                                        thumbColor = colorResource(R.color.button_normal),
-                                        activeTrackColor = colorResource(R.color.button_normal),
-                                        inactiveTrackColor = colorResource(R.color.button_normal).copy(alpha = 0.3f),
-                                        activeTickColor = Color.White,
-                                        inactiveTickColor = Color.Gray
-                                    )
-                                )
-
-                                Spacer(Modifier.height(16.dp))
-
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text(
-                                        "Exclude my repeats:",
-                                        modifier = Modifier.weight(1f),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = Color(0xFF000000)
-                                    )
-                                    Switch(
-                                        checked = excludeTicked,
-                                        onCheckedChange = { excludeTicked = it },
-                                        colors = SwitchDefaults.colors(
-                                            checkedTrackColor = colorResource(R.color.button_normal),
-                                            uncheckedTrackColor = colorResource(R.color.button_normal).copy(alpha = 0.35f),
-                                            uncheckedThumbColor = Color.White,
-                                            checkedBorderColor = Color.Transparent,
-                                            uncheckedBorderColor = Color.Transparent
-                                        )
-                                    )
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            val id = boulderToDelete
+                            if (id != null) {
+                                showDeleteDialog = false
+                                viewModel.deleteBoulder(context, id) { ok ->
+                                    if (ok) {
+                                        Toast.makeText(context, "Boulder gelöscht", Toast.LENGTH_SHORT).show()
+                                        viewModel.load(context, spraywallId)
+                                        viewModel.loadTickedBoulders(context)
+                                    } else {
+                                        Toast.makeText(context, "Fehler beim Löschen", Toast.LENGTH_SHORT).show()
+                                    }
                                 }
                             }
-                        }
-                    )
-                }
+                        },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = colorResource(R.color.button_normal)
+                        )
+                    ) {
+                        Text("Löschen")
+                    }
+                },
 
-            }
+                dismissButton = {
+                    TextButton(
+                        onClick = { showDeleteDialog = false },
+                        colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
+                    ) {
+                        Text("Abbrechen")
+                    }
+                }
+            )
+        }
+
+
         }
     }
-
-
-
-
-
-
-
 }
-
 
 
 @Composable

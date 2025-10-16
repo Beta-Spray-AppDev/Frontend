@@ -97,6 +97,8 @@ dependencies {
     implementation(libs.androidx.foundation.layout)
     implementation(libs.material3)
     implementation(libs.ui.graphics)
+    implementation(libs.androidx.compose.foundation.foundation)
+    implementation(libs.androidx.ui.text)
     ksp("androidx.room:room-compiler:2.6.1")
 
     // Tests & Debug

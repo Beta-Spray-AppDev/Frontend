@@ -34,7 +34,7 @@ import retrofit2.http.GET
 object RetrofitInstance {
 
 
-    private const val BASE_URL = "http://leitln.at:8090/"
+    private const val BASE_URL = "http://sprayconnect.at:8090/"
 
 
     private var retrofit: Retrofit? = null

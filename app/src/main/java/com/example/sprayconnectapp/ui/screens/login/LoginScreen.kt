@@ -114,6 +114,7 @@ fun LoginScreen(
             !viewModel.isLoading
 
     val headerShape = RoundedCornerShape(bottomStart = 36.dp, bottomEnd = 36.dp)
+    val errorRed = Color(0xFFD32F2F)
 
     // Bei Erfolg nach Home
     if (viewModel.message == "Login erfolgreich") {
@@ -226,6 +227,7 @@ fun LoginScreen(
                 unfocusedTextColor = Color.Black,
                 disabledTextColor = Color.Black.copy(alpha = 0.6f),
 
+
                 // Placeholder
                 focusedPlaceholderColor = placeholderCol,
                 unfocusedPlaceholderColor = placeholderCol,
@@ -245,7 +247,8 @@ fun LoginScreen(
                 // Container
                 focusedContainerColor = Color.White,
                 unfocusedContainerColor = Color.White,
-                disabledContainerColor = Color.White
+                disabledContainerColor = Color.White,
+                errorContainerColor     = Color.White
             )
 
             // Falls deine Compose-Version KEINE selectionColors im colors()-Block kennt:
@@ -290,7 +293,7 @@ fun LoginScreen(
                     if (viewModel.usernameError != null) {
                         Text(
                             text = viewModel.usernameError ?: "",
-                            color = MaterialTheme.colorScheme.error,
+                            color = errorRed,
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier
                                 .align(Alignment.Start)
@@ -334,7 +337,7 @@ fun LoginScreen(
                     if (viewModel.passwordError != null) {
                         Text(
                             text = viewModel.passwordError ?: "",
-                            color = MaterialTheme.colorScheme.error,
+                            color = errorRed,
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier
                                 .align(Alignment.CenterHorizontally)
