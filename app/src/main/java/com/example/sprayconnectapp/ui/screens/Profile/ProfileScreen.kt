@@ -117,7 +117,7 @@ fun ProfileScreen(navController: NavController) {
                                 type = "text/plain"
                                 putExtra(
                                     Intent.EXTRA_TEXT,
-                                    "Schau dir SprayConnect an! 💪\nHier kannst du die App herunterladen:\nhttps://sprayconnect.at34"
+                                    "Schau dir SprayConnect an! 💪\nHier kannst du die App herunterladen:\nhttps://sprayconnect.at"
                                 )
                             }
                             val chooser = Intent.createChooser(shareIntent, "App teilen")
