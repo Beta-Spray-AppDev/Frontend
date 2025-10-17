@@ -335,8 +335,8 @@ fun ViewBoulderScreen(
                 ) {
                     val iconSize = 35.dp
 
-                    // Prev Button
-                    IconButton(
+                    // Prev Button DAWEIL DRAUßEN WEGEN FLACKERN
+                    /**       IconButton(
                         enabled = prevId != null,
                         onClick = { prevId?.let { currentBoulderId = it } }
                     ) {
@@ -345,7 +345,7 @@ fun ViewBoulderScreen(
                             contentDescription = "Vorheriger Boulder",
                             modifier = Modifier.size(iconSize)
                         )
-                    }
+                    } */
 
                     Spacer(Modifier.weight(1f))
 
@@ -359,6 +359,7 @@ fun ViewBoulderScreen(
 
                     Spacer(Modifier.weight(1f))
 
+                    /**
                     // Next Button
                     IconButton(
                         enabled = nextId != null,
@@ -369,7 +370,7 @@ fun ViewBoulderScreen(
                             contentDescription = "Nächster Boulder",
                             modifier = Modifier.size(iconSize)
                         )
-                    }
+                    } */
                 }
             }
         ) { padding ->
