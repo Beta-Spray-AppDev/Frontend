@@ -224,6 +224,14 @@ fun ViewBoulderScreen(
         imgH = h
     }
 
+    val scale = remember { mutableStateOf(1f) }
+    val pan = remember { mutableStateOf(Offset.Zero) }
+
+    LaunchedEffect(uiState.boulder?.id) {
+        scale.value = 1f
+        pan.value = Offset.Zero
+    }
+
     val aspect = remember(imgW, imgH) { imgW.toFloat() / imgH.toFloat() }
 
     // Farben/Background wie im BoulderListScreen
@@ -397,41 +405,66 @@ fun ViewBoulderScreen(
                             .onGloballyPositioned { laidOut = it.size }
                     ) {
 
-                        val effectiveImageUri by remember(
-                            uiState.boulder?.id,
-                            uiState.boulder?.spraywallImageUrl,
-                            imageUri
-                        ) {
-                            mutableStateOf(
-                                run {
-                                    val fromBoulder = uiState.boulder?.spraywallImageUrl.orEmpty()
+                        var effectiveImageUri by remember { mutableStateOf("") }
 
-                                    if (fromBoulder.isNotBlank()){
 
-                                        // falls wir eine lokal zwischengespeicherte Datei haben, nimm diese
-                                        val token = Regex("/s/([^/]+)/").find(fromBoulder)?.groupValues?.get(1)
-                                        if (token != null){
-                                            val outName = localOutputNameFromPreview(fromBoulder, token)
-                                            val file = getPrivateImageFileByName(context, outName)
-                                            if (file.exists()) Uri.fromFile(file).toString() else fromBoulder
-                                        } else {
-                                            fromBoulder
-                                        }
+                        LaunchedEffect(uiState.boulder?.id, imageUri) {
 
+                            effectiveImageUri =  run {
+                                val fromBoulder = uiState.boulder?.spraywallImageUrl.orEmpty()
+
+                                if (fromBoulder.isNotBlank()){
+
+                                    // falls wir eine lokal zwischengespeicherte Datei haben, nimm diese
+                                    val token = Regex("/s/([^/]+)/").find(fromBoulder)?.groupValues?.get(1)
+                                    if (token != null){
+                                        val outName = localOutputNameFromPreview(fromBoulder, token)
+                                        val file = getPrivateImageFileByName(context, outName)
+                                        if (file.exists()) Uri.fromFile(file).toString() else fromBoulder
                                     } else {
-                                        // nur noch Fallback: das beim Einstieg mitgegebene Bild
-                                        imageUri
+                                        fromBoulder
                                     }
 
+                                } else {
+                                    // nur noch Fallback: das beim Einstieg mitgegebene Bild
+                                    imageUri
                                 }
-                            )
+
+                            }
+
                         }
+
+
+                        // 2) Maße (inkl. EXIF) **jedes Mal** neu lesen, wenn sich das Bild ändert:
+                        LaunchedEffect(effectiveImageUri) {
+                            if (effectiveImageUri.isBlank()) return@LaunchedEffect
+                            // Lokale Datei → wie gehabt
+                            val uri = Uri.parse(effectiveImageUri)
+                            if (uri.scheme == "file" || uri.scheme == "content") {
+                                val (w, h) = readImageSizeRespectingExif(context, uri)
+                                imgW = w; imgH = h
+                            } else {
+                                // Remote-URL: Maße aus Coil holen, wenn geladen
+                                // (setzt imgW/imgH sobald das Bild fertig ist)
+                            }
+                        }
+
 
                         if (effectiveImageUri.isNotBlank()) {
                             AsyncImage(
                                 model = ImageRequest.Builder(context)
                                     .data(effectiveImageUri)
                                     .size(Size.ORIGINAL)
+                                    .listener(
+                                        onSuccess = { _, result ->
+                                            // Fallback für http/https: intrinsische Größe aus dem Drawable
+                                            val d = result.drawable
+                                            if (d.intrinsicWidth > 0 && d.intrinsicHeight > 0) {
+                                                imgW = d.intrinsicWidth
+                                                imgH = d.intrinsicHeight
+                                            }
+                                        }
+                                    )
                                     .build(),
                                 contentDescription = "Boulder",
                                 modifier = Modifier.fillMaxSize(),
@@ -626,7 +659,7 @@ private fun InfoLine(label: String, value: String, icon: ImageVector? = null) {
         Row(Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 5.dp),
-        verticalAlignment = Alignment.CenterVertically) {
+            verticalAlignment = Alignment.CenterVertically) {
 
             if (icon != null) {
                 Icon(
@@ -859,7 +892,7 @@ fun BoulderInfoDialog(
                 )
                 InfoLineStyled("Setter", setter, Icons.Default.Person)
                 if (!setterNote.isNullOrBlank()) {
-                    
+
                     InfoLineStyled("Setter Notes", setterNote, Icons.Default.EditNote)
                 }
                 InfoLineStyled("Schwierigkeit", difficulty, Icons.Default.BarChart)
