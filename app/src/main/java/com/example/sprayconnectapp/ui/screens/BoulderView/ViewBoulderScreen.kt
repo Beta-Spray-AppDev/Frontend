@@ -397,20 +397,32 @@ fun ViewBoulderScreen(
                             .onGloballyPositioned { laidOut = it.size }
                     ) {
 
-                        val effectiveImageUri by remember(imageUri, uiState.boulder?.spraywallImageUrl) {
+                        val effectiveImageUri by remember(
+                            uiState.boulder?.id,
+                            uiState.boulder?.spraywallImageUrl,
+                            imageUri
+                        ) {
                             mutableStateOf(
-                                when {
-                                    imageUri.isNotBlank() -> imageUri
-                                    !uiState.boulder?.spraywallImageUrl.isNullOrBlank() -> {
-                                        val preview = uiState.boulder!!.spraywallImageUrl!!
-                                        val token = Regex("/s/([^/]+)/").find(preview)?.groupValues?.get(1)
-                                        if (token != null) {
-                                            val outName = localOutputNameFromPreview(preview, token)
+                                run {
+                                    val fromBoulder = uiState.boulder?.spraywallImageUrl.orEmpty()
+
+                                    if (fromBoulder.isNotBlank()){
+
+                                        // falls wir eine lokal zwischengespeicherte Datei haben, nimm diese
+                                        val token = Regex("/s/([^/]+)/").find(fromBoulder)?.groupValues?.get(1)
+                                        if (token != null){
+                                            val outName = localOutputNameFromPreview(fromBoulder, token)
                                             val file = getPrivateImageFileByName(context, outName)
-                                            if (file.exists()) Uri.fromFile(file).toString() else preview // Remote-URL fallback
-                                        } else preview
+                                            if (file.exists()) Uri.fromFile(file).toString() else fromBoulder
+                                        } else {
+                                            fromBoulder
+                                        }
+
+                                    } else {
+                                        // nur noch Fallback: das beim Einstieg mitgegebene Bild
+                                        imageUri
                                     }
-                                    else -> "" // kein Bild
+
                                 }
                             )
                         }
