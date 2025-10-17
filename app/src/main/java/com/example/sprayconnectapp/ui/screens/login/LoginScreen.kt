@@ -90,8 +90,10 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
@@ -384,18 +386,49 @@ fun LoginScreen(
 
                     Spacer(Modifier.height(8.dp))
 
-                    // Sign Up-Link
-                    Row {
-                        Text("Noch nicht registriert? ", color = Color.Black)
-                        Text(
-                            text = "Sign Up",
-                            color = brand,
-                            modifier = Modifier.clickable(
-                                enabled = online,
-                                onClick = { navController.navigate("register") }
+                    // Sign Up-Link + Passwort vergessen
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+
+                        Row(
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Noch nicht registriert? ",
+                                color = Color.Black,
+                                style = MaterialTheme.typography.bodyMedium
                             )
-                        )
+                            Text(
+                                text = "Sign Up",
+                                color = if (online) brand else Color.Gray,
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                                modifier = Modifier.clickable(enabled = online) {
+                                    navController.navigate("register")
+                                }
+                            )
+                        }
+
+                        Spacer(Modifier.height(8.dp))
+
+                        // Zweite Zeile: Passwort vergessen?
+                        TextButton(
+                            onClick = { navController.navigate("forgot") },
+                            enabled = online,
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
+                            Text(
+                                text = "Passwort vergessen?",
+                                color = if (online) brand else Color.Gray,
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
+                            )
+                        }
                     }
+
 
                     // Offline-Hinweis
                     if (!online) {
