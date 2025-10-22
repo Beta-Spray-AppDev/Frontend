@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.ImageSearch
 import androidx.compose.material3.*
@@ -99,8 +101,14 @@ fun PickBoulderTargetScreen(
 
                     // Schließen Button
                     navigationIcon = {
-                        IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(Icons.Default.Close, contentDescription = "Abbrechen")
+                        if (selectedGym == null) {
+                            IconButton(onClick = { navController.popBackStack() }) {
+                                Icon(Icons.Default.Close, contentDescription = "Abbrechen")
+                            }
+                        } else {
+                            IconButton(onClick = { selectedGym = null }) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Zurück zur Gym-Auswahl")
+                            }
                         }
                     },
                     //Titel plus Hinweis
@@ -217,13 +225,16 @@ fun PickBoulderTargetScreen(
                                     contentColor = Color(0xFF000000)    // Schwarz
                                 )
                             ) {
-                                Column(Modifier.padding(16.dp)) {
+                                Column(Modifier.padding(16.dp).heightIn(min = 40.dp)) {
                                     Text(wall.name, style = MaterialTheme.typography.titleMedium)
                                     if (wall.description.isNotBlank()) {
                                         Text(
                                             wall.description,
                                             style = MaterialTheme.typography.bodySmall
                                         )
+                                    }else {
+                                        //hält die Höhe konstant
+                                        Spacer(Modifier.height(18.dp))
                                     }
                                 }
                             }
