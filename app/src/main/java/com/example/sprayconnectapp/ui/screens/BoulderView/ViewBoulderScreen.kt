@@ -188,7 +188,7 @@ fun ViewBoulderScreen(
             else     -> emptyList()
         }
 
-        // Fallback (sollte kaum noch gebraucht werden)
+        // Fallback
         else -> gymList.mapNotNull { it.id }
     }
 
@@ -311,11 +311,17 @@ fun ViewBoulderScreen(
                     FloatingActionButton(
                         containerColor =colorResource(R.color.button_normal) ,//Color(0xFF7FBABF),
                         onClick = {
-                            val encodedUri = Uri.encode(imageUri)
                             val editTargetId = boulder?.id ?: currentBoulderId
                             if (editTargetId.isNotBlank()) {
+                                //Spraywall aus dem aktuell geladenen Boulder verwenden
+                                val editSpraywallId = boulder?.spraywallId ?: spraywallId
+
+                                // Nimm das aktuell angezeigte Bild, fallback auf ursprüngliches
+                                val editImageUri = (boulder?.spraywallImageUrl?.takeIf { it.isNotBlank() }
+                                    ?: imageUri).let { Uri.encode(it) }
+
                                 navController.navigate(
-                                    "create_boulder/$spraywallId?imageUri=$encodedUri&mode=edit&boulderId=$editTargetId"
+                                    "create_boulder/$editSpraywallId?imageUri=$editImageUri&mode=edit&boulderId=$editTargetId"
                                 )
                             }
 
@@ -336,7 +342,7 @@ fun ViewBoulderScreen(
                     val iconSize = 35.dp
 
                     // Prev Button DAWEIL DRAUßEN WEGEN FLACKERN
-                    /**       IconButton(
+                          IconButton(
                         enabled = prevId != null,
                         onClick = { prevId?.let { currentBoulderId = it } }
                     ) {
@@ -345,7 +351,7 @@ fun ViewBoulderScreen(
                             contentDescription = "Vorheriger Boulder",
                             modifier = Modifier.size(iconSize)
                         )
-                    } */
+                    }
 
                     Spacer(Modifier.weight(1f))
 
@@ -359,7 +365,7 @@ fun ViewBoulderScreen(
 
                     Spacer(Modifier.weight(1f))
 
-                    /**
+
                     // Next Button
                     IconButton(
                         enabled = nextId != null,
@@ -370,7 +376,7 @@ fun ViewBoulderScreen(
                             contentDescription = "Nächster Boulder",
                             modifier = Modifier.size(iconSize)
                         )
-                    } */
+                    }
                 }
             }
         ) { padding ->
