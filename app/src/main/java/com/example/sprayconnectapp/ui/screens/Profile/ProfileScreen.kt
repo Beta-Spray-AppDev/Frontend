@@ -14,6 +14,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
@@ -642,25 +643,24 @@ private fun ListHeader(
                         )
                     }
                 }
+                val enabled = selectedCount > 0
 
-                FilledTonalIconButton(
-                    onClick = onDeleteClick,
-                    enabled = selectedCount > 0,
-                    colors = IconButtonDefaults.filledTonalIconButtonColors(
-                        containerColor = Color(0xFFE5E5E5),                 // neutral wie deine Cards
-                        contentColor = if (selectedCount > 0)
-                            Color(0xFFD32F2F)                               // dein Rot
-                        else
-                            Color(0x66000000),                              // 40% Schwarz
-                        disabledContainerColor = Color(0xFFE5E5E5),
-                        disabledContentColor = Color(0x66000000)
-                    )
+                Surface(
+                    color = Color(0xFFE5E5E5),
+                    shape = CircleShape,
+                    tonalElevation = 0.dp,
+                    shadowElevation = 0.dp
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Löschen"
-                        // kein tint nötig, kommt jetzt vom Button-ContentColor
-                    )
+                    IconButton(
+                        onClick = onDeleteClick,
+                        enabled = enabled
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Löschen",
+                            tint = if (enabled) Color(0xFFD32F2F) else Color(0x66000000)
+                        )
+                    }
                 }
 
             }
