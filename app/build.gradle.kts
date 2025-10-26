@@ -19,7 +19,7 @@ android {
         buildConfigField(
             "String",
             "LATEST_JSON_URL",
-            "\"http://leitln.at:8090/latest.json\""
+            "\"https://sprayconnect.at/latest.json\""
         )
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -83,9 +83,10 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.3")
 
     // Images / Media / Security
-    implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("androidx.exifinterface:exifinterface:1.3.7")
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    implementation("io.coil-kt:coil-compose:2.6.0")
 
     // Room (mit KSP)
     implementation("androidx.room:room-runtime:2.6.1")

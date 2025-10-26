@@ -34,7 +34,7 @@ import retrofit2.http.GET
 object RetrofitInstance {
 
 
-    private const val BASE_URL = "http://sprayconnect.at:8090/"
+    private const val BASE_URL = "http://10.0.2.2:8080/"
 
 
     private var retrofit: Retrofit? = null
@@ -140,10 +140,10 @@ object RetrofitInstance {
 
             val path = req.url.encodedPath // beginnt immer mit '/'
             // Alles unter /auth/* ist öffentlich (login/register/refresh/logout)
-            val isPublic = path == "/auth/login" ||
-                    path == "/auth/register" ||
-                    path == "/auth/refresh" ||
-                    path == "/auth/logout"
+            val isPublic = path == "/api/auth/login" ||
+                    path == "/api/auth/register" ||
+                    path == "/api/auth/refresh" ||
+                    path == "/api/auth/logout"
             val b = req.newBuilder()
             if (!isPublic) {
                 store.accessToken()?.let { b.header("Authorization", "Bearer $it") }

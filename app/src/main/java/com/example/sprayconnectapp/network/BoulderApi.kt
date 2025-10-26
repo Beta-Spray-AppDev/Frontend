@@ -19,33 +19,33 @@ import java.util.UUID
  * Endpunkte rund um Boulder
  */
 interface BoulderApi {
-    @POST("boulders")
+    @POST("/api/boulders")
      suspend fun createBoulder(@Body request: CreateBoulderRequest): Response<BoulderDTO>
 
-    @GET("boulders/spraywall/{spraywallId}")
+    @GET("/api/boulders/spraywall/{spraywallId}")
     suspend fun getBouldersBySpraywall(@Path("spraywallId") spraywallId: UUID): Response<List<BoulderDTO>>
 
-    @GET("boulders/mine") suspend fun getMyBoulders(): Response<List<BoulderDTO>>
+    @GET("/api/boulders/mine") suspend fun getMyBoulders(): Response<List<BoulderDTO>>
 
-    @GET("boulders/{boulderId}")
+    @GET("/api/boulders/{boulderId}")
     suspend fun getBoulderById(@Path("boulderId") boulderId: UUID?): Response<BoulderDTO>
 
-    @PUT("boulders/{boulderId}")
+    @PUT("/api/boulders/{boulderId}")
     suspend fun updateBoulder(@Path("boulderId") boulderId: String, @Body request: BoulderDTO): Response<BoulderDTO>
 
 
     /** Löscht Boulder serverseitig */
-    @DELETE("boulders/{boulderId}")
+    @DELETE("/api/boulders/{boulderId}")
     suspend fun deleteBoulder(@Path("boulderId") boulderId: String): Response<Unit>
 
 
     /** Alle eigenen Ticks (als BoulderDTO-Liste) */
-    @GET("boulders/ticks/mine")
+    @GET("/api/boulders/ticks/mine")
     suspend fun getMyTickedBoulders(): Response<List<TickWithBoulderDto>>
 
 
     /** Untick: entfernt den Tick des eingeloggten Users für diesen Boulder */
-    @DELETE("boulders/{boulderId}/ticks")
+    @DELETE("/api/boulders/{boulderId}/ticks")
     suspend fun deleteTick(@Path("boulderId") boulderId: String): Response<Unit>
 
 
@@ -55,12 +55,12 @@ interface BoulderApi {
      * (boulder_id in der DB ist dann NULL).
      */
 
-    @DELETE("boulders/ticks/{tickId}")
+    @DELETE("/api/boulders/ticks/{tickId}")
     suspend fun deleteTickById(@Path("tickId") tickId: String): Response<Unit>
 
 
 
-    @POST("boulders/{boulderId}/ticks")
+    @POST("/api/boulders/{boulderId}/ticks")
     suspend fun tickBoulder(
         @Path("boulderId") boulderId: String,
         @Body body: TickCreateRequest = TickCreateRequest()

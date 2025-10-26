@@ -25,39 +25,39 @@ import retrofit2.http.Query
 
 interface AuthApi {
 
-    @POST("/auth/register")
+    @POST("/api/auth/register")
     suspend fun register(
         @Body request: RegisterRequest
     ): Response<Void>
 
-    @POST("/auth/login")
+    @POST("/api/auth/login")
     suspend fun login(
         @Body request: LoginRequest
     ): Response<TokenResponse> // Antwort vom Server -> Token
 
-    @POST("/auth/refresh")
+    @POST("/api/auth/refresh")
     suspend fun refresh(@Body req: RefreshRequest): Response<TokenResponse>
 
-    @POST("/auth/logout")
+    @POST("/api/auth/logout")
     suspend fun logout(@Body request: LogoutRequest): Response<Void>
 
 
-    @GET("/auth/profile")
+    @GET("/api/auth/profile")
     suspend fun getProfile(): Response<UserProfile>
 
-    @PUT("/auth/profile")
+    @PUT("/api/auth/profile")
     suspend fun updateProfile(@Body dto: UpdateProfileRequest): Response<UserProfile>
 
 
-    @POST("/auth/password/forgot")
+    @POST("/api/auth/password/forgot")
     suspend fun forgotPassword(@Body body: ForgotPasswordRequest): Response<Map<String, String>>
 
 
-    @GET("/auth/password/reset/validate")
+    @GET("/api/auth/password/reset/validate")
     suspend fun validateResetToken(@Query("token") token: String): Response<ValidateTokenResponse>
 
 
-    @POST("/auth/password/reset")
+    @POST("/api/auth/password/reset")
     suspend fun resetPassword(@Body body: ResetPasswordRequest): Response<Map<String, String>>
 
 
